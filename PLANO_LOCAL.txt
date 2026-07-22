@@ -1,0 +1,318 @@
+# VENDA EXPRESS — Plano de Execução Local + Estrutura da Base de Dados
+
+================================================================
+COMO EXECUTAR LOCALMENTE
+================================================================
+
+1. Pré-requisitos
+   - Node.js 18+ instalado
+   - Navegador moderno (Chrome, Firefox, Edge)
+
+2. Instalar dependências
+   npm install
+
+3. Iniciar o servidor de desenvolvimento
+   npm run dev
+   (O servidor arranca automaticamente neste ambiente — não executar manualmente)
+
+4. Construir para produção
+   npm run build
+
+5. Fluxo de teste completo (simulação real)
+   a) Abre a landing page em http://localhost:5173/
+   b) Clica em "Criar minha loja" (ou vai para #/signup)
+   c) Escolhe um plano (Starter, Business ou Premium)
+   d) Preenche: nome da loja, email, palavra-passe
+   e) O sistema cria automaticamente:
+      - A conta do utilizador
+      - A loja com subdomínio próprio (ex: joaoshop.vendaexpress.ao)
+   f) É redirecionado para o painel (#/app)
+   g) No painel, vai a "Produtos" > "Adicionar produto"
+      - Preenche nome, preço, stock, imagem (URL)
+      - Guarda
+   h) No painel "Resumo", clica em "Ver loja" ou "Copiar link"
+   i) Abre a URL da loja (#/s/joaoshop) numa nova janela
+   j) Vê a loja pública com os produtos, adiciona ao carrinho, faz checkout
+
+6. Conta demo já criada (para teste imediato)
+   Email: demo@vendaexpress.ao
+   Senha: demo123
+   Loja: João Shop — acessível em #/s/joaoshop
+
+7. Como funciona a persistência
+   - Tudo é guardado no localStorage do navegador (JSON)
+   - Os dados sobrevivem a recargas da página
+   - Para limpar: DevTools > Application > Local Storage > remover "ve_mock_db_v1"
+
+================================================================
+ROTAS DA APLICAÇÃO (hash router)
+================================================================
+
+#/                    — Landing page (marketing + planos)
+#/signup              — Registo de novo lojista (cria conta + loja)
+#/signup?plan=ID      — Registo com plano pré-selecionado
+#/login               — Login do lojista
+#/app                 — Painel do lojista (dashboard)
+#/app > produtos      — Gestão de produtos
+#/app > categorias    — Gestão de categorias
+#/app > pedidos       — Gestão de pedidos
+#/app > clientes      — Lista de clientes
+#/app > cupons        — Cupons de desconto
+#/app > aparência      — Personalização visual (cor, logo, banner)
+#/app > configurações — Dados da loja, moeda, WhatsApp, domínio
+#/s/:slug             — Loja pública (qualquer pessoa pode ver e comprar)
+#/admin               — Painel do administrador da plataforma
+
+================================================================
+ESTRUTURA DA BASE DE DADOS (JSON / localStorage)
+================================================================
+
+A base de dados é um único objeto JSON guardado no localStorage
+sob a chave "ve_mock_db_v1". Estrutura completa:
+
+{
+  "users": [
+    {
+      "id": "uuid",                    // Identificador único
+      "email": "demo@vendaexpress.ao", // Email único
+      "password": "demo123"            // Palavra-passe (texto simples — apenas mock)
+    }
+  ],
+
+  "stores": [
+    {
+      "id": "uuid",
+      "owner_id": "uuid",              // FK -> users.id (dono da loja)
+      "plan_id": "plan-business",      // FK -> plans.id
+      "name": "João Shop",             // Nome da loja
+      "slug": "joaoshop",              // Subdomínio único (URL)
+      "status": "active",              // trial | active | suspended
+      "theme_primary": "#0f766e",     // Cor principal do tema
+      "description": "Descrição...",
+      "logo_url": "",                 // URL do logótipo
+      "banner_url": "",               // URL do banner
+      "whatsapp": "+244 923 456 789", // WhatsApp para notificações
+      "currency": "AOA",              // Moeda (AOA | USD | EUR | BRL)
+      "created_at": "2026-07-13T..."
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "plan-starter",
+      "name": "Starter",
+      "price": 5000,                   // Preço mensal em Kwanzas
+      "product_limit": 50,            // Limite de produtos (null = ilimitado)
+      "features": ["Até 50 produtos", "1 administrador", ...],
+      "sort_order": 1
+    },
+    {
+      "id": "plan-business",
+      "name": "Business",
+      "price": 15000,
+      "product_limit": null,
+      "features": ["Produtos ilimitados", "Funcionários", ...],
+      "sort_order": 2
+    },
+    {
+      "id": "plan-premium",
+      "name": "Premium",
+      "price": 35000,
+      "product_limit": null,
+      "features": ["Domínio próprio", "Google Analytics", ...],
+      "sort_order": 3
+    }
+  ],
+
+  "categories": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "name": "Eletrónica",
+      "created_at": "2026-07-14T..."
+    }
+  ],
+
+  "products": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "category_id": "uuid",          // FK -> categories.id (nullable)
+      "name": "Auscultadores Bluetooth",
+      "description": "Auscultadores sem fios...",
+      "price": 25000,                 // Preço em Kwanzas
+      "stock": 15,                    // Quantidade em stock
+      "image_url": "",               // URL da imagem
+      "active": true,                // Visível na loja pública?
+      "created_at": "2026-07-15T..."
+    }
+  ],
+
+  "customers": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "name": "Ana Silva",
+      "phone": "+244 912 345 678",
+      "email": "",
+      "created_at": "2026-07-18T..."
+    }
+  ],
+
+  "orders": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "customer_id": "uuid",          // FK -> customers.id (nullable)
+      "customer_name": "Ana Silva",   // Snapshot do nome
+      "customer_phone": "+244 ...",   // Snapshot do telefone
+      "customer_address": "Rua...",   // Endereço de entrega
+      "total": 25000,                 // Total do pedido
+      "status": "pending",           // pending | paid | shipped | delivered | cancelled
+      "created_at": "2026-07-18T..."
+    }
+  ],
+
+  "order_items": [
+    {
+      "id": "uuid",
+      "order_id": "uuid",             // FK -> orders.id
+      "product_id": "uuid",          // FK -> products.id (nullable)
+      "name": "Auscultadores Bluetooth", // Snapshot do nome
+      "price": 25000,                // Snapshot do preço
+      "quantity": 1                 // Quantidade comprada
+    }
+  ],
+
+  "coupons": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "code": "PROMO10",             // Código do cupom
+      "discount_percent": 10,        // Percentagem de desconto
+      "active": true,               // Ativo?
+      "created_at": "2026-07-17T..."
+    }
+  ],
+
+  "store_staff": [
+    {
+      "id": "uuid",
+      "store_id": "uuid",             // FK -> stores.id
+      "email": "funcionario@email.ao",
+      "role": "staff",              // staff | admin
+      "created_at": "2026-07-16T..."
+    }
+  ]
+}
+
+================================================================
+SESSÃO DE AUTENTICAÇÃO
+================================================================
+
+Guardada no localStorage sob a chave "ve_mock_session_v1":
+
+{
+  "user": {
+    "id": "uuid",
+    "email": "demo@vendaexpress.ao"
+  }
+}
+
+================================================================
+ISOLAMENTO MULTI-TENANT (COMO FUNCIONA)
+================================================================
+
+Cada lojista só vê os dados da sua própria loja. O isolamento é feito
+em JavaScript (não em RLS como no Supabase):
+
+1. Ao fazer login, o user.id é guardado na sessão
+2. Ao carregar dados, filtra-se por store_id onde stores.owner_id = user.id
+3. Ao inserir dados, o store_id é sempre o da loja do utilizador logado
+4. A loja pública (#/s/:slug) não precisa de login — qualquer pessoa pode ver
+   e fazer pedidos (checkout de convidado)
+
+================================================================
+FLUXO COMPLETO: DO REGISTO À PRIMEIRA VENDA
+================================================================
+
+1. Visitante chega à landing page (#/)
+2. Escolhe um plano e clica "Criar minha loja"
+3. Preenche o formulário:
+   - Nome da loja → gera automaticamente o slug (subdomínio)
+   - Email + palavra-passe
+4. Sistema cria:
+   - Utilizador em users[]
+   - Loja em stores[] com slug único
+   - Sessão ativa
+5. Redirecionado para o painel (#/app)
+6. No painel:
+   - Vai a "Produtos" > adiciona produtos (nome, preço, stock, imagem)
+   - Vai a "Categorias" > cria categorias
+   - Vai a "Aparência" > escolhe cor, descrição, logo, banner
+   - Vai a "Configurações" > define WhatsApp, moeda
+7. Clica em "Ver loja" no resumo → abre #/s/o-seu-slug
+8. A loja pública mostra:
+   - Banner + nome + descrição da loja
+   - Filtros por categoria
+   - Grelha de produtos ativos
+   - Botão "Adicionar" em cada produto
+9. Cliente adiciona produtos ao carrinho
+10. Cliente aplica cupom (se tiver)
+11. Cliente faz checkout:
+    - Preenche nome, telefone, endereço
+    - Sistema cria customer + order + order_items
+    - Mostra confirmação
+12. Lojista vê o pedido em "Pedidos" no painel
+13. Lojista muda o estado do pedido (pendente → pago → enviado → entregue)
+
+================================================================
+FICHEIROS DO PROJETO
+================================================================
+
+src/
+├── App.tsx                          # Router principal (hash router)
+├── main.tsx                         # Entry point
+├── index.css                        # Tailwind CSS
+├── lib/
+│   ├── supabase.ts                  # Mock JSON DB (localStorage)
+│   ├── auth.tsx                     # Context de autenticação
+│   ├── types.ts                     # Tipos TypeScript
+│   ├── router.ts                    # Hash router + matchRoute
+│   └── format.ts                    # formatCurrency, slugify, etc.
+├── components/ui/
+│   ├── Button.tsx
+│   ├── Field.tsx                    # Input, Textarea, Select, Field
+│   ├── Modal.tsx
+│   ├── Badge.tsx
+│   └── Feedback.tsx                 # Spinner, PageLoader, EmptyState
+├── pages/
+│   ├── LandingPage.tsx              # Marketing + planos
+│   ├── SignupPage.tsx              # Registo (cria conta + loja)
+│   ├── LoginPage.tsx               # Login
+│   ├── StorefrontPage.tsx          # Loja pública + carrinho + checkout
+│   ├── AdminPage.tsx               # Painel do administrador
+│   └── dashboard/
+│       ├── DashboardPage.tsx       # Container do painel
+│       ├── Shell.tsx                # Sidebar + layout
+│       ├── OverviewPage.tsx        # Resumo + link da loja
+│       ├── ProductsPage.tsx         # CRUD produtos
+│       ├── CategoriesPage.tsx       # CRUD categorias
+│       ├── OrdersPage.tsx          # Lista + detalhe pedidos
+│       ├── CustomersPage.tsx       # Lista clientes
+│       ├── CouponsPage.tsx         # CRUD cupons
+│       ├── AppearancePage.tsx      # Tema + banner + logo
+│       └── SettingsPage.tsx        # Configurações da loja
+
+================================================================
+NOTAS
+================================================================
+
+- Esta é uma simulação completa com persistência local (localStorage)
+- Não precisa de backend nem Supabase para funcionar
+- Para produção real, substituir src/lib/supabase.ts pelo cliente
+  Supabase real e aplicar a migration SQL (já existe em
+  supabase/migrations/20260720080943_create_multi_tenant_schema.sql)
+- A migration SQL cria as mesmas tabelas com RLS (Row Level Security)
+  para isolamento real entre lojistas
+- O esquema JSON e o esquema SQL são equivalentes em estrutura

@@ -1,0 +1,51 @@
+import { X, Heart, Plus } from 'lucide-react';
+import { useWishlist } from '../../lib/wishlist';
+import { resolveMediaUrl } from '../../lib/api';
+import { formatCurrency, placeholderImage } from '../../lib/format';
+import { EmptyState } from '../ui/Feedback';
+import { Button } from '../ui/Button';
+import type { Product } from '../../lib/types';
+
+function thumb(p: Product) {
+  return resolveMediaUrl(p.images?.[0]?.url ?? p.image_url) || placeholderImage(p.name);
+}
+
+export function WishlistDrawer({ currency, accent, onAdd }: { currency?: string; accent: string; onAdd: (p: Product) => void }) {
+  const { wishlist, wishlistOpen, setWishlistOpen, toggleWishlist } = useWishlist();
+  if (!wishlistOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-slate-900/40" onClick={() => setWishlistOpen(false)} />
+      <div className="relative h-full w-full max-w-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <h2 className="text-lg font-bold text-slate-900">Favoritos</h2>
+          <button onClick={() => setWishlistOpen(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"><X size={20} /></button>
+        </div>
+        <div className="overflow-y-auto p-5" style={{ height: 'calc(100% - 64px)' }}>
+          {wishlist.length === 0 ? (
+            <EmptyState icon={<Heart size={28} />} title="Sem favoritos" description="Guarda produtos que gostares para veres depois." />
+          ) : (
+            <div className="space-y-3">
+              {wishlist.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+                  <img src={thumb(p)} alt={p.name} className="h-14 w-14 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-slate-900">{p.name}</div>
+                    <div className="text-xs text-slate-500">{formatCurrency(Number(p.price), currency)}</div>
+                  </div>
+                  <button onClick={() => toggleWishlist(p)} className="rounded-lg p-2 text-red-400 hover:bg-red-50" title="Remover">
+                    <Heart size={16} fill="currentColor" />
+                  </button>
+                  <Button size="sm" onClick={() => onAdd(p)} style={{ backgroundColor: accent, borderColor: accent }}>
+                    <Plus size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
