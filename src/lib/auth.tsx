@@ -11,10 +11,16 @@ type AuthContextValue = {
   user: AuthUser | null;
   store: Store | null;
   loading: boolean;
+  /**
+   * @deprecated O registo passou a exigir pagamento. Usa api.signup.start()
+   * + EmisPaymentModal + adoptSession(). Mantido só para não partir imports antigos.
+   */
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshStore: () => Promise<void>;
+  /** Adopta uma sessão já emitida pelo backend (usado após o pagamento EMIS) */
+  adoptSession: (user: AuthUser, token: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -32,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       freshStore = null;
     }
-    console.log('[auth] perfil sincronizado com a BD:', { user: freshUser, store: freshStore }); // debug
     setUser(freshUser);
     setStore(freshStore);
     setCachedSession({ user: freshUser, store: freshStore });
@@ -67,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2) Confirma/atualiza em segundo plano com a base de dados real
     syncFromServer()
       .catch(() => {
-        // Token inválido/expirado ou utilizador apagado — limpa tudo
         clearToken();
         clearCachedSession();
         setUser(null);
@@ -76,17 +80,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  /**
+   * Entra com um token já emitido pelo backend.
+   * É o que corre a seguir a /signup/complete, quando a EMIS confirmou o pagamento.
+   */
+  const adoptSession = async (newUser: AuthUser, token: string) => {
+    setToken(token);
+    setUser(newUser);
+    let s: Store | null = null;
     try {
-      const { user, token } = await api.auth.signup(email, password);
-      setToken(token);
-      setUser(user);
-      setCachedSession({ user, store: null });
-      return { error: null };
-    } catch (err: any) {
-      return { error: err.message || 'Erro ao criar conta' };
+      s = await api.stores.getMine();
+    } catch {
+      s = null;
     }
+    setStore(s);
+    setCachedSession({ user: newUser, store: s });
   };
+
+  // Mantido apenas por compatibilidade — já não há registo sem pagamento.
+  const signUp = async () => ({
+    error: 'O registo exige pagamento. Usa o formulário de criação de loja.',
+  });
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -115,7 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, store, loading, signUp, signIn, signOut, refreshStore }}>
+    <AuthContext.Provider
+      value={{ user, store, loading, signUp, signIn, signOut, refreshStore, adoptSession }}
+    >
       {children}
     </AuthContext.Provider>
   );

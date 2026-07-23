@@ -16,8 +16,10 @@ const customersRoutes = require('./routes/customers.routes');
 const uploadsRoutes = require('./routes/uploads.routes');
 const storefrontRoutes = require('./routes/storefront.routes');
 const detalhesProdutosRoutes = require('./routes/detalhes_produtos.routes');
-
-
+const paymentsRoutes = require('./routes/payments.routes');
+const { getSubscriptionStatus } = require('./controllers/stores.controller');
+const { requireAuth } = require('./middleware/auth.middleware');
+const signupRoutes = require('./routes/signup.routes');
 
 const app = express();
 app.use(cors());
@@ -38,8 +40,9 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/customers', customersRoutes);
 app.use('/api/storefront', storefrontRoutes);
 app.use('/api/detalhes-produtos', detalhesProdutosRoutes);
-
-
+app.use('/api/payments', paymentsRoutes);
+app.get('/api/subscription/status', requireAuth, getSubscriptionStatus);
+app.use('/api/signup', signupRoutes);
 
 
 const PORT = process.env.PORT || 4000;

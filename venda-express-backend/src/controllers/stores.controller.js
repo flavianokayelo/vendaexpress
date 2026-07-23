@@ -1,5 +1,7 @@
+// venda-express-backend/src/controllers/stores.controller.js
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
+const { evaluateSubscription, TRIAL_DAYS } = require('../middleware/subscription.middleware');
 
 function parseStore(row) {
   if (!row) return null;
@@ -11,7 +13,7 @@ function parseStore(row) {
       banner_urls = [];
     }
   }
-  return { ...row, banner_urls };
+  return { ...row, banner_urls, subscription: evaluateSubscription(row) };
 }
 
 async function createStore(req, res) {
@@ -19,6 +21,15 @@ async function createStore(req, res) {
     const { name, slug, plan_id } = req.body;
     if (!name || !slug) {
       return res.status(400).json({ error: 'Nome e endereço da loja são obrigatórios' });
+    }
+
+    // REGRA NOVA: escolher plano é obrigatório
+    if (!plan_id) {
+      return res.status(400).json({ error: 'Tens de escolher um plano', code: 'PLAN_REQUIRED' });
+    }
+    const [planRows] = await pool.query('SELECT id FROM plans WHERE id = ?', [plan_id]);
+    if (planRows.length === 0) {
+      return res.status(400).json({ error: 'Plano inválido', code: 'PLAN_INVALID' });
     }
 
     const [existingStore] = await pool.query('SELECT id FROM stores WHERE owner_id = ?', [req.userId]);
@@ -33,9 +44,9 @@ async function createStore(req, res) {
 
     const id = uuidv4();
     await pool.query(
-      `INSERT INTO stores (id, owner_id, plan_id, name, slug, status, banner_urls)
-       VALUES (?, ?, ?, ?, ?, 'trial', '[]')`,
-      [id, req.userId, plan_id || null, name, slug]
+      `INSERT INTO stores (id, owner_id, plan_id, name, slug, status, banner_urls, trial_ends_at)
+       VALUES (?, ?, ?, ?, ?, 'trial', '[]', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+      [id, req.userId, plan_id, name, slug, TRIAL_DAYS]
     );
 
     const [rows] = await pool.query('SELECT * FROM stores WHERE id = ?', [id]);
@@ -50,6 +61,41 @@ async function getMyStore(req, res) {
   try {
     const [rows] = await pool.query('SELECT * FROM stores WHERE owner_id = ?', [req.userId]);
     return res.json(parseStore(rows[0]) || null);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro no servidor' });
+  }
+}
+
+/**
+ * GET /api/subscription/status
+ * Usado pelo frontend para mostrar o contador "faltam X dias" e decidir
+ * se abre o modal EMIS. Nunca devolve 402 — é sempre informativo.
+ */
+async function getSubscriptionStatus(req, res) {
+  try {
+    const [rows] = await pool.query('SELECT * FROM stores WHERE owner_id = ?', [req.userId]);
+    if (rows.length === 0) {
+      return res.json({ active: false, reason: 'no_store', expires_at: null, days_left: 0, plan: null });
+    }
+    const store = rows[0];
+    const sub = evaluateSubscription(store);
+
+    let plan = null;
+    if (store.plan_id) {
+      const [planRows] = await pool.query('SELECT * FROM plans WHERE id = ?', [store.plan_id]);
+      if (planRows.length > 0) {
+        plan = {
+          ...planRows[0],
+          features:
+            typeof planRows[0].features === 'string'
+              ? JSON.parse(planRows[0].features)
+              : planRows[0].features,
+        };
+      }
+    }
+
+    return res.json({ ...sub, plan, store_status: store.status });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro no servidor' });
@@ -133,4 +179,11 @@ async function updateMyStore(req, res) {
   }
 }
 
-module.exports = { createStore, getMyStore, getMyStoreStats, updateMyStore };
+module.exports = {
+  createStore,
+  getMyStore,
+  getMyStoreStats,
+  updateMyStore,
+  getSubscriptionStatus,
+  parseStore,
+};

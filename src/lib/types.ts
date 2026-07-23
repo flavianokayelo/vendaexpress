@@ -2,9 +2,21 @@ export type Plan = {
   id: string;
   name: string;
   price: number;
+  duration_days: number;
   product_limit: number | null;
   features: string[];
   sort_order: number;
+};
+
+export type SubscriptionReason = 'plan' | 'trial' | 'trial_expired' | 'plan_expired' | 'no_store';
+
+export type SubscriptionStatus = {
+  active: boolean;
+  reason: SubscriptionReason;
+  expires_at: string | null;
+  days_left: number;
+  plan?: Plan | null;
+  store_status?: string;
 };
 
 export type Store = {
@@ -21,7 +33,34 @@ export type Store = {
   whatsapp: string | null;
   currency: string;
   created_at: string;
-  banner_urls?: string[] | null;   // <-- ADICIONAR ESTA LINHA
+  banner_urls?: string[] | null;
+
+  // --- subscrição ---
+  trial_ends_at: string | null;
+  plan_started_at: string | null;
+  plan_expires_at: string | null;
+  subscription?: SubscriptionStatus;
+};
+
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired';
+
+export type Payment = {
+  id: string;
+  store_id: string;
+  plan_id: string | null;
+  plan_name?: string | null;
+  reference: string;
+  amount: number;
+  currency: string;
+  duration_days: number;
+  method: 'emis' | 'transferencia' | 'manual';
+  status: PaymentStatus;
+  emis_token: string | null;
+  emis_transaction_id: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  paid_at: string | null;
+  created_at: string;
 };
 
 export type Category = {

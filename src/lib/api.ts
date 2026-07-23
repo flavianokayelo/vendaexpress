@@ -20,6 +20,29 @@ export function resolveMediaUrl(path: string | null | undefined): string | null 
   return `${BACKEND_ORIGIN}${path}`;
 }
 
+/**
+ * Erro da API que preserva o status HTTP e o código do backend.
+ * Serve para o frontend distinguir, por exemplo, um 402 SUBSCRIPTION_REQUIRED
+ * (abrir modal EMIS) de um 401 (mandar para o login).
+ */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  payload: any;
+
+  constructor(message: string, status: number, code?: string, payload?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.payload = payload;
+  }
+
+  get isSubscriptionRequired() {
+    return this.status === 402 || this.code === 'SUBSCRIPTION_REQUIRED';
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -32,7 +55,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || 'Erro na comunicação com o servidor');
+    throw new ApiError(
+      data.error || 'Erro na comunicação com o servidor',
+      res.status,
+      data.code,
+      data
+    );
   }
   return data as T;
 }
@@ -50,7 +78,7 @@ export async function uploadCategoryIcon(file: File): Promise<{ url: string }> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao enviar imagem');
+    throw new ApiError(data.error || 'Erro ao enviar imagem', res.status, data.code, data);
   }
   return data;
 }
@@ -69,7 +97,7 @@ export async function uploadProductImages(files: File[]): Promise<{ photos: Uplo
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao enviar imagens');
+    throw new ApiError(data.error || 'Erro ao enviar imagens', res.status, data.code, data);
   }
   return data;
 }
@@ -90,7 +118,7 @@ export async function uploadProductVideo(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao enviar vídeo');
+    throw new ApiError(data.error || 'Erro ao enviar vídeo', res.status, data.code, data);
   }
   return data;
 }
@@ -107,7 +135,7 @@ export async function uploadStoreLogo(file: File): Promise<{ url: string }> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao enviar logótipo');
+    throw new ApiError(data.error || 'Erro ao enviar logótipo', res.status, data.code, data);
   }
   return data;
 }
@@ -124,7 +152,7 @@ export async function uploadStoreBanner(files: File[]): Promise<{ urls: string[]
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao enviar banner');
+    throw new ApiError(data.error || 'Erro ao enviar banner', res.status, data.code, data);
   }
   return data;
 }
@@ -143,7 +171,7 @@ export async function aiAssistImage(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao analisar imagem');
+    throw new ApiError(data.error || 'Erro ao analisar imagem', res.status, data.code, data);
   }
   return data;
 }
@@ -165,16 +193,106 @@ export const api = {
   plans: {
     list: () => request<any[]>('/plans'),
   },
+  // Registo pago: a conta só nasce depois da EMIS confirmar.
+  signup: {
+    start: (payload: {
+      email: string;
+      password: string;
+      store_name: string;
+      slug: string;
+      plan_id: string;
+    }) =>
+      request<{
+        reference: string;
+        payment_id: string;
+        gpo_token: string | null;
+        frame_url: string | null;
+        amount: number;
+        plan_name: string;
+        mocked: boolean;
+        expires_in_minutes: number;
+      }>('/signup/start', { method: 'POST', body: JSON.stringify(payload) }),
+    status: (reference: string) =>
+      request<{ status: 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired'; ready: boolean }>(
+        `/signup/status?reference=${encodeURIComponent(reference)}`
+      ),
+    complete: (reference: string) =>
+      request<{ user: { id: string; email: string }; token: string }>('/signup/complete', {
+        method: 'POST',
+        body: JSON.stringify({ reference }),
+      }),
+    // Só funciona com EMIS_ALLOW_MANUAL=true no backend (a EMIS não chama localhost)
+    confirmManual: (reference: string) =>
+      request<{ ok: boolean; already: boolean }>('/signup/confirm-manual', {
+        method: 'POST',
+        body: JSON.stringify({ reference }),
+      }),
+    /** Fecha a tentativa (modal fechado ou pagamento recusado) e devolve a elegibilidade */
+    abandon: (reference: string, reason?: string) =>
+      request<{
+        ok: boolean;
+        status: string;
+        failed_attempts: number;
+        needed: number;
+        trial_days: number;
+        eligible: boolean;
+        already_registered: boolean;
+      }>('/signup/abandon', { method: 'POST', body: JSON.stringify({ reference, reason }) }),
+    trialEligibility: (email: string) =>
+      request<{
+        failed_attempts: number;
+        needed: number;
+        trial_days: number;
+        eligible: boolean;
+        already_registered: boolean;
+      }>(`/signup/trial-eligibility?email=${encodeURIComponent(email)}`),
+    /** Cria a conta em modo de teste (7 dias), só se elegível */
+    startTrial: (payload: {
+      email: string;
+      password: string;
+      store_name: string;
+      slug: string;
+      plan_id: string;
+    }) =>
+      request<{ user: { id: string; email: string }; token: string; trial_days: number }>(
+        '/signup/trial',
+        { method: 'POST', body: JSON.stringify(payload) }
+      ),
+  },
   stores: {
     getMine: () => request<any>('/stores/mine'),
     getStats: () =>
       request<{ products: number; orders: number; customers: number; revenue: number; recentOrders: any[] }>(
         '/stores/mine/stats'
       ),
-    create: (payload: { name: string; slug: string; plan_id: string | null }) =>
+    create: (payload: { name: string; slug: string; plan_id: string }) =>
       request<any>('/stores', { method: 'POST', body: JSON.stringify(payload) }),
     update: (payload: { theme_primary: string; description: string | null; logo_url: string | null; banner_urls: string[] }) =>
       request<any>('/stores/mine', { method: 'PUT', body: JSON.stringify(payload) }),
+  },
+  subscription: {
+    status: () =>
+      request<{
+        active: boolean;
+        reason: 'plan' | 'trial' | 'trial_expired' | 'plan_expired' | 'no_store';
+        expires_at: string | null;
+        days_left: number;
+        plan: any | null;
+        store_status?: string;
+      }>('/subscription/status'),
+  },
+  payments: {
+    start: (planId: string) =>
+      request<{
+        payment: any;
+        emis: { token: string | null; frame_url: string | null; mocked: boolean; error?: string };
+      }>('/payments/start', { method: 'POST', body: JSON.stringify({ plan_id: planId }) }),
+    status: (paymentId: string) =>
+      request<{ payment: any; store: any }>(`/payments/${paymentId}/status`),
+    listMine: () => request<any[]>('/payments/mine'),
+    // Só funciona com EMIS_ALLOW_MANUAL=true no .env do backend (para testes locais)
+    confirmManual: (paymentId: string) =>
+      request<{ payment: any }>(`/payments/${paymentId}/confirm-manual`, { method: 'POST' }),
   },
   admin: {
     listStores: () => request<any[]>('/admin/stores'),
