@@ -9,6 +9,7 @@ import { CustomersPage } from './CustomersPage';
 import { CouponsPage } from './CouponsPage';
 import { AppearancePage } from './AppearancePage';
 import { SettingsPage } from './SettingsPage';
+import { TrialBanner } from '../../components/TrialBanner';
 import { PageLoader } from '../../components/ui/Feedback';
 import { Button } from '../../components/ui/Button';
 import { Store } from 'lucide-react';
@@ -39,6 +40,10 @@ export function DashboardPage({ navigate }: { navigate: (to: string) => void }) 
 
   return (
     <DashboardShell page={page} onNavigate={setPage}>
+      {/* Aviso de teste/expiração — aparece em TODAS as páginas do painel
+          e não tem botão de fechar. Só desaparece quando o plano for pago. */}
+      <TrialBanner />
+
       {page === 'overview' && <OverviewPage navigate={navigate} onGoToTab={setPage} />}
       {page === 'products' && <ProductsPage />}
       {page === 'categories' && <CategoriesPage />}
