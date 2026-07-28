@@ -1,0 +1,31 @@
+{
+  "id": "minimal",
+  "name": "minimal",
+  "label": "Minimal",
+  "description": "Tema minimalista com foco no produto para lojas de design e arte",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com",
+    "email": "dev@vendaexpress.com"
+  },
+  "version": "1.0.0",
+  "minimumStorefrontVersion": "1.0.0",
+  "tags": ["minimal", "clean", "modern", "design"],
+  "supportsDarkMode": true,
+  "supportsRTL": false,
+  "premium": false,
+  "preview": "/previews/minimal.png",
+  "compatibility": {
+    "node": ">=18.0.0",
+    "browsers": ["> 0.5%", "last 2 versions", "not dead"]
+  },
+  "capabilities": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "compareProducts": false,
+    "liveSearch": true,
+    "infiniteScroll": false
+  }
+}

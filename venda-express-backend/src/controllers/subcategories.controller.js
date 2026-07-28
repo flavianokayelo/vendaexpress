@@ -1,10 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
-
-async function getOwnedStoreId(userId) {
-  const [rows] = await pool.query('SELECT id FROM stores WHERE owner_id = ?', [userId]);
-  return rows[0]?.id ?? null;
-}
+const storeService = require('../services/store.service');
 
 async function categoryBelongsToStore(categoryId, storeId) {
   const [rows] = await pool.query(
@@ -16,7 +12,7 @@ async function categoryBelongsToStore(categoryId, storeId) {
 
 async function listSubcategories(req, res) {
   try {
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const { category_id } = req.query;
@@ -43,7 +39,7 @@ async function createSubcategory(req, res) {
       return res.status(400).json({ error: 'Nome e categoria são obrigatórios' });
     }
 
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const belongs = await categoryBelongsToStore(category_id, storeId);
@@ -71,7 +67,7 @@ async function updateSubcategory(req, res) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const [result] = await pool.query(
@@ -93,7 +89,7 @@ async function updateSubcategory(req, res) {
 async function deleteSubcategory(req, res) {
   try {
     const { id } = req.params;
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const [result] = await pool.query(

@@ -1,7 +1,7 @@
 import { type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes, type ReactNode } from 'react';
 
 const baseInput =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors';
+  'w-full rounded-[var(--sf-radius-md,0.5rem)] border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--sf-primary,#2563eb)] focus:outline-none focus:ring-1 focus:ring-[var(--sf-primary,#2563eb)] transition-colors';
 
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`${baseInput} ${className}`} {...props} />;

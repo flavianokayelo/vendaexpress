@@ -1,7 +1,7 @@
-// venda-express-backend/src/controllers/stores.controller.js
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
 const { evaluateSubscription, TRIAL_DAYS } = require('../middleware/subscription.middleware');
+const { DEFAULT_THEME_CONFIG } = require('../constants');
 
 function parseStore(row) {
   if (!row) return null;
@@ -13,7 +13,15 @@ function parseStore(row) {
       banner_urls = [];
     }
   }
-  return { ...row, banner_urls, subscription: evaluateSubscription(row) };
+  let theme_config = null;
+  if (row.theme_config) {
+    try {
+      theme_config = typeof row.theme_config === 'string' ? JSON.parse(row.theme_config) : row.theme_config;
+    } catch {
+      theme_config = null;
+    }
+  }
+  return { ...row, banner_urls, theme_config, subscription: evaluateSubscription(row) };
 }
 
 async function createStore(req, res) {
@@ -23,7 +31,6 @@ async function createStore(req, res) {
       return res.status(400).json({ error: 'Nome e endereço da loja são obrigatórios' });
     }
 
-    // REGRA NOVA: escolher plano é obrigatório
     if (!plan_id) {
       return res.status(400).json({ error: 'Tens de escolher um plano', code: 'PLAN_REQUIRED' });
     }
@@ -44,9 +51,9 @@ async function createStore(req, res) {
 
     const id = uuidv4();
     await pool.query(
-      `INSERT INTO stores (id, owner_id, plan_id, name, slug, status, banner_urls, trial_ends_at)
-       VALUES (?, ?, ?, ?, ?, 'trial', '[]', DATE_ADD(NOW(), INTERVAL ? DAY))`,
-      [id, req.userId, plan_id, name, slug, TRIAL_DAYS]
+      `INSERT INTO stores (id, owner_id, plan_id, name, slug, status, banner_urls, theme_config, theme_id, trial_ends_at)
+       VALUES (?, ?, ?, ?, ?, 'trial', '[]', ?, 'standard', DATE_ADD(NOW(), INTERVAL ? DAY))`,
+      [id, req.userId, plan_id, name, slug, DEFAULT_THEME_CONFIG, TRIAL_DAYS]
     );
 
     const [rows] = await pool.query('SELECT * FROM stores WHERE id = ?', [id]);
@@ -67,11 +74,6 @@ async function getMyStore(req, res) {
   }
 }
 
-/**
- * GET /api/subscription/status
- * Usado pelo frontend para mostrar o contador "faltam X dias" e decidir
- * se abre o modal EMIS. Nunca devolve 402 — é sempre informativo.
- */
 async function getSubscriptionStatus(req, res) {
   try {
     const [rows] = await pool.query('SELECT * FROM stores WHERE owner_id = ?', [req.userId]);
@@ -146,30 +148,39 @@ async function getMyStoreStats(req, res) {
 
 async function updateMyStore(req, res) {
   try {
-    const { theme_primary, description, logo_url, banner_urls } = req.body;
+    const { theme_primary, theme_id, description, logo_url, banner_urls, whatsapp } = req.body;
 
     const [storeRows] = await pool.query('SELECT id FROM stores WHERE owner_id = ?', [req.userId]);
     if (storeRows.length === 0) return res.status(404).json({ error: 'Loja não encontrada' });
     const storeId = storeRows[0].id;
 
-    // banner_urls é uma lista de até 5 URLs; guardamos como JSON (string) na coluna banner_urls.
-    // banner_url (singular, coluna antiga) fica sincronizada com a primeira imagem,
-    // para não quebrar nada que ainda leia esse campo isoladamente.
+    const validThemeIds = ['standard', 'luxury', 'minimal', 'fashion', 'electronics'];
+    const resolvedThemeId = theme_id && validThemeIds.includes(theme_id) ? theme_id : undefined;
+
     const bannerList = Array.isArray(banner_urls) ? banner_urls.slice(0, 5) : [];
 
-    await pool.query(
-      `UPDATE stores
-       SET theme_primary = ?, description = ?, logo_url = ?, banner_url = ?, banner_urls = ?
-       WHERE id = ?`,
-      [
-        theme_primary || null,
-        description || null,
-        logo_url || null,
-        bannerList[0] || null,
-        JSON.stringify(bannerList),
-        storeId,
-      ]
-    );
+    const fields = [];
+    const values = [];
+
+    if (theme_primary !== undefined) { fields.push('theme_primary = ?'); values.push(theme_primary || null); }
+    if (resolvedThemeId !== undefined) { fields.push('theme_id = ?'); values.push(resolvedThemeId); }
+    if (description !== undefined) { fields.push('description = ?'); values.push(description || null); }
+    if (logo_url !== undefined) { fields.push('logo_url = ?'); values.push(logo_url || null); }
+    if (banner_urls !== undefined) {
+      fields.push('banner_url = ?', 'banner_urls = ?');
+      values.push(bannerList[0] || null, JSON.stringify(bannerList));
+    }
+    if (whatsapp !== undefined) { fields.push('whatsapp = ?'); values.push(whatsapp || null); }
+
+    if (fields.length === 0) {
+      const [rows] = await pool.query('SELECT * FROM stores WHERE id = ?', [storeId]);
+      return res.json(parseStore(rows[0]));
+    }
+
+    fields.push('updated_at = NOW()');
+    values.push(storeId);
+
+    await pool.query(`UPDATE stores SET ${fields.join(', ')} WHERE id = ?`, values);
 
     const [rows] = await pool.query('SELECT * FROM stores WHERE id = ?', [storeId]);
     return res.json(parseStore(rows[0]));

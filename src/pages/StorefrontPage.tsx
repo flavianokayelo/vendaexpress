@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Store as StoreIcon, Tag, Flame, Sparkles, Video,
-  ShoppingCart, Check, Minus, Plus, Trash2, X,
-} from 'lucide-react';
+import { Store as StoreIcon, Tag, Flame, Sparkles, Video, Check } from 'lucide-react';
 import { api, resolveMediaUrl } from '../lib/api';
 import type { Store, Product, Category } from '../lib/types';
 import { formatCurrency, placeholderImage } from '../lib/format';
@@ -10,16 +7,21 @@ import { Button } from '../components/ui/Button';
 import { Input, Field, Textarea } from '../components/ui/Field';
 import { EmptyState, PageLoader } from '../components/ui/Feedback';
 import { Modal } from '../components/ui/Modal';
-import { ImageCard } from '../components/product/ImageCard';
 import { VideoCard } from '../components/product/VideoCard';
 import { CartProvider, useCart } from '../lib/cart';
 import { WishlistProvider, useWishlist } from '../lib/wishlist';
 import { WishlistDrawer } from '../components/storefront/WishlistDrawer';
-import { StorefrontHeader } from '../components/storefront/StorefrontHeader';
-import { HeroCarousel, type HeroSlide } from '../components/storefront/HeroCarousel';
-import { ProductSection } from '../components/storefront/ProductSection';
-
-const PAGE_SIZE = 12;
+import { StorefrontThemeProvider } from '../storefrontTheme/ThemeProvider';
+import { mergeTheme } from '../storefrontTheme/mergeTheme';
+import { AnnouncementBar } from '../components/theme/AnnouncementBar';
+import { Header } from '../components/theme/Header';
+import { Hero, type HeroSlide } from '../components/theme/Hero';
+import { Section } from '../components/theme/Section';
+import { ProductGrid } from '../components/theme/ProductGrid';
+import { CategoryGrid } from '../components/theme/CategoryGrid';
+import { TrustStrip } from '../components/theme/TrustStrip';
+import { CartDrawer } from '../components/theme/CartDrawer';
+import { Footer } from '../components/theme/Footer';
 
 function productThumb(p: Product) {
   return resolveMediaUrl(p.images?.[0]?.url ?? p.image_url) || placeholderImage(p.name);
@@ -36,7 +38,7 @@ export function StorefrontPage({ slug, navigate }: { slug: string; navigate: (to
 }
 
 function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: string) => void }) {
-  const { cart, cartOpen, setCartOpen, addToCart, updateQty, removeFromCart, clearCart } = useCart();
+  const { cart, setCartOpen, addToCart, clearCart } = useCart();
   const { isWishlisted, toggleWishlist, wishlist, setWishlistOpen } = useWishlist();
 
   const [store, setStore] = useState<Store | null>(null);
@@ -162,6 +164,8 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
     })();
   }, [slug]);
 
+  const categoryNames = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+
   const promoProducts = useMemo(
     () => products.filter((p) => p.compare_at_price && Number(p.compare_at_price) > Number(p.price)).slice(0, 8),
     [products]
@@ -174,25 +178,6 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
     const searchOk = !search || p.name.toLowerCase().includes(search.toLowerCase());
     return catOk && searchOk;
   }), [products, selectedCat, search]);
-
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [selectedCat, search]);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((v) => Math.min(v + PAGE_SIZE, filtered.length));
-        }
-      },
-      { rootMargin: '400px' }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [filtered.length]);
-  const visibleProducts = filtered.slice(0, visibleCount);
 
   const slides: HeroSlide[] = useMemo(() => {
     const list: HeroSlide[] = [];
@@ -240,7 +225,8 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
     );
   }
 
-  const accent = store.theme_primary || '#0f766e';
+  const theme = mergeTheme(store);
+  const accent = theme.colors.primary;
 
   if (orderSuccess) {
     return (
@@ -258,84 +244,72 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <StorefrontHeader
+    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-slate-50">
+      <AnnouncementBar theme={theme} />
+
+      <Header
         store={store}
-        accent={accent}
         search={search}
         onSearchChange={setSearch}
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
         onCartClick={() => setCartOpen(true)}
         wishlistCount={wishlist.length}
         onWishlistClick={() => setWishlistOpen(true)}
-        onBack={() => navigate('/')}
+        categories={categories}
+        selectedCategoryId={selectedCat}
+        onSelectCategory={setSelectedCat}
       />
 
-      <HeroCarousel slides={slides} accent={accent} onCtaClick={scrollToCatalog} />
+      <Hero slides={slides} onCtaClick={scrollToCatalog} />
 
-      <ProductSection
-        title="Em promoção"
-        icon={<Flame size={20} className="text-red-500" />}
-        products={promoProducts}
-        currency={store.currency}
-        accent={accent}
-        onAdd={addToCart}
-        onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-        isWishlisted={isWishlisted}
-        onToggleWishlist={toggleWishlist}
-      />
+      <TrustStrip />
 
-      <ProductSection
-        title="Novidades"
-        icon={<Sparkles size={20} style={{ color: accent }} />}
-        products={featuredProducts}
-        currency={store.currency}
-        accent={accent}
-        onAdd={addToCart}
-        onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-        isWishlisted={isWishlisted}
-        onToggleWishlist={toggleWishlist}
-      />
+      {categories.length > 0 && (
+        <Section title="Comprar por categoria" icon={<Tag size={20} className="text-[var(--sf-primary)]" />}>
+          <CategoryGrid categories={categories} onSelect={(id) => { setSelectedCat(id); scrollToCatalog(); }} />
+        </Section>
+      )}
+
+      <Section title="Em promoção" icon={<Flame size={20} className="text-red-500" />}>
+        <ProductGrid
+          products={promoProducts}
+          currency={store.currency}
+          categoryNames={categoryNames}
+          layout="rail"
+          onAdd={addToCart}
+          onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+          isWishlisted={isWishlisted}
+          onToggleWishlist={toggleWishlist}
+        />
+      </Section>
+
+      <Section title="Novidades" icon={<Sparkles size={20} className="text-[var(--sf-primary)]" />}>
+        <ProductGrid
+          products={featuredProducts}
+          currency={store.currency}
+          categoryNames={categoryNames}
+          layout="rail"
+          onAdd={addToCart}
+          onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+          isWishlisted={isWishlisted}
+          onToggleWishlist={toggleWishlist}
+        />
+      </Section>
 
       {videoProducts.length > 0 && (
-        <div className="bg-slate-900 py-6">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="mb-4 flex items-center gap-2">
-              <Video size={20} className="text-white" />
-              <h2 className="text-lg font-bold text-white">Vídeos</h2>
-            </div>
-            <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
-              {videoProducts.map((p) => (
-                <VideoCard key={p.id} p={p} currency={store.currency} accent={accent} onAdd={addToCart} />
-              ))}
-            </div>
+        <Section title="Vídeos" icon={<Video size={20} className="text-white" />} dark>
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+            {videoProducts.map((p) => (
+              <VideoCard key={p.id} p={p} currency={store.currency} accent={accent} onAdd={addToCart} />
+            ))}
           </div>
-        </div>
+        </Section>
       )}
 
       <div ref={catalogRef} className="mx-auto max-w-6xl px-4 pt-8">
         <div className="mb-4 flex items-center gap-2">
           <Tag size={20} className="text-slate-400" />
-          <h2 className="text-lg font-bold text-slate-900">Todos os produtos</h2>
-        </div>
-        <div className="mb-4 flex flex-nowrap gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setSelectedCat('')}
-            className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${!selectedCat ? 'text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-            style={!selectedCat ? { backgroundColor: accent } : {}}
-          >
-            Todos
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCat(c.id)}
-              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${selectedCat === c.id ? 'text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-              style={selectedCat === c.id ? { backgroundColor: accent } : {}}
-            >
-              {c.name}
-            </button>
-          ))}
+          <h2 className="text-lg font-bold text-[var(--sf-ink)]">Todos os produtos</h2>
         </div>
       </div>
 
@@ -343,93 +317,38 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
         {filtered.length === 0 ? (
           <EmptyState icon={<StoreIcon size={28} />} title="Sem produtos" description="Esta loja ainda não tem produtos disponíveis." />
         ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {visibleProducts.map((p) => (
-                <ImageCard
-                  key={p.id}
-                  p={p}
-                  currency={store.currency}
-                  accent={accent}
-                  onAdd={addToCart}
-                  onView={(prod) => navigate(`/s/${slug}/products/${prod.id}`)}
-                  isWishlisted={isWishlisted(p.id)}
-                  onToggleWishlist={toggleWishlist}
-                />
-              ))}
-            </div>
-            {visibleCount < filtered.length && (
-              <div ref={sentinelRef} className="flex justify-center py-8 text-sm text-slate-400">
-                A carregar mais produtos...
-              </div>
-            )}
-          </>
+          <ProductGrid
+            products={filtered}
+            currency={store.currency}
+            categoryNames={categoryNames}
+            layout="grid"
+            paginate
+            onAdd={addToCart}
+            onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+            isWishlisted={isWishlisted}
+            onToggleWishlist={toggleWishlist}
+          />
         )}
       </div>
 
+      <Footer store={store} categories={categories} />
+
       <WishlistDrawer currency={store.currency} accent={accent} onAdd={addToCart} />
 
-      {cartOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setCartOpen(false)} />
-          <div className="relative h-full w-full max-w-md bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Carrinho</h2>
-              <button onClick={() => setCartOpen(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"><X size={20} /></button>
-            </div>
-            <div className="flex flex-col" style={{ height: 'calc(100% - 64px)' }}>
-              <div className="flex-1 overflow-y-auto p-5">
-                {cart.length === 0 ? (
-                  <EmptyState icon={<ShoppingCart size={28} />} title="Carrinho vazio" description="Adiciona produtos para continuar." />
-                ) : (
-                  <div className="space-y-3">
-                    {cart.map((item) => (
-                      <div key={item.product.id} className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
-                        <img src={productThumb(item.product)} alt={item.product.name} className="h-14 w-14 rounded-lg object-cover" />
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate text-sm font-medium text-slate-900">{item.product.name}</div>
-                          <div className="text-xs text-slate-500">{formatCurrency(Number(item.product.price), store.currency)}</div>
-                          <div className="mt-1 flex items-center gap-2">
-                            <button onClick={() => updateQty(item.product.id, -1)} className="rounded p-1 hover:bg-slate-100"><Minus size={14} /></button>
-                            <span className="text-sm font-medium">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.product.id, 1)} className="rounded p-1 hover:bg-slate-100"><Plus size={14} /></button>
-                            <button onClick={() => removeFromCart(item.product.id)} className="ml-auto rounded p-1 text-red-500 hover:bg-red-50"><Trash2 size={14} /></button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {cart.length > 0 && (
-                <div className="border-t border-slate-200 p-5">
-                  <div className="mb-3 flex gap-2">
-                    <Input className="flex-1" placeholder="Cupom" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
-                    <Button variant="outline" onClick={applyCoupon} disabled={couponBusy}>
-                      {couponBusy ? '...' : 'Aplicar'}
-                    </Button>
-                  </div>
-                  {couponError && <p className="mb-2 text-xs text-red-600">{couponError}</p>}
-                  {appliedCoupon && <p className="mb-2 text-xs text-green-600">Cupom {appliedCoupon.code} aplicado: {appliedCoupon.discount_percent}%</p>}
-                  <div className="mb-3 space-y-1 text-sm">
-                    <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{formatCurrency(subtotal, store.currency)}</span></div>
-                    {discount > 0 && <div className="flex justify-between text-green-600"><span>Desconto</span><span>-{formatCurrency(discount, store.currency)}</span></div>}
-                    <div className="flex justify-between text-base font-bold text-slate-900"><span>Total</span><span>{formatCurrency(total, store.currency)}</span></div>
-                  </div>
-                  {whatsappMissing && (
-                    <p className="mb-2 text-xs text-red-600">
-                      Esta loja ainda não tem um número de WhatsApp configurado para receber pedidos. Contacte o lojista diretamente.
-                    </p>
-                  )}
-                  <Button className="w-full" size="lg" style={{ backgroundColor: accent, borderColor: accent }} onClick={openCheckout}>
-                    Finalizar pedido
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <CartDrawer
+        currency={store.currency}
+        subtotal={subtotal}
+        discount={discount}
+        total={total}
+        couponCode={couponCode}
+        onCouponCodeChange={setCouponCode}
+        couponBusy={couponBusy}
+        couponError={couponError}
+        appliedCoupon={appliedCoupon}
+        onApplyCoupon={applyCoupon}
+        whatsappMissing={whatsappMissing}
+        onCheckout={openCheckout}
+      />
 
       <Modal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} title="Finalizar pedido">
         <form onSubmit={placeOrder} className="space-y-4">
@@ -454,6 +373,6 @@ function StorefrontPageInner({ slug, navigate }: { slug: string; navigate: (to: 
           </div>
         </form>
       </Modal>
-    </div>
+    </StorefrontThemeProvider>
   );
 }

@@ -1,0 +1,87 @@
+@layer base {
+  :root {
+    /* Colors */
+    --theme-colors-primary: #6366f1;
+    --theme-colors-primary-foreground: #ffffff;
+    --theme-colors-secondary: #f1f5f9;
+    --theme-colors-secondary-foreground: #1e293b;
+    --theme-colors-accent: #f59e0b;
+    --theme-colors-accent-foreground: #ffffff;
+    --theme-colors-surface: #ffffff;
+    --theme-colors-background: #f8fafc;
+    --theme-colors-muted: #f1f5f9;
+    --theme-colors-muted-foreground: #64748b;
+    --theme-colors-success: #22c55e;
+    --theme-colors-danger: #ef4444;
+    --theme-colors-warning: #f59e0b;
+    --theme-colors-info: #3b82f6;
+    --theme-colors-border: #e2e8f0;
+    --theme-colors-text: #0f172a;
+    --theme-colors-text-secondary: #64748b;
+
+    /* Radius */
+    --theme-radius-none: 0;
+    --theme-radius-sm: 0.25rem;
+    --theme-radius-md: 0.5rem;
+    --theme-radius-lg: 0.75rem;
+    --theme-radius-xl: 1rem;
+    --theme-radius-2xl: 1.5rem;
+    --theme-radius-full: 9999px;
+
+    /* Shadows */
+    --theme-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --theme-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --theme-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --theme-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    --theme-shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+    /* Typography */
+    --theme-typography-font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --theme-typography-font-family-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --theme-typography-font-family-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --theme-typography-heading-1: 2.5rem;
+    --theme-typography-heading-2: 2rem;
+    --theme-typography-heading-3: 1.5rem;
+    --theme-typography-heading-4: 1.125rem;
+    --theme-typography-body: 1rem;
+    --theme-typography-small: 0.875rem;
+    --theme-typography-xs: 0.75rem;
+    --theme-typography-line-height-tight: 1.2;
+    --theme-typography-line-height-normal: 1.5;
+    --theme-typography-line-height-relaxed: 1.75;
+
+    /* Spacing */
+    --theme-spacing-xs: 0.25rem;
+    --theme-spacing-sm: 0.5rem;
+    --theme-spacing-md: 1rem;
+    --theme-spacing-lg: 1.5rem;
+    --theme-spacing-xl: 2rem;
+    --theme-spacing-2xl: 3rem;
+    --theme-spacing-3xl: 4rem;
+    --theme-spacing-section-y: 5rem;
+
+    /* Motion */
+    --theme-motion-duration-fast: 150ms;
+    --theme-motion-duration-normal: 300ms;
+    --theme-motion-duration-slow: 500ms;
+    --theme-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --theme-motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --theme-motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --theme-motion-delay-none: 0ms;
+    --theme-motion-delay-sm: 100ms;
+    --theme-motion-delay-md: 200ms;
+    --theme-motion-transition-base: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --theme-motion-hover-lift: translateY(-2px);
+    --theme-motion-hover-scale: scale(1.02);
+
+    /* Component tokens */
+    --theme-button-border-radius: 0.5rem;
+    --theme-button-font-size: 0.875rem;
+    --theme-button-font-weight: 600;
+    --theme-card-border-radius: 0.75rem;
+    --theme-header-height: 4rem;
+    --theme-hero-min-height: 70vh;
+    --theme-hero-title-font-size: 3.5rem;
+    --theme-section-padding-y: 5rem;
+  }
+}

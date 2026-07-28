@@ -1,0 +1,12 @@
+{
+  "id": "standard",
+  "name": "standard",
+  "label": "Standard",
+  "description": "Tema padrão universal para lojas de e-commerce",
+  "author": { "name": "Venda Express", "url": "https://vendaexpress.com" },
+  "version": "1.0.0",
+  "minimumStorefrontVersion": "1.0.0",
+  "tags": ["universal", "clean", "professional"],
+  "supportsDarkMode": false,
+  "premium": false
+}

@@ -7,6 +7,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth.routes');
 const plansRoutes = require('./routes/plans.routes');
 const storesRoutes = require('./routes/stores.routes');
+const themesRoutes = require('./routes/themes.routes');
 const adminRoutes = require('./routes/admin.routes');
 const categoriesRoutes = require('./routes/categories.routes');
 const subcategoriesRoutes = require('./routes/subcategories.routes');
@@ -18,6 +19,8 @@ const storefrontRoutes = require('./routes/storefront.routes');
 const detalhesProdutosRoutes = require('./routes/detalhes_produtos.routes');
 const paymentsRoutes = require('./routes/payments.routes');
 const signupRoutes = require('./routes/signup.routes');
+const couponsRoutes = require('./routes/coupons.routes');
+const pagesRoutes = require('./routes/pages.routes');
 
 const { getSubscriptionStatus } = require('./controllers/stores.controller');
 const { requireAuth } = require('./middleware/auth.middleware');
@@ -44,6 +47,7 @@ app.use('/api/plans', plansRoutes);        // catálogo de planos (público)
 app.use('/api/payments', paymentsRoutes);  // pagar é a saída do bloqueio
 app.use('/api/stores', storesRoutes);      // /stores/mine tem de responder mesmo suspensa
 app.use('/api/admin', adminRoutes);
+app.use('/api/themes', themesRoutes);
 app.use('/api/storefront', storefrontRoutes); // loja pública
 
 // Ficheiros enviados (imagens de produtos, logótipos) — servidos a toda a gente,
@@ -63,6 +67,8 @@ app.use('/api/categories', requireAuth, requireActiveSubscription, categoriesRou
 app.use('/api/subcategories', requireAuth, requireActiveSubscription, subcategoriesRoutes);
 app.use('/api/uploads', requireAuth, requireActiveSubscription, uploadsRoutes);
 app.use('/api/detalhes-produtos', requireAuth, requireActiveSubscription, detalhesProdutosRoutes);
+app.use('/api/coupons', requireAuth, requireActiveSubscription, couponsRoutes);
+app.use('/api/pages', requireAuth, requireActiveSubscription, pagesRoutes);
 
 // Encomendas e clientes ficam de FORA do bloqueio de propósito: quem já
 // vendeu tem direito a ver a quem deve entregar, mesmo com o plano vencido.

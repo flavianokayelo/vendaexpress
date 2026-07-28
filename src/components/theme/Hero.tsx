@@ -9,15 +9,7 @@ export type HeroSlide = {
   cta?: string;
 };
 
-export function HeroCarousel({
-  slides,
-  accent,
-  onCtaClick,
-}: {
-  slides: HeroSlide[];
-  accent: string;
-  onCtaClick?: () => void;
-}) {
+export function Hero({ slides, onCtaClick }: { slides: HeroSlide[]; onCtaClick?: () => void }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => setIdx(0), [slides.length]);
@@ -31,7 +23,7 @@ export function HeroCarousel({
   if (slides.length === 0) return null;
 
   return (
-    <div className="relative h-56 w-full overflow-hidden bg-slate-800 sm:h-72 md:h-96">
+    <div className="relative h-56 w-full overflow-hidden bg-[var(--sf-ink)] sm:h-72 md:h-96">
       {slides.map((s, i) => (
         <div
           key={i}
@@ -41,16 +33,15 @@ export function HeroCarousel({
           <img src={s.image} alt={s.title || ''} className="h-full w-full object-contain" />
           {(s.title || s.subtitle) && (
             <>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 sm:px-8 sm:pb-10 md:px-12 md:pb-12">
                 <div className="mx-auto max-w-6xl">
                   {s.title && <h2 className="text-xl font-bold text-white sm:text-2xl md:text-4xl">{s.title}</h2>}
                   {s.subtitle && <p className="mt-1.5 max-w-md text-xs text-white/80 sm:text-sm md:text-base">{s.subtitle}</p>}
                   {s.cta && (
                     <Button
-                      className="mt-3 sm:mt-4"
+                      className="mt-3 !rounded-[var(--sf-radius-md)] !bg-[var(--sf-primary)] hover:!bg-[var(--sf-primary-hover)] sm:mt-4"
                       size="sm"
-                      style={{ backgroundColor: accent, borderColor: accent }}
                       onClick={onCtaClick}
                     >
                       {s.cta}
@@ -67,13 +58,13 @@ export function HeroCarousel({
         <>
           <button
             onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}
-            className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-slate-800 hover:bg-white sm:left-3 sm:h-9 sm:w-9"
+            className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[var(--sf-ink)] hover:bg-white sm:left-3 sm:h-9 sm:w-9"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => setIdx((i) => (i + 1) % slides.length)}
-            className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-slate-800 hover:bg-white sm:right-3 sm:h-9 sm:w-9"
+            className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-[var(--sf-ink)] hover:bg-white sm:right-3 sm:h-9 sm:w-9"
           >
             <ChevronRight size={16} />
           </button>
@@ -82,8 +73,7 @@ export function HeroCarousel({
               <button
                 key={i}
                 onClick={() => setIdx(i)}
-                className="h-1.5 rounded-full transition-all"
-                style={{ width: i === idx ? 18 : 6, backgroundColor: i === idx ? accent : 'rgba(255,255,255,0.6)' }}
+                className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-[18px] bg-[var(--sf-primary)]' : 'w-1.5 bg-white/60'}`}
               />
             ))}
           </div>

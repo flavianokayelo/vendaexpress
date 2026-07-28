@@ -1,57 +1,10 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
-
-function parseProduct(row, videoRow, photoRows) {
-  return {
-    ...row,
-    images: (photoRows || []).map((p) => ({ url: p.url, hash: p.hash })),
-    video: videoRow ? { url: videoRow.url, thumbnail_url: videoRow.thumbnail_url || null } : null,
-    active: !!row.active,
-  };
-}
+const mediaService = require('../services/media.service');
 
 async function getStoreIdBySlug(slug) {
   const [rows] = await pool.query('SELECT id FROM stores WHERE slug = ?', [slug]);
   return rows[0]?.id ?? null;
-}
-
-// Busca produtos por uma lista de IDs, já com fotos e vídeo anexados —
-// usado pelo carrinho e pela wishlist para devolver os produtos completos.
-async function getProductsById(storeId, ids) {
-  if (!ids || ids.length === 0) return [];
-  const placeholders = ids.map(() => '?').join(',');
-  const [rows] = await pool.query(
-    `SELECT * FROM products WHERE store_id = ? AND id IN (${placeholders})`,
-    [storeId, ...ids]
-  );
-  if (rows.length === 0) return [];
-
-  const [photoRows] = await pool.query(
-    `SELECT product_id, url, hash FROM product_photos WHERE store_id = ? AND product_id IN (${placeholders})`,
-    [storeId, ...ids]
-  );
-  const photosByProduct = new Map();
-  for (const row of photoRows) {
-    const list = photosByProduct.get(row.product_id) || [];
-    list.push({ url: row.url, hash: row.hash });
-    photosByProduct.set(row.product_id, list);
-  }
-
-  const [videoRows] = await pool.query(
-    `SELECT product_id, url, thumbnail_url FROM product_videos WHERE store_id = ? AND product_id IN (${placeholders})`,
-    [storeId, ...ids]
-  );
-  const videoByProduct = new Map();
-  for (const row of videoRows) {
-    videoByProduct.set(row.product_id, { url: row.url, thumbnail_url: row.thumbnail_url });
-  }
-
-  return rows.map((p) => ({
-    ...p,
-    images: photosByProduct.get(p.id) || [],
-    video: videoByProduct.get(p.id) || null,
-    active: !!p.active,
-  }));
 }
 
 async function getStorefront(req, res) {
@@ -64,7 +17,6 @@ async function getStorefront(req, res) {
     if (storeRows.length === 0) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const store = storeRows[0];
-    // banner_urls é guardado como JSON em LONGTEXT — o mysql2 não faz parse automático
     let banner_urls = [];
     if (store.banner_urls) {
       try {
@@ -73,7 +25,15 @@ async function getStorefront(req, res) {
         banner_urls = [];
       }
     }
-    const parsedStore = { ...store, banner_urls };
+    let theme_config = null;
+    if (store.theme_config) {
+      try {
+        theme_config = typeof store.theme_config === 'string' ? JSON.parse(store.theme_config) : store.theme_config;
+      } catch {
+        theme_config = null;
+      }
+    }
+    const parsedStore = { ...store, banner_urls, theme_config };
 
     const [products] = await pool.query(
       'SELECT * FROM products WHERE store_id = ? AND active = 1 ORDER BY created_at DESC',
@@ -83,30 +43,8 @@ async function getStorefront(req, res) {
       'SELECT * FROM categories WHERE store_id = ? ORDER BY name ASC',
       [store.id]
     );
-    const [photoRows] = await pool.query(
-      'SELECT product_id, url, hash FROM product_photos WHERE store_id = ? ORDER BY sort_order ASC',
-      [store.id]
-    );
-    const photosByProduct = new Map();
-    for (const row of photoRows) {
-      const list = photosByProduct.get(row.product_id) || [];
-      list.push({ url: row.url, hash: row.hash });
-      photosByProduct.set(row.product_id, list);
-    }
-    const [videoRows] = await pool.query(
-      'SELECT product_id, url, thumbnail_url FROM product_videos WHERE store_id = ?',
-      [store.id]
-    );
-    const videoByProduct = new Map();
-    for (const row of videoRows) {
-      videoByProduct.set(row.product_id, { url: row.url, thumbnail_url: row.thumbnail_url });
-    }
-    const productsWithMedia = products.map((p) => ({
-      ...p,
-      images: photosByProduct.get(p.id) || [],
-      video: videoByProduct.get(p.id) || null,
-      active: !!p.active,
-    }));
+
+    const productsWithMedia = await mediaService.attachMedia(store.id, products);
 
     return res.json({ store: parsedStore, categories, products: productsWithMedia });
   } catch (err) {
@@ -132,11 +70,8 @@ async function getStorefrontProduct(req, res) {
     if (productRows.length === 0) return res.status(404).json({ error: 'Produto não encontrado' });
     const productRow = productRows[0];
 
-    const [videoRows] = await pool.query('SELECT * FROM product_videos WHERE product_id = ?', [id]);
-    const [photoRows] = await pool.query(
-      'SELECT * FROM product_photos WHERE product_id = ? ORDER BY sort_order ASC',
-      [id]
-    );
+    const [withMedia] = await mediaService.attachMedia(store.id, [productRow]);
+    const product = withMedia;
 
     let category = null;
     if (productRow.category_id) {
@@ -144,7 +79,6 @@ async function getStorefrontProduct(req, res) {
       category = categoryRows[0] || null;
     }
 
-    // Produtos relacionados: mesma categoria, ativos, excluindo o próprio.
     let related = [];
     if (productRow.category_id) {
       const [relatedRows] = await pool.query(
@@ -153,23 +87,8 @@ async function getStorefrontProduct(req, res) {
          ORDER BY created_at DESC LIMIT 8`,
         [store.id, productRow.category_id, id]
       );
-      const relatedIds = relatedRows.map((r) => r.id);
-      const relatedPhotosByProduct = new Map();
-      if (relatedIds.length > 0) {
-        const placeholders = relatedIds.map(() => '?').join(',');
-        const [relatedPhotoRows] = await pool.query(
-          `SELECT * FROM product_photos WHERE product_id IN (${placeholders}) ORDER BY product_id, sort_order ASC`,
-          relatedIds
-        );
-        for (const ph of relatedPhotoRows) {
-          if (!relatedPhotosByProduct.has(ph.product_id)) relatedPhotosByProduct.set(ph.product_id, []);
-          relatedPhotosByProduct.get(ph.product_id).push(ph);
-        }
-      }
-      related = relatedRows.map((r) => parseProduct(r, null, relatedPhotosByProduct.get(r.id)));
+      related = await mediaService.attachMedia(store.id, relatedRows);
     }
-
-    const product = parseProduct(productRow, videoRows[0], photoRows);
 
     return res.json({ store, product, category, related });
   } catch (err) {
@@ -244,34 +163,43 @@ async function placeOrder(req, res) {
     }
     const total = Math.round((subtotal - (subtotal * discountPercent) / 100) * 100) / 100;
 
-    const customerId = uuidv4();
-    await pool.query(
-      'INSERT INTO customers (id, store_id, name, phone) VALUES (?, ?, ?, ?)',
-      [customerId, storeId, name.trim(), phone || null]
-    );
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    const orderId = uuidv4();
-    await pool.query(
-      `INSERT INTO orders (id, store_id, customer_id, customer_name, customer_phone, customer_address, total, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [orderId, storeId, customerId, name.trim(), phone || null, address || null, total]
-    );
-
-    for (const item of orderItemsData) {
-      await pool.query(
-        'INSERT INTO order_items (id, order_id, product_id, name, price, quantity) VALUES (?, ?, ?, ?, ?, ?)',
-        [uuidv4(), orderId, item.product_id, item.name, item.price, item.quantity]
+      const customerId = uuidv4();
+      await conn.query(
+        'INSERT INTO customers (id, store_id, name, phone) VALUES (?, ?, ?, ?)',
+        [customerId, storeId, name.trim(), phone || null]
       );
-    }
 
-    return res.status(201).json({ order_id: orderId, total });
+      const orderId = uuidv4();
+      await conn.query(
+        `INSERT INTO orders (id, store_id, customer_id, customer_name, customer_phone, customer_address, total, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [orderId, storeId, customerId, name.trim(), phone || null, address || null, total]
+      );
+
+      for (const item of orderItemsData) {
+        await conn.query(
+          'INSERT INTO order_items (id, order_id, product_id, name, price, quantity) VALUES (?, ?, ?, ?, ?, ?)',
+          [uuidv4(), orderId, item.product_id, item.name, item.price, item.quantity]
+        );
+      }
+
+      await conn.commit();
+      return res.status(201).json({ order_id: orderId, total });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro no servidor' });
   }
 }
-
-// --- Carrinho sincronizado (guest_id anónimo por dispositivo) ---
 
 async function getCart(req, res) {
   try {
@@ -286,7 +214,7 @@ async function getCart(req, res) {
       'SELECT product_id, quantity FROM cart_items WHERE store_id = ? AND guest_id = ?',
       [storeId, guest_id]
     );
-    const products = await getProductsById(storeId, items.map((i) => i.product_id));
+    const products = await mediaService.getProductsById(storeId, items.map((i) => i.product_id));
     const productMap = new Map(products.map((p) => [p.id, p]));
 
     const result = items
@@ -326,8 +254,6 @@ async function syncCart(req, res) {
   }
 }
 
-// --- Wishlist sincronizada (guest_id anónimo por dispositivo) ---
-
 async function getWishlist(req, res) {
   try {
     const { slug } = req.params;
@@ -341,7 +267,7 @@ async function getWishlist(req, res) {
       'SELECT product_id FROM wishlist_items WHERE store_id = ? AND guest_id = ?',
       [storeId, guest_id]
     );
-    const products = await getProductsById(storeId, items.map((i) => i.product_id));
+    const products = await mediaService.getProductsById(storeId, items.map((i) => i.product_id));
     return res.json(products);
   } catch (err) {
     console.error(err);

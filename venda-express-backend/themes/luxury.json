@@ -1,0 +1,12 @@
+{
+  "id": "luxury",
+  "name": "luxury",
+  "label": "Luxury",
+  "description": "Tema premium para marcas de luxo e alto padrão",
+  "author": { "name": "Venda Express", "url": "https://vendaexpress.com" },
+  "version": "1.0.0",
+  "minimumStorefrontVersion": "1.0.0",
+  "tags": ["premium", "elegant", "sophisticated"],
+  "supportsDarkMode": false,
+  "premium": true
+}

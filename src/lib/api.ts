@@ -177,6 +177,13 @@ export async function aiAssistImage(
 }
 
 export const api = {
+  pages: {
+    list: () => request<any[]>('/pages'),
+    get: (id: string) => request<any>(`/pages/${id}`),
+    create: (payload: any) => request<any>('/pages', { method: 'POST', body: JSON.stringify(payload) }),
+    update: (id: string, payload: any) => request<any>(`/pages/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+    remove: (id: string) => request<void>(`/pages/${id}`, { method: 'DELETE' }),
+  },
   auth: {
     signup: (email: string, password: string) =>
       request<{ user: { id: string; email: string }; token: string }>('/auth/signup', {
@@ -267,8 +274,11 @@ export const api = {
       ),
     create: (payload: { name: string; slug: string; plan_id: string }) =>
       request<any>('/stores', { method: 'POST', body: JSON.stringify(payload) }),
-    update: (payload: { theme_primary: string; description: string | null; logo_url: string | null; banner_urls: string[] }) =>
+    update: (payload: { theme_primary?: string; theme_id?: string; description?: string | null; logo_url?: string | null; banner_urls?: string[] }) =>
       request<any>('/stores/mine', { method: 'PUT', body: JSON.stringify(payload) }),
+  },
+  themes: {
+    list: () => request<any[]>('/themes'),
   },
   subscription: {
     status: () =>

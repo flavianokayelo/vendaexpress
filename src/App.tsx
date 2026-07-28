@@ -1,4 +1,5 @@
-import { AuthProvider } from './lib/auth';
+import { AuthProvider, useAuth } from './lib/auth';
+import { ThemeProvider } from './theme';
 import { useHashRoute, matchRoute } from './lib/router';
 import { LandingPage } from './pages/LandingPage';
 import { SignupPage } from './pages/SignupPage';
@@ -41,10 +42,20 @@ function Router() {
   return <LandingPage navigate={navigate} />;
 }
 
+function ThemedApp() {
+  const { store } = useAuth();
+  const themeId = store?.theme_id ?? 'standard';
+  return (
+    <ThemeProvider initialThemeId={themeId}>
+      <Router />
+    </ThemeProvider>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
-      <Router />
+      <ThemedApp />
     </AuthProvider>
   );
 }

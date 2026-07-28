@@ -1,0 +1,12 @@
+{
+  "id": "electronics",
+  "name": "electronics",
+  "label": "Electronics",
+  "description": "Tema tecnológico e dark-mode para lojas de eletrónica e gaming",
+  "author": { "name": "Venda Express", "url": "https://vendaexpress.com" },
+  "version": "1.0.0",
+  "minimumStorefrontVersion": "1.0.0",
+  "tags": ["tech", "modern", "gadgets", "dark"],
+  "supportsDarkMode": true,
+  "premium": false
+}

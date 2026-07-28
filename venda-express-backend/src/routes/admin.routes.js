@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const { listStores, getStats } = require('../controllers/admin.controller');
 const { requireAuth } = require('../middleware/auth.middleware');
+const { requireAdmin } = require('../middleware/admin.middleware');
 
-// TODO: trocar requireAuth por um requireAdmin quando existir papel de admin
-router.get('/stores', requireAuth, listStores);
-router.get('/stats', requireAuth, getStats);
+router.get('/stores', requireAuth, requireAdmin, listStores);
+router.get('/stats', requireAuth, requireAdmin, getStats);
 
 module.exports = router;

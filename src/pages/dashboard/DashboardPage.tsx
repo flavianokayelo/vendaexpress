@@ -8,7 +8,10 @@ import { OrdersPage } from './OrdersPage';
 import { CustomersPage } from './CustomersPage';
 import { CouponsPage } from './CouponsPage';
 import { AppearancePage } from './AppearancePage';
+import { ThemesPage } from './ThemesPage';
 import { SettingsPage } from './SettingsPage';
+import { PagesPage } from './PagesPage';
+import { BuilderPageView } from './BuilderPageView';
 import { TrialBanner } from '../../components/TrialBanner';
 import { PageLoader } from '../../components/ui/Feedback';
 import { Button } from '../../components/ui/Button';
@@ -17,6 +20,7 @@ import { Store } from 'lucide-react';
 export function DashboardPage({ navigate }: { navigate: (to: string) => void }) {
   const { user, store, loading } = useAuth();
   const [page, setPage] = useState<DashPage>('overview');
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
 
   if (loading) return <PageLoader />;
 
@@ -38,6 +42,11 @@ export function DashboardPage({ navigate }: { navigate: (to: string) => void }) 
     );
   }
 
+  // Modo editor a ecrã inteiro (fora do Shell)
+  if (editingPageId !== null) {
+    return <BuilderPageView pageId={editingPageId} onClose={() => setEditingPageId(null)} />;
+  }
+
   return (
     <DashboardShell page={page} onNavigate={setPage}>
       {/* Aviso de teste/expiração — aparece em TODAS as páginas do painel
@@ -50,7 +59,9 @@ export function DashboardPage({ navigate }: { navigate: (to: string) => void }) 
       {page === 'orders' && <OrdersPage />}
       {page === 'customers' && <CustomersPage />}
       {page === 'coupons' && <CouponsPage />}
+      {page === 'pages' && <PagesPage onEditPage={(id) => setEditingPageId(id)} />}
       {page === 'appearance' && <AppearancePage />}
+      {page === 'themes' && <ThemesPage />}
       {page === 'settings' && <SettingsPage />}
     </DashboardShell>
   );

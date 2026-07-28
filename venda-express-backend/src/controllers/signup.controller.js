@@ -11,6 +11,8 @@ const pool = require('../db');
 const emis = require('../services/emis.service');
 const plog = require('../services/paymentLog');
 const mailer = require('../services/mailer');
+const { TRIAL_DAYS } = require('../middleware/subscription.middleware');
+const { DEFAULT_THEME_CONFIG } = require('../constants');
 
 /** Recusa registada: escreve no log ANTES de responder. */
 function recusar(res, status, motivo, extra = {}) {
@@ -33,7 +35,6 @@ const PENDING_TTL_MINUTES = 30;
 // se a mesma pessoa tentar pagar e falhar este número de vezes, libertamos
 // uma semana de teste para não a deixarmos bloqueada à porta.
 const FAILED_ATTEMPTS_FOR_TRIAL = 2;
-const TRIAL_DAYS = 7;
 
 function signToken(user) {
   return jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -232,10 +233,10 @@ async function activatePendingSignup(reference, { transactionId = null, raw = nu
     const storeId = uuidv4();
     await conn.query(
       `INSERT INTO stores
-        (id, owner_id, plan_id, name, slug, status, banner_urls,
+        (id, owner_id, plan_id, name, slug, status, banner_urls, theme_config,
          trial_ends_at, plan_started_at, plan_expires_at)
-       VALUES (?,?,?,?,?, 'active', '[]', NULL, ?, ?)`,
-      [storeId, userId, pending.plan_id, pending.store_name, pending.slug, now, periodEnd]
+       VALUES (?,?,?,?,?, 'active', '[]', ?, NULL, ?, ?)`,
+      [storeId, userId, pending.plan_id, pending.store_name, pending.slug, DEFAULT_THEME_CONFIG, now, periodEnd]
     );
 
     // 3) factura
@@ -560,10 +561,10 @@ async function startTrial(req, res) {
     // Loja em modo de teste: sem plano pago, expira em TRIAL_DAYS dias
     await conn.query(
       `INSERT INTO stores
-        (id, owner_id, plan_id, name, slug, status, banner_urls,
+        (id, owner_id, plan_id, name, slug, status, banner_urls, theme_config,
          trial_ends_at, plan_started_at, plan_expires_at)
-       VALUES (?,?,?,?,?, 'trial', '[]', DATE_ADD(NOW(), INTERVAL ? DAY), NULL, NULL)`,
-      [storeId, userId, planId, storeName, slug, TRIAL_DAYS]
+       VALUES (?,?,?,?,?, 'trial', '[]', ?, DATE_ADD(NOW(), INTERVAL ? DAY), NULL, NULL)`,
+      [storeId, userId, planId, storeName, slug, DEFAULT_THEME_CONFIG, TRIAL_DAYS]
     );
 
     await conn.commit();

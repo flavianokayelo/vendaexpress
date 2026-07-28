@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import {
   Store as StoreIcon, ArrowLeft, ChevronLeft, ChevronRight,
-  ShoppingCart, Minus, Plus, Flame, Undo2,
+  ShoppingCart, Minus, Plus, Flame, Undo2, Heart,
 } from 'lucide-react';
 import { api, resolveMediaUrl } from '../lib/api';
 import type { Store, Product, Category } from '../lib/types';
 import { formatCurrency, placeholderImage } from '../lib/format';
 import { Button } from '../components/ui/Button';
 import { PageLoader } from '../components/ui/Feedback';
-import { ImageCard } from '../components/product/ImageCard';
 import { CartProvider, useCart } from '../lib/cart';
+import { WishlistProvider, useWishlist } from '../lib/wishlist';
+import { WishlistDrawer } from '../components/storefront/WishlistDrawer';
+import { StorefrontThemeProvider } from '../storefrontTheme/ThemeProvider';
+import { mergeTheme } from '../storefrontTheme/mergeTheme';
+import { ProductGrid } from '../components/theme/ProductGrid';
 
 export function ProductDetailPage({
   slug,
@@ -22,7 +26,9 @@ export function ProductDetailPage({
 }) {
   return (
     <CartProvider slug={slug}>
-      <ProductDetailPageInner slug={slug} productId={productId} navigate={navigate} />
+      <WishlistProvider slug={slug}>
+        <ProductDetailPageInner slug={slug} productId={productId} navigate={navigate} />
+      </WishlistProvider>
     </CartProvider>
   );
 }
@@ -37,6 +43,7 @@ function ProductDetailPageInner({
   navigate: (to: string) => void;
 }) {
   const { cart, addToCart } = useCart();
+  const { isWishlisted, toggleWishlist, wishlist, setWishlistOpen } = useWishlist();
 
   const [store, setStore] = useState<Store | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
@@ -89,8 +96,10 @@ function ProductDetailPageInner({
     );
   }
 
-  const accent = store.theme_primary || '#0f766e';
+  const theme = mergeTheme(store);
+  const accent = theme.colors.primary;
   const isPromo = product.compare_at_price && Number(product.compare_at_price) > Number(product.price);
+  const productIsWishlisted = isWishlisted(product.id);
 
   const gallery: string[] =
     product.images && product.images.length > 0
@@ -106,32 +115,42 @@ function ProductDetailPageInner({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-30 border-b border-[var(--sf-line)] bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(`/s/${slug}`)} className="flex items-center gap-2 text-slate-600">
+          <button onClick={() => navigate(`/s/${slug}`)} className="flex items-center gap-2 text-[var(--sf-ink-secondary)]">
             <ArrowLeft size={18} />
             <span className="hidden text-sm font-medium sm:inline">Voltar à loja</span>
           </button>
           <div className="flex items-center gap-3">
             {store.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ''} alt={store.name} className="h-8 w-8 rounded-lg object-cover" />
+              <img src={resolveMediaUrl(store.logo_url) ?? ''} alt={store.name} className="h-8 w-8 rounded-[var(--sf-radius-sm)] object-cover" />
             ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold" style={{ backgroundColor: accent }}>
+              <div className="flex h-8 w-8 items-center justify-center rounded-[var(--sf-radius-sm)] bg-[var(--sf-primary)] font-bold text-white">
                 {store.name[0]}
               </div>
             )}
-            <span className="text-sm font-semibold text-slate-900">{store.name}</span>
+            <span className="text-sm font-semibold text-[var(--sf-ink)]">{store.name}</span>
           </div>
-          <button onClick={() => navigate(`/s/${slug}`)} className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100">
-            <ShoppingCart size={22} />
-            {cartCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-700 px-1 text-xs font-bold text-white">
-                {cartCount}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setWishlistOpen(true)} className="relative rounded-lg p-2 text-[var(--sf-ink-secondary)] hover:bg-slate-100">
+              <Heart size={20} />
+              {wishlist.length > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--sf-primary)] px-1 text-xs font-bold text-white">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => navigate(`/s/${slug}`)} className="relative rounded-lg p-2 text-[var(--sf-ink-secondary)] hover:bg-slate-100">
+              <ShoppingCart size={22} />
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--sf-primary)] px-1 text-xs font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -139,13 +158,22 @@ function ProductDetailPageInner({
         <div className="grid gap-8 md:grid-cols-2">
           {/* Gallery */}
           <div>
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-100">
+            <div className="relative aspect-square w-full overflow-hidden rounded-[var(--sf-radius-lg)] bg-[var(--sf-surface-muted)]">
               <img src={gallery[activeImg]} alt={product.name} className="h-full w-full object-cover" />
               {isPromo && (
                 <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">
                   <Flame size={12} /> Promoção
                 </span>
               )}
+              <button
+                onClick={() => toggleWishlist(product)}
+                className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition-colors ${
+                  productIsWishlisted ? 'bg-red-500 text-white' : 'bg-white/80 text-slate-500 hover:text-red-500'
+                }`}
+                title={productIsWishlisted ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+              >
+                <Heart size={17} fill={productIsWishlisted ? 'currentColor' : 'none'} />
+              </button>
               {gallery.length > 1 && (
                 <>
                   <button
@@ -169,7 +197,7 @@ function ProductDetailPageInner({
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
-                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 ${i === activeImg ? '' : 'border-transparent opacity-70'}`}
+                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-[var(--sf-radius-sm)] border-2 ${i === activeImg ? '' : 'border-transparent opacity-70'}`}
                     style={i === activeImg ? { borderColor: accent } : {}}
                   >
                     <img src={src} alt="" className="h-full w-full object-cover" />
@@ -179,7 +207,7 @@ function ProductDetailPageInner({
             )}
 
             {product.video && (
-              <div className="mt-4 overflow-hidden rounded-2xl bg-slate-900">
+              <div className="mt-4 overflow-hidden rounded-[var(--sf-radius-lg)] bg-slate-900">
                 <video
                   src={resolveMediaUrl(product.video.url) ?? undefined}
                   poster={resolveMediaUrl(product.video.thumbnail_url) ?? undefined}
@@ -193,20 +221,20 @@ function ProductDetailPageInner({
           {/* Info */}
           <div>
             {category && (
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-400">{category.name}</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-[var(--sf-ink-secondary)]">{category.name}</span>
             )}
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">{product.name}</h1>
+            <h1 className="mt-1 text-2xl font-bold text-[var(--sf-ink)]">{product.name}</h1>
 
             <div className="mt-3 flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-slate-900">{formatCurrency(Number(product.price), store.currency)}</span>
+              <span className="text-3xl font-bold text-[var(--sf-ink)]">{formatCurrency(Number(product.price), store.currency)}</span>
               {isPromo && (
-                <span className="text-base text-slate-400 line-through">
+                <span className="text-base text-[var(--sf-ink-secondary)] line-through">
                   {formatCurrency(Number(product.compare_at_price), store.currency)}
                 </span>
               )}
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
+            <div className="mt-4 flex flex-wrap gap-4 text-sm text-[var(--sf-ink-secondary)]">
               {product.color && (
                 <span className="flex items-center gap-1.5">
                   <span
@@ -223,16 +251,16 @@ function ProductDetailPageInner({
             </div>
 
             {product.description && (
-              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-600">{product.description}</p>
+              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-[var(--sf-ink-secondary)]">{product.description}</p>
             )}
 
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-xs text-[var(--sf-ink-secondary)]">
               {product.stock > 0 ? `${product.stock} em stock` : 'Sem stock disponível'}
             </p>
 
             {/* Quantity + add to cart */}
             <div className="mt-6 flex items-center gap-3">
-              <div className="flex items-center rounded-xl border border-slate-200">
+              <div className="flex items-center rounded-[var(--sf-radius-md)] border border-[var(--sf-line)]">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   className="flex h-11 w-11 items-center justify-center text-slate-500 hover:bg-slate-50"
@@ -248,10 +276,9 @@ function ProductDetailPageInner({
                 </button>
               </div>
               <Button
-                className="flex-1"
+                className="flex-1 !rounded-[var(--sf-radius-md)] !bg-[var(--sf-primary)] hover:!bg-[var(--sf-primary-hover)]"
                 size="lg"
                 disabled={product.stock <= 0}
-                style={{ backgroundColor: accent, borderColor: accent }}
                 onClick={handleAddToCart}
               >
                 {justAdded ? 'Adicionado!' : 'Adicionar ao carrinho'}
@@ -259,7 +286,7 @@ function ProductDetailPageInner({
             </div>
 
             {product.return_policy && (
-              <div className="mt-6 flex gap-2 rounded-xl bg-slate-100 p-3 text-xs text-slate-600">
+              <div className="mt-6 flex gap-2 rounded-[var(--sf-radius-md)] bg-slate-100 p-3 text-xs text-slate-600">
                 <Undo2 size={16} className="mt-0.5 flex-shrink-0 text-slate-400" />
                 <p>{product.return_policy}</p>
               </div>
@@ -270,23 +297,21 @@ function ProductDetailPageInner({
         {/* Related products */}
         {related.length > 0 && (
           <div className="mt-12">
-            <h2 className="mb-4 text-lg font-bold text-slate-900">Também pode gostar</h2>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {related.map((p) => (
-                <ImageCard
-                  key={p.id}
-                  p={p}
-                  currency={store.currency}
-                  accent={accent}
-                  onAdd={addToCart}
-                  onView={(prod) => navigate(`/s/${slug}/products/${prod.id}`)}
-                />
-              ))}
-            </div>
+            <h2 className="mb-4 text-lg font-bold text-[var(--sf-ink)]">Também pode gostar</h2>
+            <ProductGrid
+              products={related}
+              currency={store.currency}
+              layout="grid"
+              onAdd={addToCart}
+              onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+              isWishlisted={isWishlisted}
+              onToggleWishlist={toggleWishlist}
+            />
           </div>
         )}
-
       </div>
-    </div>
+
+      <WishlistDrawer currency={store.currency} accent={accent} onAdd={addToCart} />
+    </StorefrontThemeProvider>
   );
 }

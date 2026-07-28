@@ -1,72 +1,41 @@
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
-
-async function getOwnedStoreId(userId) {
-  const [rows] = await pool.query('SELECT id FROM stores WHERE owner_id = ?', [userId]);
-  return rows[0]?.id ?? null;
-}
-
-async function replacePhotos(productId, storeId, photos) {
-  await pool.query('DELETE FROM product_photos WHERE product_id = ?', [productId]);
-  const list = Array.isArray(photos) ? photos.slice(0, 5) : [];
-  if (list.length === 0) return;
-  const values = list.map((p, idx) => [uuidv4(), storeId, productId, p.url, p.hash, idx]);
-  await pool.query(
-    'INSERT INTO product_photos (id, store_id, product_id, url, hash, sort_order) VALUES ?',
-    [values]
-  );
-}
-
-async function replaceVideo(productId, storeId, video) {
-  await pool.query('DELETE FROM product_videos WHERE product_id = ?', [productId]);
-  if (!video || !video.url) return;
-  await pool.query(
-    'INSERT INTO product_videos (id, store_id, product_id, url, thumbnail_url) VALUES (?, ?, ?, ?, ?)',
-    [uuidv4(), storeId, productId, video.url, video.thumbnail_url || null]
-  );
-}
-
-async function attachMedia(storeId, products) {
-  if (products.length === 0) return products;
-
-  const [photoRows] = await pool.query(
-    'SELECT product_id, url, hash FROM product_photos WHERE store_id = ? ORDER BY sort_order ASC',
-    [storeId]
-  );
-  const photosByProduct = new Map();
-  for (const row of photoRows) {
-    const list = photosByProduct.get(row.product_id) || [];
-    list.push({ url: row.url, hash: row.hash });
-    photosByProduct.set(row.product_id, list);
-  }
-
-  const [videoRows] = await pool.query(
-    'SELECT product_id, url, thumbnail_url FROM product_videos WHERE store_id = ?',
-    [storeId]
-  );
-  const videoByProduct = new Map();
-  for (const row of videoRows) {
-    videoByProduct.set(row.product_id, { url: row.url, thumbnail_url: row.thumbnail_url });
-  }
-
-  return products.map((p) => ({
-    ...p,
-    images: photosByProduct.get(p.id) || [],
-    video: videoByProduct.get(p.id) || null,
-    active: !!p.active,
-  }));
-}
+const storeService = require('../services/store.service');
+const mediaService = require('../services/media.service');
 
 async function listProducts(req, res) {
   try {
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
-    const [rows] = await pool.query(
-      'SELECT * FROM products WHERE store_id = ? ORDER BY created_at DESC',
+    const { search, page = 1, limit = 50 } = req.query;
+    const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
+
+    let sql = 'SELECT * FROM products WHERE store_id = ?';
+    const params = [storeId];
+
+    if (search && search.trim()) {
+      sql += ' AND (name LIKE ? OR description LIKE ?)';
+      const term = `%${search.trim()}%`;
+      params.push(term, term);
+    }
+
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), offset);
+
+    const [rows] = await pool.query(sql, params);
+
+    const [[{ total }]] = await pool.query(
+      'SELECT COUNT(*) AS total FROM products WHERE store_id = ?',
       [storeId]
     );
-    return res.json(await attachMedia(storeId, rows));
+
+    return res.json({
+      products: await mediaService.attachMedia(storeId, rows),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro no servidor' });
@@ -85,7 +54,7 @@ async function createProduct(req, res) {
       return res.status(400).json({ error: 'Preço é obrigatório' });
     }
 
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const photoList = Array.isArray(images) ? images.slice(0, 5) : [];
@@ -105,11 +74,11 @@ async function createProduct(req, res) {
       ]
     );
 
-    await replacePhotos(id, storeId, photoList);
-    await replaceVideo(id, storeId, video || null);
+    await mediaService.replacePhotos(id, storeId, photoList);
+    await mediaService.replaceVideo(id, storeId, video || null);
 
     const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
-    const [withMedia] = await attachMedia(storeId, rows);
+    const [withMedia] = await mediaService.attachMedia(storeId, rows);
     return res.status(201).json(withMedia);
   } catch (err) {
     console.error(err);
@@ -130,7 +99,7 @@ async function updateProduct(req, res) {
       return res.status(400).json({ error: 'Preço é obrigatório' });
     }
 
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const photoList = Array.isArray(images) ? images.slice(0, 5) : [];
@@ -151,11 +120,11 @@ async function updateProduct(req, res) {
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Produto não encontrado' });
 
-    await replacePhotos(id, storeId, photoList);
-    await replaceVideo(id, storeId, video || null);
+    await mediaService.replacePhotos(id, storeId, photoList);
+    await mediaService.replaceVideo(id, storeId, video || null);
 
     const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
-    const [withMedia] = await attachMedia(storeId, rows);
+    const [withMedia] = await mediaService.attachMedia(storeId, rows);
     return res.json(withMedia);
   } catch (err) {
     console.error(err);
@@ -166,7 +135,7 @@ async function updateProduct(req, res) {
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const [result] = await pool.query('DELETE FROM products WHERE id = ? AND store_id = ?', [id, storeId]);
@@ -183,7 +152,7 @@ async function searchByHash(req, res) {
     const { hash } = req.query;
     if (!hash) return res.status(400).json({ error: 'hash é obrigatório' });
 
-    const storeId = await getOwnedStoreId(req.userId);
+    const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
 
     const [rows] = await pool.query(

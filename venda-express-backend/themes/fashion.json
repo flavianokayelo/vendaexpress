@@ -1,0 +1,12 @@
+{
+  "id": "fashion",
+  "name": "fashion",
+  "label": "Fashion",
+  "description": "Tema moderno para lojas de moda e vestuário com design arrojado",
+  "author": { "name": "Venda Express", "url": "https://vendaexpress.com" },
+  "version": "1.0.0",
+  "minimumStorefrontVersion": "1.0.0",
+  "tags": ["fashion", "stylish", "trendy", "bold"],
+  "supportsDarkMode": false,
+  "premium": false
+}
