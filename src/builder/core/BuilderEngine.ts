@@ -200,6 +200,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'SET_DRAGGING':
       return { ...state, isDragging: action.isDragging };
 
+    case 'SET_STATUS': {
+      if (!state.page) return state;
+      return {
+        ...state,
+        page: { ...state.page, status: action.status },
+        dirty: true,
+      };
+    }
+
+    case 'SET_TITLE': {
+      if (!state.page) return state;
+      return {
+        ...state,
+        page: { ...state.page, title: action.title },
+        dirty: true,
+      };
+    }
+
     default:
       return state;
   }

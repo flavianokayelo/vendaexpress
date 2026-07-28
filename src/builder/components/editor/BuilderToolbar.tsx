@@ -5,6 +5,7 @@ import {
   ChevronDown, Check, ArrowLeft, Globe,
 } from 'lucide-react';
 import type { DeviceMode } from '../../types/editor';
+import type { PageStatus } from '../../types/page';
 
 interface BuilderToolbarProps {
   device: DeviceMode;
@@ -14,12 +15,13 @@ interface BuilderToolbarProps {
   dirty: boolean;
   zoom: number;
   pageTitle: string;
+  pageStatus?: PageStatus;
   storeName?: string;
   onDeviceChange: (device: DeviceMode) => void;
   onModeChange: (mode: 'edit' | 'preview') => void;
   onUndo: () => void;
   onRedo: () => void;
-  onSave: () => void;
+  onSave: (status?: PageStatus) => void;
   onExport: () => void;
   onImport: () => void;
   onZoomIn: () => void;
@@ -35,7 +37,7 @@ const devices: { id: DeviceMode; icon: typeof Monitor; label: string }[] = [
 ];
 
 export function BuilderToolbar({
-  device, mode, canUndo, canRedo, dirty, zoom, pageTitle, storeName,
+  device, mode, canUndo, canRedo, dirty, zoom, pageTitle, pageStatus, storeName,
   onDeviceChange, onModeChange, onUndo, onRedo,
   onSave, onExport, onImport, onZoomIn, onZoomOut, onPageTitleChange, onBack,
 }: BuilderToolbarProps) {
@@ -108,6 +110,12 @@ export function BuilderToolbar({
         }`}>
           {dirty ? 'Não guardado' : 'Guardado'}
         </span>
+
+        {pageStatus === 'published' && (
+          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+            Publicado
+          </span>
+        )}
       </div>
 
       {/* Center */}
@@ -210,14 +218,14 @@ export function BuilderToolbar({
             className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:from-blue-700 hover:to-blue-800 transition-all hover:shadow-md active:scale-[0.97]"
           >
             <Check size={14} />
-            <span>Publicar</span>
+            <span>{pageStatus === 'published' ? 'Publicado' : 'Publicar'}</span>
             <ChevronDown size={12} className={`transition-transform ${publishOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {publishOpen && (
             <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50">
               <button
-                onClick={() => { onSave(); setPublishOpen(false); }}
+                onClick={() => { onSave('draft'); setPublishOpen(false); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
@@ -229,7 +237,7 @@ export function BuilderToolbar({
                 </div>
               </button>
               <button
-                onClick={() => { onSave(); setPublishOpen(false); }}
+                onClick={() => { onSave('published'); setPublishOpen(false); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-green-600">
@@ -240,6 +248,20 @@ export function BuilderToolbar({
                   <div className="text-[10px] text-slate-400">Tornar página visível</div>
                 </div>
               </button>
+              {pageStatus === 'published' && (
+                <button
+                  onClick={() => { onSave('draft'); setPublishOpen(false); }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50 text-amber-600">
+                    <EyeOff size={13} />
+                  </div>
+                  <div className="text-left">
+                    <div>Despublicar</div>
+                    <div className="text-[10px] text-slate-400">Tornar página invisível</div>
+                  </div>
+                </button>
+              )}
             </div>
           )}
         </div>

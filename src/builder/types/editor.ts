@@ -1,4 +1,4 @@
-import type { Page, PageSection } from './page';
+import type { Page, PageSection, PageStatus } from './page';
 import type { BlockDefinition } from './block';
 
 export type DeviceMode = 'desktop' | 'tablet' | 'mobile';
@@ -43,7 +43,9 @@ export type EditorAction =
   | { type: 'SET_MODE'; mode: EditorMode }
   | { type: 'SET_ZOOM'; zoom: number }
   | { type: 'MARK_CLEAN' }
-  | { type: 'SET_DRAGGING'; isDragging: boolean };
+  | { type: 'SET_DRAGGING'; isDragging: boolean }
+  | { type: 'SET_STATUS'; status: PageStatus }
+  | { type: 'SET_TITLE'; title: string };
 
 export interface BuilderContextType {
   state: EditorState;

@@ -97,6 +97,45 @@ async function getStorefrontProduct(req, res) {
   }
 }
 
+async function getStorefrontPage(req, res) {
+  try {
+    const { slug, pageSlug } = req.params;
+    const [storeRows] = await pool.query(
+      "SELECT id, name, slug, logo_url, description, whatsapp, currency, theme_id FROM stores WHERE slug = ? AND status IN ('trial','active')",
+      [slug]
+    );
+    if (storeRows.length === 0) return res.status(404).json({ error: 'Loja não encontrada' });
+    const store = storeRows[0];
+
+    const [pageRows] = await pool.query(
+      `SELECT id, store_id, title, slug, template, status, sections, meta, created_at, updated_at
+       FROM pages WHERE store_id = ? AND slug = ? AND status = 'published'`,
+      [store.id, pageSlug]
+    );
+    if (pageRows.length === 0) return res.status(404).json({ error: 'Página não encontrada' });
+    const row = pageRows[0];
+    const page = {
+      id: String(row.id),
+      storeId: String(row.store_id),
+      title: row.title,
+      slug: row.slug,
+      template: row.template,
+      status: row.status,
+      sections: typeof row.sections === 'string' ? JSON.parse(row.sections) : (row.sections || []),
+      meta: typeof row.meta === 'string' ? JSON.parse(row.meta) : (row.meta || {}),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+
+    const [categories] = await pool.query('SELECT * FROM categories WHERE store_id = ? ORDER BY name ASC', [store.id]);
+
+    return res.json({ store, categories, page });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro no servidor' });
+  }
+}
+
 async function validateCoupon(req, res) {
   try {
     const { slug } = req.params;
@@ -300,6 +339,7 @@ async function syncWishlist(req, res) {
 module.exports = {
   getStorefront,
   getStorefrontProduct,
+  getStorefrontPage,
   validateCoupon,
   placeOrder,
   getCart,

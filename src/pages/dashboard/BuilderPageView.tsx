@@ -5,7 +5,7 @@ import {
   BuilderProvider, useBuilderEngine, BuilderEditor,
   registerAllBlocks, globalBlockRegistry, Serializer,
 } from '../../builder';
-import type { Page } from '../../builder';
+import type { Page, PageStatus } from '../../builder';
 
 registerAllBlocks();
 
@@ -53,7 +53,7 @@ function BuilderInner({
     }
   }, [pageId, store]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (status?: PageStatus) => {
     if (!store || !state.page) return;
     setSaving(true);
     setError(null);
@@ -63,7 +63,7 @@ function BuilderInner({
         title: state.page.title,
         slug: state.page.slug,
         template: state.page.template,
-        status: state.page.status,
+        status: status ?? state.page.status,
         sections: state.sections,
         meta: state.page.meta,
       };

@@ -13,7 +13,7 @@ import { BuilderSidebar } from './BuilderSidebar';
 import { BuilderInspector } from './BuilderInspector';
 import { BuilderToolbar } from './BuilderToolbar';
 import type { BuilderContextType } from '../../hooks/useBuilder';
-import type { PageSection } from '../../types/page';
+import type { PageSection, PageStatus } from '../../types/page';
 import type { BlockDefinition } from '../../types/block';
 import type { DeviceMode } from '../../types/editor';
 
@@ -104,11 +104,11 @@ export function BuilderEditor({
 }: {
   builder: BuilderContextType;
   onBack?: () => void;
-  onSave?: () => Promise<void>;
+  onSave?: (status?: PageStatus) => Promise<void>;
 }) {
   const { state, dispatch, getBlock, getSelected, canUndo, canRedo } = builder;
   const { sections, selectedId, device, mode, dirty, zoom } = state;
-  const [pageTitle, setPageTitle] = useState(state.page?.title ?? 'Nova página');
+  const pageTitle = state.page?.title ?? 'Nova página';
   const [dragTarget, setDragTarget] = useState<{ kind: 'palette'; type: string } | { kind: 'section'; section: PageSection } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropTargetRef = useRef<string | null>(null);
@@ -116,10 +116,6 @@ export function BuilderEditor({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
-  useEffect(() => {
-    if (state.page?.title) setPageTitle(state.page.title);
-  }, [state.page?.title]);
 
   const availableBlocks = globalBlockRegistry.getAll();
 
@@ -159,8 +155,9 @@ export function BuilderEditor({
   const handleUndo = useCallback(() => dispatch({ type: 'UNDO' }), [dispatch]);
   const handleRedo = useCallback(() => dispatch({ type: 'REDO' }), [dispatch]);
 
-  const handleSave = useCallback(() => {
-    if (onSaveExternal) onSaveExternal();
+  const handleSave = useCallback((status?: PageStatus) => {
+    if (status) dispatch({ type: 'SET_STATUS', status });
+    if (onSaveExternal) onSaveExternal(status);
     else dispatch({ type: 'MARK_CLEAN' });
   }, [dispatch, onSaveExternal]);
 
@@ -179,7 +176,6 @@ export function BuilderEditor({
     try {
       const text = await file.text();
       const imported = Serializer.importFromJson(text);
-      setPageTitle(imported.title);
       if (state.page) {
         dispatch({
           type: 'SET_PAGE',
@@ -209,8 +205,8 @@ export function BuilderEditor({
   }, [dispatch, zoom]);
 
   const handlePageTitleChange = useCallback((title: string) => {
-    setPageTitle(title);
-  }, []);
+    dispatch({ type: 'SET_TITLE', title });
+  }, [dispatch]);
 
   const handleDeselect = useCallback(() => {
     dispatch({ type: 'DESELECT_ALL' });
@@ -284,6 +280,7 @@ export function BuilderEditor({
           dirty={dirty}
           zoom={zoom}
           pageTitle={pageTitle}
+          pageStatus={state.page?.status}
           onBack={onBack}
           onDeviceChange={handleDeviceChange}
           onModeChange={handleModeChange}
@@ -326,6 +323,7 @@ export function BuilderEditor({
         dirty={dirty}
         zoom={zoom}
         pageTitle={pageTitle}
+        pageStatus={state.page?.status}
         onBack={onBack}
         onDeviceChange={handleDeviceChange}
         onModeChange={handleModeChange}
