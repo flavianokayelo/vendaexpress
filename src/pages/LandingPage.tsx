@@ -1,20 +1,37 @@
-import { useRef, useState, useEffect } from "react";
-import { motion, useReducedMotion, AnimatePresence } from "motion/react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
+import Lenis from "lenis";
+import {
+  motion,
+  AnimatePresence,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValue,
+  useMotionValueEvent,
+  useInView,
+  type MotionValue,
+} from "motion/react";
 import {
   ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  ExternalLink,
-  LayoutDashboard,
-  Menu,
   MessageCircle,
-  Package,
-  ShoppingCart,
-  Sparkles,
-  Store,
-  Truck,
-  X,
+  BarChart3,
   Zap,
+  ShoppingCart,
+  CheckCircle2,
+  Bot,
+  TrendingUp,
+  Quote,
+  ShieldCheck,
+  CreditCard,
+  Clock,
+  Undo2,
 } from "lucide-react";
 
 function Link({
@@ -36,7 +53,6 @@ function Link({
       </a>
     );
   }
-
   return (
     <a
       href={href}
@@ -52,64 +68,734 @@ function Link({
   );
 }
 
-const features = [
+function ParallaxLayer({
+  children,
+  speed = 0.4,
+  className = "",
+}: {
+  children: ReactNode;
+  speed?: number;
+  className?: string;
+}) {
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, (v) => v * speed * -0.5);
+  return (
+    <motion.div style={{ y }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-50px 0px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 36 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 36 }}
+      transition={{ duration: 0.8, delay, ease: [0.2, 0.7, 0.2, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function TiltCard({
+  children,
+  className = "",
+  style,
+  glare = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  glare?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0.5);
+  const y = useMotionValue(0.5);
+  const rx = useSpring(useTransform(x, [0, 1], [-6, 6]), {
+    damping: 18,
+    stiffness: 180,
+  });
+  const ry = useSpring(useTransform(y, [0, 1], [6, -6]), {
+    damping: 18,
+    stiffness: 180,
+  });
+  const mxPct = useTransform(x, (v) => `${v * 100}%`);
+  const myPct = useTransform(y, (v) => `${v * 100}%`);
+  const handleMove = (e: React.MouseEvent) => {
+    const r = ref.current!.getBoundingClientRect();
+    x.set((e.clientX - r.left) / r.width);
+    y.set((e.clientY - r.top) / r.height);
+  };
+  const handleLeave = () => {
+    x.set(0.5);
+    y.set(0.5);
+  };
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{
+        rotateX: ry,
+        rotateY: rx,
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+        ...(glare
+          ? ({ "--mx": mxPct, "--my": myPct } as unknown as React.CSSProperties)
+          : {}),
+        ...style,
+      }}
+      className={`relative overflow-hidden group ${className}`}
+    >
+      {children}
+      {glare && (
+        <span
+          aria-hidden
+          className="glare-layer pointer-events-none absolute inset-0 z-[1] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            mixBlendMode: "soft-light",
+            background:
+              "radial-gradient(280px circle at var(--mx) var(--my), rgba(255,255,255,0.55), transparent 65%)",
+          }}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+function MagneticWrap({
+  children,
+  className = "",
+  strength = 0.3,
+}: {
+  children: ReactNode;
+  className?: string;
+  strength?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { damping: 10, stiffness: 120 });
+  const springY = useSpring(y, { damping: 10, stiffness: 120 });
+  const handleMove = (e: React.MouseEvent) => {
+    const r = ref.current!.getBoundingClientRect();
+    x.set((e.clientX - r.left - r.width / 2) * strength);
+    y.set((e.clientY - r.top - r.height / 2) * strength);
+  };
+  const handleLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ x: springX, y: springY }}
+      className={`inline-flex ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { damping: 25, stiffness: 200 });
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 z-[110] h-[3px] origin-left pointer-events-none"
+      style={{
+        scaleX,
+        background: "linear-gradient(90deg, #1a4bf0, #8b5cf6, #f59e0b)",
+      }}
+    />
+  );
+}
+
+function CustomCursor() {
+  const reduce = useReducedMotion();
+  const cx = useMotionValue(-100);
+  const cy = useMotionValue(-100);
+  const springX = useSpring(cx, { damping: 22, stiffness: 180 });
+  const springY = useSpring(cy, { damping: 22, stiffness: 180 });
+  const [hoverBtn, setHoverBtn] = useState(false);
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (reduce) return;
+    const move = (e: MouseEvent) => {
+      cx.set(e.clientX - 10);
+      cy.set(e.clientY - 10);
+    };
+    const over = (e: MouseEvent) => {
+      const el = e.target as HTMLElement;
+      const labelEl = el.closest("[data-cursor]");
+      const btnEl = el.closest("a,button,[data-magnetic]");
+      setLabel(labelEl ? labelEl.getAttribute("data-cursor") : null);
+      setHoverBtn(!!btnEl && !labelEl);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseover", over);
+    return () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseover", over);
+    };
+  }, []);
+  if (reduce) return null;
+  return (
+    <motion.div
+      aria-hidden
+      style={{ translateX: springX, translateY: springY }}
+      className={`pointer-events-none fixed top-0 left-0 z-[999] flex items-center justify-center mix-blend-difference rounded-full bg-ink text-paper font-body text-[11px] font-semibold tracking-wide transition-[width,height] duration-200 ${
+        label ? "px-3.5 h-9 whitespace-nowrap" : hoverBtn ? "size-8" : "size-5"
+      }`}
+    >
+      {label}
+    </motion.div>
+  );
+}
+
+function Particles({
+  count = 24,
+  color = "rgba(21,21,14,0.08)",
+}: {
+  count?: number;
+  color?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    if (reduce) return;
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    let anim: number;
+    const dots: { x: number; y: number; vx: number; vy: number; r: number }[] =
+      [];
+    const resize = () => {
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    for (let i = 0; i < count; i++) {
+      dots.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.8 + 0.6,
+      });
+    }
+    const draw = () => {
+      ctx.clearRect(0, 0, c.width, c.height);
+      for (const d of dots) {
+        d.x += d.vx;
+        d.y += d.vy;
+        if (d.x < 0 || d.x > c.width) d.vx *= -1;
+        if (d.y < 0 || d.y > c.height) d.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      anim = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(anim);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+  return (
+    <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" />
+  );
+}
+
+const logos = [
+  "Bella Casa",
+  "GadgetHub",
+  "Verde Vida",
+  "UrbanFit",
+  "Doce Mel",
+  "Lumina",
+  "Kianda Store",
+  "Muxima",
+];
+
+const tourPanels = [
   {
-    icon: Zap,
-    title: "Loja em minutos",
-    desc: "Temas prontos, domínio próprio e checkout ativo. Publique em instantes.",
+    id: "p-vendas",
+    url: "app.vendaexpress.ao/vendas",
+    title: "Vendas ao vivo",
+    no: "01",
+    desc: "Acompanha os teus pedidos e faturação num painel simples e direto.",
+    content: (reduce: boolean) => (
+      <div>
+        <div className="mb-3 flex items-baseline gap-3">
+          <span className="font-heading text-[38px] font-bold tracking-[-.03em] text-ink leading-none">
+            Kz 84.700
+          </span>
+          <span
+            className="font-mono text-xs font-bold text-success border border-success/30 bg-success/5 px-2 py-1"
+            style={{ borderRadius: "999px" }}
+          >
+            +18%
+          </span>
+        </div>
+        <div className="flex items-end gap-[10px] h-[70px] mb-4">
+          {[44, 62, 50, 78, 60, 90, 100].map((h, i) => (
+            <div
+              key={i}
+              className="flex-1 origin-bottom"
+              style={{
+                height: `${h}%`,
+                borderRadius: "2px",
+                background: i >= 6 ? "#1a4bf0" : "rgba(26,75,240,0.08)",
+              }}
+            />
+          ))}
+        </div>
+        <div className="space-y-0 border-t border-border">
+          {[
+            { p: "Ténis UrbanFit", c: "Luanda", v: "Kz 18.900" },
+            { p: "Bolsa Lumina", c: "Lubango", v: "Kz 24.000" },
+            { p: "Fone GadgetHub", c: "Lobito", v: "Kz 8.900" },
+          ].map((o, i) => (
+            <div
+              key={i}
+              className="flex justify-between items-center py-3 border-b border-border text-sm"
+            >
+              <span>
+                <span className="text-ink font-medium">{o.p}</span>
+                <span className="font-mono text-xs text-ink-2 ml-2">
+                  · {o.c}
+                </span>
+              </span>
+              <span className="font-heading font-bold text-ink">{o.v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
   },
   {
-    icon: MessageCircle,
-    title: "IA no WhatsApp",
-    desc: "Um assistente responde, recomenda e fecha pedidos 24 horas por dia.",
+    id: "p-ia",
+    url: "app.vendaexpress.ao/ia-whatsapp",
+    title: "Vendas via WhatsApp",
+    no: "02",
+    desc: "Recebes e geres pedidos diretamente pelo chat sem sair do painel.",
+    content: () => (
+      <div className="flex flex-col gap-3">
+        {[
+          {
+            text: "Olá! Ainda têm o vestido Bella Casa tamanho M?",
+            who: "cliente",
+            time: "02:14",
+            side: "them",
+          },
+          {
+            text: "Temos sim! Custa Kz 12.500 e entregamos em Luanda em 24h. Queres que eu reserve já?",
+            who: "ia",
+            time: "02:14",
+            side: "me",
+          },
+          {
+            text: "Sim, quero. Pago por Multicaixa Express.",
+            who: "cliente",
+            time: "02:15",
+            side: "them",
+          },
+          {
+            text: "Pedido criado ✓ Envie o comprovativo aqui e despacho hoje mesmo.",
+            who: "ia",
+            time: "02:15",
+            side: "me",
+          },
+        ].map((msg, i) => (
+          <div
+            key={i}
+            className={`max-w-[76%] ${msg.side === "me" ? "self-end" : "self-start"}`}
+          >
+            <div
+              className={`px-3.5 py-2.5 text-sm leading-relaxed ${
+                msg.side === "me"
+                  ? "bg-primary text-white"
+                  : "bg-paper text-ink"
+              }`}
+              style={{
+                borderRadius: "12px",
+                borderBottomLeftRadius: msg.side === "them" ? "3px" : "12px",
+                borderBottomRightRadius: msg.side === "me" ? "3px" : "12px",
+              }}
+            >
+              {msg.text}
+              <span className="block font-mono text-[10px] opacity-60 mt-1">
+                {msg.who} · {msg.time}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div className="self-start flex items-center gap-1.5 font-mono text-[11px] text-ink-2">
+          <span className="w-[5px] h-[5px] rounded-full bg-ink-2 animate-bounce" />
+          <span
+            className="w-[5px] h-[5px] rounded-full bg-ink-2 animate-bounce"
+            style={{ animationDelay: "0.2s" }}
+          />
+          <span
+            className="w-[5px] h-[5px] rounded-full bg-ink-2 animate-bounce"
+            style={{ animationDelay: "0.4s" }}
+          />{" "}
+          a escrever…
+        </div>
+      </div>
+    ),
   },
   {
-    icon: ShoppingCart,
-    title: "Pagamentos integrados",
-    desc: "Multicaixa, cartão e transferência. Menor taxa do mercado.",
+    id: "p-prod",
+    url: "app.vendaexpress.ao/produtos",
+    title: "Produtos",
+    no: "03",
+    desc: "Publica, edita e organiza o teu catálogo em segundos.",
+    content: () => (
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          {
+            n: "Ténis UrbanFit",
+            p: "Kz 18.900",
+            g: "linear-gradient(135deg,#DDE3F7,#EFF1FB)",
+          },
+          {
+            n: "Vestido Bella Casa",
+            p: "Kz 12.500",
+            g: "linear-gradient(135deg,#F1E6F7,#F6EEFB)",
+          },
+          {
+            n: "Kit Verde Vida",
+            p: "Kz 6.750",
+            g: "linear-gradient(135deg,#E3F3EC,#F0F8F3)",
+          },
+          {
+            n: "Bolsa Lumina",
+            p: "Kz 24.000",
+            g: "linear-gradient(135deg,#F7EFE1,#FBF6EE)",
+          },
+          {
+            n: "Fone GadgetHub",
+            p: "Kz 8.900",
+            g: "linear-gradient(135deg,#E1F1F7,#EEF7FB)",
+          },
+          {
+            n: "Perfume Doce Mel",
+            p: "Kz 9.800",
+            g: "linear-gradient(135deg,#F7E5E5,#FBEFEF)",
+          },
+        ].map((prod, i) => (
+          <div
+            key={i}
+            className="border border-border p-3 transition hover:-translate-y-[3px] hover:border-border-2"
+            style={{ borderRadius: "10px" }}
+          >
+            <div
+              className="h-[70px] mb-2.5"
+              style={{ borderRadius: "8px", background: prod.g }}
+            />
+            <div className="text-xs text-ink font-medium">{prod.n}</div>
+            <div className="font-heading text-sm font-bold text-primary mt-1">
+              {prod.p}
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
   },
   {
-    icon: Truck,
-    title: "Logística automática",
-    desc: "Frete, etiquetas e rastreio calculados sem você levantar um dedo.",
+    id: "p-log",
+    url: "app.vendaexpress.ao/logistica",
+    title: "Logística",
+    no: "04",
+    desc: "Calcula frete, gera etiquetas e rastreia sem fazer nada.",
+    content: () => (
+      <div className="space-y-0">
+        {[
+          {
+            id: "#VE-2041",
+            from: "Luanda → Talatona",
+            pill: "em trânsito",
+            pillClass: "bg-accent-soft text-primary",
+          },
+          {
+            id: "#VE-2040",
+            from: "Benguela → Lobito",
+            pill: "entregue",
+            pillClass: "bg-success/10 text-success",
+          },
+          {
+            id: "#VE-2039",
+            from: "Huambo → Caála",
+            pill: "a preparar",
+            pillClass: "bg-[#FBF0DD] text-[#9A7414]",
+          },
+          {
+            id: "#VE-2038",
+            from: "Lubango → Namibe",
+            pill: "em trânsito",
+            pillClass: "bg-accent-soft text-primary",
+          },
+          {
+            id: "#VE-2037",
+            from: "Luanda → Viana",
+            pill: "entregue",
+            pillClass: "bg-success/10 text-success",
+          },
+        ].map((l, i) => (
+          <div
+            key={i}
+            className={`flex items-center justify-between py-3.5 text-sm ${i < 4 ? "border-b border-border" : ""}`}
+          >
+            <span className="font-mono text-xs text-ink-2">{l.id}</span>
+            <span className="text-ink font-medium">{l.from}</span>
+            <span
+              className={`font-mono text-[10.5px] font-semibold px-2 py-1 ${l.pillClass}`}
+              style={{ borderRadius: "100px" }}
+            >
+              {l.pill}
+            </span>
+          </div>
+        ))}
+      </div>
+    ),
   },
   {
-    icon: BarChart3,
-    title: "Analytics em tempo real",
-    desc: "Faturamento, produtos campeões e origem das vendas num painel claro.",
-  },
-  {
-    icon: ExternalLink,
-    title: "Migração sem trauma",
-    desc: "Importe produtos e clientes de outras plataformas em um clique.",
+    id: "p-ana",
+    url: "app.vendaexpress.ao/analytics",
+    title: "Analytics",
+    no: "05",
+    desc: "Vê o que vende mais e de onde vêm os teus clientes.",
+    content: () => (
+      <div>
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { l: "receita", v: "Kz 3.1M", d: "↑ 22%" },
+            { l: "pedidos", v: "642", d: "↑ 14%" },
+            { l: "ticket médio", v: "Kz 4.8k", d: "↑ 6%" },
+          ].map((a, i) => (
+            <div
+              key={i}
+              className="border border-border p-3.5"
+              style={{ borderRadius: "10px" }}
+            >
+              <div className="font-mono text-[10.5px] text-ink-2">{a.l}</div>
+              <div className="font-heading text-2xl font-bold text-ink mt-1.5">
+                {a.v}
+              </div>
+              <div className="font-mono text-[10.5px] text-success mt-0.5">
+                {a.d}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-end gap-[10px] h-[90px]">
+          {[40, 65, 52, 80, 60, 92, 74].map((h, i) => (
+            <div
+              key={i}
+              className="flex-1"
+              style={{
+                height: `${h}%`,
+                borderRadius: "2px",
+                background: i % 2 === 0 ? "#1a4bf0" : "#C9D4F8",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    ),
   },
 ];
 
-const steps = [
+const testimonials = [
   {
-    num: "1",
-    title: "Monte sua loja",
-    desc: "Escolha um tema, personalize a vitrine e publique. Sem código, sem designer.",
+    num: "+212%",
+    lab: "em vendas nos primeiros 3 meses",
+    quote:
+      "Configurei a loja num sábado à tarde. No domingo já tinha pedidos a entrar pelo WhatsApp sem eu tocar em nada.",
+    avatar: "/images/landing/produtos.jpg",
+    name: "Bella Casa",
+    role: "decoração · luanda",
+    color: "#1a4bf0",
   },
   {
-    num: "2",
-    title: "Conecte e automatize",
-    desc: "Ative pagamentos, frete e a IA do WhatsApp em poucos cliques.",
+    num: "3×",
+    lab: "mais pedidos fechados pelo WhatsApp",
+    quote:
+      "Os clientes pedem pelo WhatsApp e eu recebo na hora. Nunca foi tão fácil vender.",
+    avatar: "/images/landing/gadget.jpg",
+    name: "GadgetHub",
+    role: "eletrónica · benguela",
+    color: "#8b5cf6",
   },
   {
-    num: "3",
-    title: "Venda no piloto automático",
-    desc: "Divulgue o link e veja os pedidos entrarem enquanto a operação roda sozinha.",
+    num: "−40%",
+    lab: "menos tempo perdido com logística",
+    quote:
+      "A plataforma calcula o frete e gera as etiquetas por mim. Só me preocupo em vender.",
+    avatar: "/images/landing/loja.jpg",
+    name: "Verde Vida",
+    role: "naturais · lobito",
+    color: "#f59e0b",
   },
 ];
+
+function TestimonialCarousel({
+  testimonials,
+}: {
+  testimonials: typeof testimonials;
+}) {
+  const [active, setActive] = useState(0);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    const t = setInterval(
+      () => setActive((p) => (p + 1) % testimonials.length),
+      3800,
+    );
+    return () => clearInterval(t);
+  }, [testimonials.length]);
+
+  const activeT = testimonials[active];
+
+  return (
+    <div className="relative">
+      <div className="grid md:grid-cols-3 gap-5 min-h-[320px]">
+        {testimonials.map((t, i) => {
+          const isActive = i === active;
+          return (
+            <motion.button
+              key={t.name}
+              data-cursor="Ler"
+              onClick={() => setActive(i)}
+              whileHover={!reduce ? { scale: 1.01 } : undefined}
+              className={`h-full bg-surface border text-left p-7 md:p-8 transition-all duration-500 ${
+                isActive ? "" : "border-border opacity-60 hover:opacity-90"
+              }`}
+              style={{
+                borderRadius: "18px",
+                ...(isActive
+                  ? {
+                      borderColor: `${t.color}66`,
+                      boxShadow: `0 0 30px -8px ${t.color}26`,
+                    }
+                  : {}),
+              }}
+            >
+              <Quote
+                size={22}
+                className="mb-3 transition-all duration-500"
+                style={{ color: t.color, opacity: isActive ? 0.5 : 0.2 }}
+              />
+              <div className="font-heading text-[58px] font-bold tracking-[-.04em] leading-none text-ink">
+                <em className="not-italic" style={{ color: t.color }}>
+                  {t.num}
+                </em>
+              </div>
+              <div className="font-mono text-xs text-ink-2 mt-2">{t.lab}</div>
+              <div
+                className="relative overflow-hidden mt-5"
+                style={{ height: "4.5em" }}
+              >
+                <AnimatePresence mode="wait">
+                  {isActive && (
+                    <motion.p
+                      key={t.name}
+                      initial={!reduce ? { opacity: 0, y: 10 } : undefined}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={!reduce ? { opacity: 0, y: -10 } : undefined}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="text-sm text-ink leading-relaxed absolute inset-0"
+                    >
+                      &ldquo;{t.quote}&rdquo;
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div className="flex items-center gap-3 border-t border-border pt-4 mt-5">
+                <div
+                  className={`w-[34px] h-[34px] overflow-hidden transition-all duration-500 shrink-0 ${
+                    isActive ? "scale-110" : ""
+                  }`}
+                  style={{
+                    borderRadius: "999px",
+                    boxShadow: isActive ? `0 0 0 2px ${t.color}4d` : undefined,
+                  }}
+                >
+                  <img
+                    src={t.avatar}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div>
+                  <div className="font-heading text-[14.5px] font-semibold text-ink">
+                    {t.name}
+                  </div>
+                  <div className="font-mono text-[11.5px] text-ink-2">
+                    {t.role}
+                  </div>
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-2.5 mt-6">
+        {testimonials.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            className={`transition-all duration-500 rounded-full ${
+              i === active
+                ? "w-7 h-[6px]"
+                : "w-[6px] h-[6px] bg-border-2 hover:bg-ink-2"
+            }`}
+            style={
+              i === active
+                ? { backgroundColor: testimonials[active].color }
+                : undefined
+            }
+            aria-label={`testemunho ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const plans = [
   {
+    tag: "início",
     name: "Início",
-    desc: "Para validar sua ideia e fazer a primeira venda.",
+    desc: "Para validar a tua ideia e fazer a primeira venda.",
     price: "Kz 4.900",
     per: "/mês",
-    popular: false,
+    pop: false,
+    color: "#0d9488",
     perks: [
       "Loja + domínio grátis",
       "Multicaixa e cartão",
@@ -118,25 +804,29 @@ const plans = [
     ],
   },
   {
+    tag: "mais popular",
     name: "Crescimento",
-    desc: "Para escalar com automação e IA vendendo por você.",
+    desc: "Para escalar as tuas vendas com tudo que precisas.",
     price: "Kz 14.900",
     per: "/mês",
-    popular: true,
+    pop: true,
+    color: "#1a4bf0",
     perks: [
       "Tudo do Início",
-      "IA de vendas no WhatsApp",
-      "Logística automática",
+      "Vendas pelo WhatsApp",
+      "Logística integrada",
       "Produtos ilimitados",
       "Analytics avançado",
     ],
   },
   {
+    tag: "enterprise",
     name: "Enterprise",
     desc: "Para marcas com alto volume e integrações sob medida.",
     price: "Sob consulta",
     per: "",
-    popular: false,
+    pop: false,
+    color: "#f59e0b",
     perks: [
       "Tudo do Crescimento",
       "Gerente de conta dedicado",
@@ -146,314 +836,164 @@ const plans = [
   },
 ];
 
-const logos = [
-  "LumaWear",
-  "Café Norte",
-  "TênisPro",
-  "Bella Casa",
-  "GadgetHub",
-  "Verde Vida",
-  "UrbanFit",
-  "Doce Mel",
-];
-
-const iconTints = [
-  "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-600",
-  "bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400 group-hover:bg-sky-500",
-  "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 group-hover:bg-indigo-600",
-  "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-600",
-  "bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400 group-hover:bg-sky-500",
-];
-
-function AuroraField() {
+function CountUpSection() {
   const reduce = useReducedMotion();
-  const blobs = [
-    {
-      className: "left-[-10%] top-[-15%] h-[560px] w-[560px]",
-      from: "rgba(0,80,203,0.55)",
-      dur: 22,
-    },
-    {
-      className: "right-[-15%] top-[5%] h-[480px] w-[480px]",
-      from: "rgba(56,189,248,0.45)",
-      dur: 26,
-    },
-    {
-      className: "left-[20%] bottom-[-20%] h-[420px] w-[420px]",
-      from: "rgba(0,80,203,0.35)",
-      dur: 30,
-    },
-  ];
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {blobs.map((b, i) => (
-        <motion.div
-          key={i}
-          className={`absolute rounded-full blur-[110px] ${b.className}`}
-          style={{
-            background: `radial-gradient(circle, ${b.from}, transparent 70%)`,
-          }}
-          animate={
-            reduce
-              ? {}
-              : {
-                  x: [0, 40, -20, 0],
-                  y: [0, -30, 20, 0],
-                  scale: [1, 1.08, 0.96, 1],
-                }
-          }
-          transition={{ duration: b.dur, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
-      <div
-        className="absolute inset-0 opacity-[0.4] dark:opacity-[0.18]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(0,80,203,0.35) 1px, transparent 0)",
-          backgroundSize: "28px 28px",
-        }}
-      />
-      <svg className="absolute inset-0 h-full w-full opacity-[0.035] mix-blend-overlay dark:opacity-[0.06]">
-        <filter id="grain">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.9"
-            numOctaves="2"
-          />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#grain)" />
-      </svg>
-    </div>
-  );
-}
-
-function DashboardMockup() {
-  const reduce = useReducedMotion();
-
-  return (
-    <div className="relative" style={{ perspective: "1200px" }}>
-      <div
-        className="absolute -inset-[14%_10%] rounded-[56px] opacity-60 blur-[72px] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 40%, rgba(0,80,203,0.45), rgba(0,80,203,0) 70%)",
-        }}
-      />
-      <div
-        className="absolute -inset-[8%_6%] rounded-[44px] opacity-40 blur-[90px] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 25% 65%, rgba(56,189,248,0.35), transparent 60%)",
-        }}
-      />
-      <motion.div
-        className="absolute -inset-2 rounded-[28px] pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(120deg, rgba(0,80,203,0.5), rgba(56,189,248,0.5), rgba(0,80,203,0.5))",
-          backgroundSize: "200% 200%",
-          filter: "blur(18px)",
-          opacity: 0.5,
-        }}
-        animate={
-          reduce ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
-        }
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-      />
-
-      <motion.div
-        initial={reduce ? false : { opacity: 0, y: 40, rotateX: 4 }}
-        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-        transition={{
-          duration: 1,
-          delay: 0.3,
-          ease: [0.16, 1, 0.3, 1] as const,
-        }}
-        className="relative overflow-hidden rounded-2xl border border-white/60 bg-white shadow-2xl shadow-blue-900/20 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/50"
-        style={{ transformStyle: "preserve-3d" }}
-      >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/10" />
-
-        <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-          <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          <div className="ml-3 flex flex-1 justify-center">
-            <span className="rounded-md bg-zinc-100 px-3 py-1 text-[11px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-              minhaloja.vendaexpress.com
-            </span>
-          </div>
-        </div>
-        <div className="grid min-h-[270px] grid-cols-[64px_1fr]">
-          <div className="flex flex-col items-center gap-3 border-r border-zinc-200 py-5 dark:border-zinc-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-600/40">
-              <LayoutDashboard size={15} />
-            </div>
-            {[Package, BarChart3, MessageCircle].map((Icon, i) => (
-              <div
-                key={i}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-300 transition hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400"
-              >
-                <Icon size={13} />
-              </div>
-            ))}
-          </div>
-          <div className="p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <div className="text-[10px] tracking-[.15em] text-zinc-400 uppercase">
-                  Faturamento · hoje
-                </div>
-                <div className="mt-0.5 text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                  Kz 84.700
-                </div>
-              </div>
-              <div className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                +18%
-              </div>
-            </div>
-            <div className="flex h-[72px] items-end gap-1.5 border-b border-zinc-200 py-2 dark:border-zinc-800">
-              {[40, 58, 34, 72, 50, 86, 62, 94, 70].map((h, i) => (
-                <motion.div
-                  key={i}
-                  initial={reduce ? false : { scaleY: 0 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: 0.6 + i * 0.06,
-                    ease: [0.16, 1, 0.3, 1] as const,
-                  }}
-                  className="flex-1 rounded-sm origin-bottom"
-                  style={{
-                    height: `${h}%`,
-                    background:
-                      i >= 6
-                        ? "linear-gradient(180deg, #38bdf8, #0050cb)"
-                        : "rgba(0,80,203,0.12)",
-                  }}
-                />
-              ))}
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2.5">
-              {[
-                { label: "Pedidos", value: "142" },
-                { label: "Visitas", value: "3.9k" },
-                { label: "Conversão", value: "3,6%" },
-              ].map((item, i) => (
-                <motion.div
-                  key={item.label}
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: 1 + i * 0.08,
-                    ease: [0.16, 1, 0.3, 1] as const,
-                  }}
-                  className="rounded-xl bg-zinc-50 p-2.5 dark:bg-zinc-800/60"
-                >
-                  <div className="text-[10px] text-zinc-400">{item.label}</div>
-                  <div className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-white">
-                    {item.value}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.95 }}
-        animate={{ opacity: 1, y: [0, -8, 0], scale: 1 }}
-        transition={{
-          opacity: { delay: 1.4, duration: 0.7 },
-          scale: { delay: 1.4, duration: 0.7 },
-          y: { delay: 2, duration: 4, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-64 rounded-xl border border-blue-200/70 bg-white/95 p-4 shadow-2xl shadow-blue-600/20 backdrop-blur-xl dark:border-blue-800 dark:bg-zinc-900/95"
-      >
-        <div className="mb-2.5 flex items-center gap-3">
-          <motion.div
-            animate={reduce ? {} : { scale: [1, 1.08, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-sm"
-          >
-            <MessageCircle size={15} />
-          </motion.div>
-          <div>
-            <div className="text-xs font-bold text-zinc-900 dark:text-white">
-              Assistente IA
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-emerald-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              online agora
-            </div>
-          </div>
-          <span className="ml-auto rounded-full bg-gradient-to-r from-blue-600 to-sky-400 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-            Vendas
-          </span>
-        </div>
-        <div className="rounded-xl rounded-tl-sm bg-gradient-to-br from-blue-50 to-white p-3 text-xs leading-relaxed text-zinc-600 shadow-sm dark:from-blue-900/20 dark:to-zinc-900 dark:text-zinc-300">
-          Fechei 3 pedidos enquanto você dormia —{" "}
-          <span className="font-semibold text-blue-600 dark:text-blue-400">
-            Kz 84.700
-          </span>{" "}
-          hoje
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="absolute -left-10 top-16 hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-emerald-600 shadow-xl shadow-emerald-500/10 backdrop-blur-xl dark:border-emerald-800 dark:bg-zinc-900/95 lg:flex"
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0, y: [0, 10, 0] }}
-        transition={{
-          opacity: { delay: 1.8, duration: 0.6 },
-          x: { delay: 1.8, duration: 0.6 },
-          y: { delay: 2.4, duration: 5, repeat: Infinity, ease: "easeInOut" },
-        }}
-      >
-        <CheckCircle2 size={13} /> Pagamento aprovado
-      </motion.div>
-      <motion.div
-        className="absolute -right-8 bottom-24 hidden items-center gap-1.5 rounded-full border border-blue-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-blue-600 shadow-xl shadow-blue-500/10 backdrop-blur-xl dark:border-blue-800 dark:bg-zinc-900/95 lg:flex"
-        initial={{ opacity: 0, x: 10 }}
-        animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
-        transition={{
-          opacity: { delay: 2.1, duration: 0.6 },
-          x: { delay: 2.1, duration: 0.6 },
-          y: { delay: 2.7, duration: 4.5, repeat: Infinity, ease: "easeInOut" },
-        }}
-      >
-        <Truck size={13} /> Frete calculado
-      </motion.div>
-    </div>
-  );
-}
-
-export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
-  const reduce = useReducedMotion();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
   const countedRef = useRef(false);
 
+  const [flash, setFlash] = useState(false);
+
   useEffect(() => {
-    const el = document.getElementById("numeros");
+    const el = document.getElementById("stats");
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !countedRef.current) {
           countedRef.current = true;
-          const targets = [12000, 3, 60, 99];
-          const dur = 1600;
+          const targets = [12, 3, 60, 99];
+          const dur = 1500;
           const start = performance.now();
           const tick = (now: number) => {
             const p = Math.min(1, (now - start) / dur);
             const e = 1 - Math.pow(1 - p, 3);
             setCounts(targets.map((t) => Math.round(t * e)));
             if (p < 1) requestAnimationFrame(tick);
-            else setCounts(targets);
+            else {
+              setCounts(targets);
+              setFlash(true);
+            }
           };
           requestAnimationFrame(tick);
+          io.unobserve(el);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const items = [
+    { val: `${counts[0]}k+`, label: "lojas ativas", color: "#1a4bf0" },
+    {
+      val: `Kz ${counts[1]} bi`,
+      label: "vendidos na plataforma",
+      color: "#8b5cf6",
+    },
+    { val: `${counts[2]}s`, label: "para criar uma loja", color: "#f59e0b" },
+    { val: `${counts[3]}%`, label: "uptime", color: "#0d9488" },
+  ];
+
+  return (
+    <div
+      id="stats"
+      className="grid grid-cols-2 md:grid-cols-4 border-b border-border"
+    >
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="stat-cell relative overflow-hidden border-r border-border last:border-r-0 p-10 md:p-16 text-center cursor-default"
+        >
+          <span
+            className="absolute top-0 left-0 right-0 h-[3px] opacity-70"
+            style={{ background: item.color }}
+          />
+          <div
+            className={`font-heading text-[clamp(40px,5vw,64px)] font-bold leading-none tracking-[-.035em] tabular-nums ${flash ? "count-flash" : ""}`}
+            style={{ color: item.color }}
+          >
+            {item.val}
+          </div>
+          <div className="mt-3 font-mono text-xs text-ink-2">{item.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TourRailFill({
+  index,
+  n,
+  progress,
+}: {
+  index: number;
+  n: number;
+  progress: MotionValue<number>;
+}) {
+  const width = useTransform(
+    progress,
+    [index / n, (index + 1) / n],
+    ["0%", "100%"],
+  );
+  return (
+    <motion.div className="h-full bg-primary rounded-[2px]" style={{ width }} />
+  );
+}
+
+function TourFrame({
+  panel,
+  index,
+  n,
+  progress,
+  reduce,
+}: {
+  panel: (typeof tourPanels)[number];
+  index: number;
+  n: number;
+  progress: MotionValue<number>;
+  reduce: boolean;
+}) {
+  const segStart = index / n;
+  const segEnd = (index + 1) / n;
+  const ease = (segEnd - segStart) * 0.08;
+  const opacity = useTransform(
+    progress,
+    [segStart, segStart + ease, segEnd - ease, segEnd],
+    [index === 0 ? 1 : 0, 1, 1, index === n - 1 ? 1 : 0],
+  );
+  const y = useTransform(
+    progress,
+    [segStart, segStart + ease, segEnd - ease, segEnd],
+    [index === 0 ? 0 : 16, 0, 0, index === n - 1 ? 0 : -16],
+  );
+  return (
+    <motion.div
+      style={reduce ? undefined : { opacity, y }}
+      className="pointer-events-none absolute inset-0 bg-surface p-6"
+    >
+      <div className="mb-4 flex justify-between font-mono text-[11px] text-ink-2 uppercase tracking-[.06em]">
+        <span>{panel.title.toLowerCase()}</span>
+        <span>hoje</span>
+      </div>
+      {panel.content(reduce)}
+    </motion.div>
+  );
+}
+
+/** Click/autoplay tour used on mobile and under prefers-reduced-motion, where a pinned scroll-scrub hurts more than it helps. */
+function InteractiveTourFallback({ reduce }: { reduce: boolean }) {
+  const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(!reduce);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const [visible, setVisible] = useState(false);
+
+  const advance = useCallback(() => {
+    setActive((prev) => (prev + 1) % tourPanels.length);
+  }, []);
+
+  useEffect(() => {
+    if (!visible || reduce || !playing) return;
+    intervalRef.current = setInterval(advance, 5200);
+    return () => clearInterval(intervalRef.current);
+  }, [advance, visible, reduce, playing]);
+
+  useEffect(() => {
+    const el = document.getElementById("plataforma");
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
           io.unobserve(el);
         }
       },
@@ -463,789 +1003,2485 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
     return () => io.disconnect();
   }, []);
 
-  const displayStats = [
-    {
-      node:
-        counts[0] >= 1000
-          ? `${(counts[0] / 1000).toFixed(counts[0] >= 10000 ? 0 : 1).replace(".", ",")}k`
-          : counts[0],
-      label: "Lojas ativas",
-      suffix: "+",
-    },
-    { node: `Kz ${counts[1]}`, label: "Vendidos na plataforma", suffix: " bi" },
-    { node: `${counts[2]}`, label: "Para criar uma loja", suffix: "s" },
-    { node: `${counts[3]}`, label: "Uptime", suffix: "%" },
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 1 },
-    visible: { transition: { staggerChildren: 0.06 } },
-  };
-
-  const itemVariants = {
-    hidden: reduce ? {} : { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
-    },
-  };
+  const panel = tourPanels[active];
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <style>{`
-        @keyframes gradientPan { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        .gradient-text-live { background-size: 200% auto; animation: gradientPan 6s ease-in-out infinite; }
-        @keyframes shine { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(220%) skewX(-20deg); } }
-        .shine-sweep::after {
-          content: ''; position: absolute; inset: 0; width: 40%;
-          background: linear-gradient(115deg, transparent, rgba(255,255,255,0.35), transparent);
-          animation: shine 3.2s ease-in-out infinite;
-        }
-        .conic-border { background: conic-gradient(from 0deg, #0050cb, #38bdf8, #0050cb); }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-marquee { animation: marquee 35s linear infinite; }
-      `}</style>
-
-      <nav className="fixed inset-x-0 top-4 z-50">
-        <div className="relative mx-auto flex h-16 w-[min(1280px,calc(100%-40px))] items-center justify-between rounded-2xl border border-zinc-200/70 bg-white/85 px-5 shadow-lg shadow-blue-900/10 backdrop-blur-2xl transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-950/85 dark:shadow-black/20">
-          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-white/50 to-transparent dark:from-white/[0.03]" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px rounded-full bg-gradient-to-r from-transparent via-blue-500/50 to-transparent dark:via-blue-500/40" />
-
-          <Link
-            href="/"
-            className="group relative z-10 flex items-center gap-2.5"
-            navigate={navigate}
+    <div
+      className="grid md:grid-cols-[0.9fr_1.6fr] gap-7 md:gap-11 items-start"
+      style={{ perspective: "1600px" }}
+    >
+      <div className="flex flex-col border-t border-border">
+        {tourPanels.map((p, i) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              setPlaying(false);
+              setActive(i);
+            }}
+            className={`text-left bg-none border-0 border-b border-border py-5 px-1 cursor-pointer grid grid-cols-[auto_1fr] gap-4 items-start transition-all duration-300 ${
+              i === active ? "pl-3" : "hover:pl-2"
+            }`}
           >
-            <motion.div
-              whileHover={reduce ? {} : { scale: 1.05, rotate: -6 }}
-              className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-400 text-[15px] font-bold text-white shadow-lg shadow-blue-500/40"
+            <span
+              className={`font-mono text-xs mt-1 transition-colors ${i === active ? "text-primary" : "text-ink-2"}`}
             >
-              V
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
-            </motion.div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-[17px] font-bold tracking-tight">
-                Venda Express
+              {p.no}
+            </span>
+            <span>
+              <h4
+                className={`font-heading text-lg font-semibold tracking-[-.02em] transition-colors ${i === active ? "text-primary" : "text-ink"}`}
+              >
+                {p.title}
+              </h4>
+              <p
+                className={`text-sm text-ink-2 transition-all duration-400 ${
+                  i === active
+                    ? "max-h-[60px] opacity-100 mt-1.5"
+                    : "max-h-0 opacity-0 overflow-hidden"
+                }`}
+              >
+                {p.desc}
+              </p>
+              <div
+                className="h-[2px] bg-line-2 mt-3 overflow-hidden rounded-[2px]"
+                style={{ display: i === active ? "block" : "none" }}
+              >
+                <div
+                  className="h-full bg-primary rounded-[2px] transition-[width]"
+                  style={{
+                    width: i === active ? "100%" : "0%",
+                    transitionDuration: i === active && playing ? "5s" : "0.3s",
+                    transitionTimingFunction: "linear",
+                  }}
+                />
+              </div>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div
+        className="tour-stage"
+        data-cursor="Explorar"
+        style={{ perspective: "1600px" }}
+      >
+        <TiltCard
+          className="tour-screen relative border border-border-2 bg-surface shadow-lg overflow-hidden"
+          style={{ borderRadius: "20px", minHeight: "430px" }}
+        >
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <div className="flex gap-1.5">
+              <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+              <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+              <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+            </div>
+            <div
+              className="flex-1 text-center font-mono text-[11.5px] text-ink-2 bg-paper py-1.5 px-3"
+              style={{ borderRadius: "999px" }}
+            >
+              {panel.url}
+            </div>
+            <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold text-success tracking-[.04em]">
+              <span
+                className="w-[6px] h-[6px] rounded-full bg-success"
+                style={{ animation: "pulse2 1.6s infinite" }}
+              />
+              AO VIVO
+            </span>
+          </div>
+          <div className="relative min-h-[376px] p-6" key={panel.id}>
+            <div className="mb-4 flex justify-between font-mono text-[11px] text-ink-2 uppercase tracking-[.06em]">
+              <span>{panel.title.toLowerCase()}</span>
+              <span>hoje</span>
+            </div>
+            {panel.content(reduce ?? false)}
+          </div>
+        </TiltCard>
+      </div>
+    </div>
+  );
+}
+
+/** Desktop, motion-enabled: pins the section and scrubs through the 5 platform frames as the user scrolls, like flipping through the app while it runs. */
+function InteractiveTourPinned() {
+  const n = tourPanels.length;
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    setActive(Math.min(n - 1, Math.max(0, Math.floor(v * n))));
+  });
+
+  const goTo = (i: number) => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const target = top + (el.offsetHeight * (i + 0.5)) / n;
+    window.scrollTo({ top: target, behavior: "smooth" });
+  };
+
+  const panel = tourPanels[active];
+
+  return (
+    <div
+      ref={sectionRef}
+      className="relative"
+      style={{ height: `${n * 92}vh` }}
+    >
+      <div
+        className="sticky top-[96px] grid md:grid-cols-[0.9fr_1.6fr] gap-7 md:gap-11 items-start"
+        style={{ perspective: "1600px" }}
+      >
+        <div className="flex flex-col border-t border-border">
+          {tourPanels.map((p, i) => (
+            <button
+              key={p.id}
+              onClick={() => goTo(i)}
+              className={`text-left bg-none border-0 border-b border-border py-5 px-1 cursor-pointer grid grid-cols-[auto_1fr] gap-4 items-start transition-all duration-300 ${
+                i === active ? "pl-3" : "hover:pl-2"
+              }`}
+            >
+              <span
+                className={`font-mono text-xs mt-1 transition-colors ${i === active ? "text-primary" : "text-ink-2"}`}
+              >
+                {p.no}
               </span>
-              <span className="hidden rounded-full border border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:border-blue-800 dark:from-blue-900/40 dark:to-sky-900/30 dark:text-blue-300 sm:inline-block">
-                AO
+              <span>
+                <h4
+                  className={`font-heading text-lg font-semibold tracking-[-.02em] transition-colors ${i === active ? "text-primary" : "text-ink"}`}
+                >
+                  {p.title}
+                </h4>
+                <p
+                  className={`text-sm text-ink-2 transition-all duration-400 ${
+                    i === active
+                      ? "max-h-[60px] opacity-100 mt-1.5"
+                      : "max-h-0 opacity-0 overflow-hidden"
+                  }`}
+                >
+                  {p.desc}
+                </p>
+                <div
+                  className="h-[2px] bg-line-2 mt-3 overflow-hidden rounded-[2px]"
+                  style={{ display: i === active ? "block" : "none" }}
+                >
+                  <TourRailFill index={i} n={n} progress={scrollYProgress} />
+                </div>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div
+          className="tour-stage"
+          data-cursor="Explorar"
+          style={{ perspective: "1600px" }}
+        >
+          <TiltCard
+            className="tour-screen relative border border-border-2 bg-surface shadow-lg overflow-hidden"
+            style={{ borderRadius: "20px", minHeight: "430px" }}
+          >
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+              <div className="flex gap-1.5">
+                <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+                <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+                <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+              </div>
+              <div
+                className="flex-1 text-center font-mono text-[11.5px] text-ink-2 bg-paper py-1.5 px-3"
+                style={{ borderRadius: "999px" }}
+              >
+                {panel.url}
+              </div>
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold text-success tracking-[.04em]">
+                <span
+                  className="w-[6px] h-[6px] rounded-full bg-success"
+                  style={{ animation: "pulse2 1.6s infinite" }}
+                />
+                AO VIVO
               </span>
             </div>
-          </Link>
+            <div className="relative min-h-[376px]">
+              {tourPanels.map((p, i) => (
+                <TourFrame
+                  key={p.id}
+                  panel={p}
+                  index={i}
+                  n={n}
+                  progress={scrollYProgress}
+                  reduce={false}
+                />
+              ))}
+            </div>
+          </TiltCard>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          <div className="hidden items-center gap-0.5 md:flex">
-            {[
-              { href: "#recursos", label: "Recursos" },
-              { href: "#como", label: "Como funciona" },
-              { href: "#precos", label: "Preços" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group relative rounded-lg px-3.5 py-2 text-sm font-medium text-zinc-500 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                navigate={navigate}
-              >
-                {link.label}
-              </Link>
+function InteractiveTour() {
+  const reduce = useReducedMotion();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  if (isDesktop && !reduce) return <InteractiveTourPinned />;
+  return <InteractiveTourFallback reduce={!!reduce} />;
+}
+
+function LiveDashboard() {
+  const reduce = useReducedMotion();
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [revenue, setRevenue] = useState(84700);
+  const [pedidos, setPedidos] = useState(142);
+  const [aiMsg, setAiMsg] = useState(
+    "Fechei 3 pedidos enquanto dormias — Kz 84.700 hoje.",
+  );
+  const [toast, setToast] = useState<{ title: string; sub: string } | null>(
+    null,
+  );
+  const idxRef = useRef(0);
+
+  const orders = [
+    { p: "Ténis UrbanFit", v: 18900, c: "Luanda" },
+    { p: "Vestido Bella Casa", v: 12500, c: "Benguela" },
+    { p: "Fone GadgetHub", v: 8900, c: "Lobito" },
+    { p: "Kit Verde Vida", v: 6750, c: "Huambo" },
+    { p: "Bolsa Lumina", v: 24000, c: "Lubango" },
+    { p: "Relógio GadgetHub", v: 31500, c: "Namibe" },
+    { p: "Perfume Doce Mel", v: 9800, c: "Luanda" },
+    { p: "Sapatilha UrbanFit", v: 15300, c: "Benguela" },
+  ];
+
+  const fmt = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  useEffect(() => {
+    if (reduce) return;
+    let timer1 = setTimeout(() => {
+      newOrder();
+      const interval = setInterval(newOrder, 3400);
+      timer1 = setInterval(() => {}, 0); // placeholder
+    }, 1800);
+    function newOrder() {
+      if (document.hidden) return;
+      const o = orders[idxRef.current % orders.length];
+      idxRef.current++;
+      setRevenue((prev) => prev + o.v);
+      setPedidos((prev) => prev + 1);
+      setAiMsg(`Fechei o pedido — ${o.p} · Kz ${fmt(o.v)} · ${o.c}`);
+      setToast({
+        title: `${o.p} — Kz ${fmt(o.v)}`,
+        sub: `fechado pela ia · ${o.c}`,
+      });
+    }
+    return () => clearTimeout(timer1);
+  }, []);
+
+  const svgUrl = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E`;
+
+  return (
+    <div
+      ref={stageRef}
+      className="relative"
+      style={{
+        perspective: "1600px",
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+      }}
+      data-rotate
+    >
+      <div
+        className="browser bg-surface border border-border-2 shadow-lg overflow-hidden"
+        style={{ borderRadius: "20px" }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <div className="flex gap-1.5">
+            <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+            <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+            <span className="w-[10px] h-[10px] rounded-full bg-[#E6E4DA]" />
+          </div>
+          <div
+            className="flex-1 text-center font-mono text-[11.5px] text-ink-2 bg-paper py-1.5 px-3"
+            style={{ borderRadius: "999px" }}
+          >
+            minhaloja.vendaexpress.ao
+          </div>
+          <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold text-success tracking-[.04em]">
+            <span
+              className="w-[6px] h-[6px] rounded-full bg-success"
+              style={{ animation: "pulse2 1.6s infinite" }}
+            />
+            AO VIVO
+          </span>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-mono text-[10px] tracking-[.08em] uppercase text-ink-2">
+              faturamento · hoje
+            </span>
+            <span
+              className="font-mono text-[11.5px] font-bold text-success border border-success/30 bg-success/5 px-2 py-1"
+              style={{ borderRadius: "999px" }}
+            >
+              +18%
+            </span>
+          </div>
+          <div className="mt-1.5 mb-4">
+            <span className="font-heading text-[34px] font-bold tracking-[-.02em] text-ink tabular-nums">
+              Kz {fmt(revenue)}
+            </span>
+          </div>
+          <div
+            id="chart"
+            className="flex items-end gap-2 h-[100px] pb-3.5 border-b border-border"
+          >
+            {[44, 60, 50, 74, 58, 86, 100].map((h, i) => (
+              <div
+                key={i}
+                className="flex-1 origin-bottom chart-bar"
+                style={{
+                  height: `${h}%`,
+                  borderRadius: "2px",
+                  background: i >= 6 ? "#1a4bf0" : "rgba(26,75,240,0.08)",
+                }}
+              />
             ))}
           </div>
+          <div className="flex gap-6 mt-4">
+            {[
+              { n: fmt(pedidos), l: "pedidos" },
+              { n: "3.9k", l: "visitas" },
+              { n: "27%", l: "conversão" },
+            ].map((s, i) => (
+              <div key={i}>
+                <div
+                  className="font-heading text-lg font-bold text-ink tabular-nums"
+                  id={i === 0 ? "pedidos" : undefined}
+                >
+                  {s.n}
+                </div>
+                <div className="font-mono text-[10.5px] text-ink-2">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-          <div className="hidden items-center gap-2 md:flex">
+      <div
+        className="absolute left-[-30px] bottom-[34px] max-w-[244px] bg-surface border border-border-2 shadow-xl flex gap-2.5 p-3"
+        style={{ borderRadius: "16px", transform: "translateZ(60px)" }}
+      >
+        <div
+          className="w-[30px] h-[30px] bg-primary text-white flex items-center justify-center shrink-0"
+          style={{ borderRadius: "10px" }}
+        >
+          <Bot size={16} />
+        </div>
+        <div>
+          <div className="font-mono text-[11px] font-semibold text-ink flex items-center gap-1.5">
+            assistente ia{" "}
+            <span className="w-[6px] h-[6px] rounded-full bg-success" />
+          </div>
+          <div className="text-[11.5px] text-ink-2 leading-relaxed mt-1">
+            {aiMsg}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`absolute top-[-16px] right-5 bg-ink text-paper font-mono flex items-center gap-2.5 px-3.5 py-2.5 transition-all duration-350 ${
+          toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+        style={{
+          borderRadius: "999px",
+          transform: toast
+            ? "translateZ(80px)"
+            : "translateZ(80px) translateY(-8px)",
+        }}
+      >
+        <span className="text-[#8FE9B4] text-sm">↑</span>
+        <div>
+          <div className="text-[11.5px] font-semibold whitespace-nowrap">
+            {toast?.title ?? ""}
+          </div>
+          <div className="text-[10.5px] text-paper/60 whitespace-nowrap">
+            {toast?.sub ?? ""}
+          </div>
+        </div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: [0, 10, 0] }}
+        transition={{
+          opacity: { delay: 1.8, duration: 0.6 },
+          y: { delay: 2.4, duration: 5, repeat: Infinity, ease: "easeInOut" },
+        }}
+        className="absolute right-1 top-14 sm:-right-6 sm:top-16 lg:-right-10 flex items-center gap-1.5 sm:gap-2 bg-surface border border-success/30 px-2.5 py-1 sm:px-3 sm:py-1.5 font-mono text-[10px] sm:text-xs font-semibold text-success shadow-xl scale-90 sm:scale-100 origin-right"
+        style={{ borderRadius: "999px" }}
+      >
+        <CheckCircle2 size={12} className="shrink-0" /> Pagamento aprovado
+      </motion.div>
+    </div>
+  );
+}
+
+export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
+  const reduce = useReducedMotion();
+  const navRef = useRef<HTMLElement>(null);
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+  const [introDone, setIntroDone] = useState(false);
+
+  // Opening curtain — a brief branded reveal instead of dropping straight into the hero.
+  // Purely visual (the opaque overlay already covers everything): it must NOT touch
+  // document.body.style.overflow, since that races with Lenis's own scroll setup below
+  // and left the page's scroll broken once the curtain lifted.
+  useEffect(() => {
+    if (reduce) {
+      setIntroDone(true);
+      return;
+    }
+    const t = setTimeout(() => setIntroDone(true), 1900);
+    return () => clearTimeout(t);
+  }, [reduce]);
+
+  // Smooth (inertia) scroll — landing page only, doesn't touch dashboard/admin.
+  // Lenis keeps driving the real document scroll (just smoothed via rAF), so
+  // window.scrollY, IntersectionObserver and motion's useScroll all keep working.
+  useEffect(() => {
+    if (reduce) return;
+    const lenis = new Lenis({
+      duration: 1.1,
+      smoothWheel: true,
+      wheelMultiplier: 1,
+    });
+    let rafId: number;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, [reduce]);
+
+  useEffect(() => {
+    const handleScroll = () => setNavScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Scroll spy
+  useEffect(() => {
+    const sections = document.querySelectorAll("section[id]");
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setActiveSection(e.target.id);
+          }
+        }
+      },
+      { threshold: 0.15, rootMargin: "-80px 0px -20% 0px" },
+    );
+    sections.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, []);
+
+  // Lock body scroll on mobile menu open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // Hero scroll rotation
+  useEffect(() => {
+    if (reduce) return;
+    const stage = document.querySelector("[data-rotate]") as HTMLElement;
+    if (!stage) return;
+    let ticking = false;
+    const frame = () => {
+      const r = stage.getBoundingClientRect();
+      const p = Math.max(0, Math.min(1, 1 - r.top / window.innerHeight));
+      const rx = (1 - p) * 16;
+      const ry = (1 - p) * -4;
+      const ty = p * -24;
+      stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateY(${ty}px)`;
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          frame();
+          ticking = true;
+        });
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    frame();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Chart grow on scroll
+  useEffect(() => {
+    if (reduce) return;
+    const chart = document.getElementById("chart");
+    if (!chart) return;
+    const io = new IntersectionObserver(
+      ([entry], observer) => {
+        if (entry.isIntersecting) {
+          chart.querySelectorAll(".chart-bar").forEach((el) => {
+            (el as HTMLElement).style.transform = "scaleY(1)";
+          });
+          observer.unobserve(chart);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(chart);
+    return () => io.disconnect();
+  }, []);
+
+  // Reveal animations
+  useEffect(() => {
+    if (reduce) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+    );
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-paper text-ink-2 selection:bg-primary selection:text-paper font-body">
+      <AnimatePresence>
+        {!introDone && (
+          <motion.div
+            aria-hidden
+            className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden bg-ink"
+            initial={{ y: 0 }}
+            animate={{ y: "-100%" }}
+            transition={{
+              duration: 0.7,
+              delay: 1.15,
+              ease: [0.76, 0, 0.24, 1],
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-[0.14]"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 25% 20%, #8b5cf6, transparent 55%), radial-gradient(circle at 80% 85%, #1a4bf0, transparent 55%), radial-gradient(circle at 85% 15%, #f59e0b, transparent 50%)",
+              }}
+            />
+            <div className="overflow-hidden relative z-[1]">
+              <motion.span
+                className="flex items-center gap-3 font-heading text-white text-[9vw] md:text-[3.6vw] font-bold tracking-[-.03em]"
+                initial={{ y: "115%" }}
+                animate={{ y: "0%" }}
+                transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <span className="w-[10px] h-[10px] rounded-full bg-primary shrink-0" />
+                Venda Express
+              </motion.span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ScrollProgress />
+      <CustomCursor />
+      <Particles />
+
+      {/* Grain overlay */}
+      <div
+        className="pointer-events-none fixed inset-0 z-50 opacity-[0.028] mix-blend-multiply"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      <style>{`
+        html { scroll-behavior: smooth; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 30s linear infinite; }
+        .animate-marquee:hover { animation-play-state: paused; }
+        @keyframes pulse2 { 0% { box-shadow: 0 0 0 0 rgba(31,157,87,.45); } 70% { box-shadow: 0 0 0 7px rgba(31,157,87,0); } 100% { box-shadow: 0 0 0 0 rgba(31,157,87,0); } }
+        .btn-press { transition: transform .12s cubic-bezier(.2,.85,.4,1), box-shadow .25s ease; }
+        .btn-press:active { transform: scale(.97); }
+        .btn-press.bg-ink:hover { box-shadow: 0 0 0 5px rgba(26,75,240,0.12); }
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+        .reveal.in { opacity: 1; transform: none; }
+        .chart-bar { transform: scaleY(0); transition: transform .9s cubic-bezier(.2,.8,.2,1); }
+        #chart .chart-bar { transform: scaleY(1); }
+        .navlink-underline::after {
+          content: ''; position: absolute; left: 0; right: 100%; bottom: -4px; height: 2px;
+          background: linear-gradient(90deg, var(--theme-colors-primary, #1a4bf0), #8b5cf6);
+          transition: right .3s cubic-bezier(.2,.7,.2,1);
+        }
+        .navlink-underline:hover::after, .navlink-underline.is-active::after { right: 0; }
+        .stat-cell { transition: transform .3s cubic-bezier(.2,.7,.2,1); }
+        .stat-cell:hover { transform: translateY(-4px); }
+        .kicker-line { width: 0; transition: width 1s cubic-bezier(.2,.7,.2,1) .1s; }
+        .reveal.in .kicker-line { width: 100%; }
+        @media (prefers-reduced-motion: reduce) {
+          html { scroll-behavior: auto; }
+          .reveal { opacity: 1; transform: none; transition: none; }
+          .chart-bar { transform: scaleY(1); }
+          .navlink-underline::after { transition: none; }
+          .stat-cell { transition: none; }
+          .kicker-line { transition: none; }
+        }
+      `}</style>
+
+      {/* Nav */}
+      <nav
+        ref={navRef}
+        className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
+          navScrolled
+            ? "bg-paper/82 backdrop-blur-[12px] border-b border-border"
+            : "bg-transparent border-b border-transparent"
+        }`}
+      >
+        <div className="mx-auto flex items-center justify-between h-[72px] max-w-[1220px] px-8">
+          <a href="#top" className="flex items-center gap-2.5">
+            <span className="w-[9px] h-[9px] rounded-full bg-primary" />
+            <span className="font-heading text-[19px] font-bold tracking-[-.02em] text-ink">
+              Venda Express
+            </span>
+            <span
+              className="font-mono text-[10px] font-semibold text-ink-2 border border-border-2 px-1.5 py-0.5 tracking-[.05em]"
+              style={{ borderRadius: "999px" }}
+            >
+              AO
+            </span>
+          </a>
+
+          <div className="hidden md:flex items-center gap-[26px]">
+            {[
+              { href: "#plataforma", label: "plataforma" },
+              { href: "#recursos", label: "recursos" },
+              { href: "#resultados", label: "resultados" },
+              { href: "#precos", label: "preços" },
+            ].map((link) => {
+              const id = link.href.slice(1);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative font-body text-[14.5px] font-medium transition-colors hover:text-ink px-0.5 navlink-underline ${
+                    activeSection === id ? "text-ink is-active" : "text-ink-2"
+                  }`}
+                  navigate={navigate}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="hidden md:flex items-center gap-[18px]">
             <Link
               href="/login"
-              className="relative z-10 rounded-xl px-4 py-2 text-sm font-semibold text-zinc-500 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="font-body text-[14.5px] font-medium text-ink transition hover:text-primary"
               navigate={navigate}
             >
               Entrar
             </Link>
             <Link
               href="/signup"
-              className="group relative z-10 inline-flex items-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/35 transition-all duration-200 hover:shadow-blue-600/55 hover:from-blue-700 hover:to-sky-500 active:scale-[0.97]"
+              className="inline-flex items-center gap-2 font-heading font-semibold text-[14.5px] text-white px-5 py-3 bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/25 transition hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 btn-press"
+              style={{ borderRadius: "999px" }}
               navigate={navigate}
             >
-              <span className="relative z-10 flex items-center gap-1.5">
-                Testar grátis
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-0.5"
-                />
-              </span>
+              Testar grátis{" "}
+              <ArrowRight
+                size={15}
+                className="transition-transform group-hover:translate-x-1"
+              />
             </Link>
           </div>
 
           <button
-            className="relative z-10 rounded-xl border border-zinc-200/70 bg-white/80 p-2.5 shadow-sm backdrop-blur-sm transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:border-blue-600 md:hidden"
+            className="md:hidden bg-none border-0 cursor-pointer relative w-[34px] h-[34px]"
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Abrir menu"
+            aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            <motion.span
+              className="block absolute left-1/2 w-[20px] h-[2px] bg-ink"
+              style={{ x: "-50%" }}
+              animate={mobileOpen ? { rotate: 45, y: 0 } : { rotate: 0, y: -6 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            />
+            <motion.span
+              className="block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[20px] h-[2px] bg-ink"
+              animate={
+                mobileOpen
+                  ? { opacity: 0, scale: 0.6 }
+                  : { opacity: 1, scale: 1 }
+              }
+              transition={{ duration: 0.2 }}
+            />
+            <motion.span
+              className="block absolute left-1/2 w-[20px] h-[2px] bg-ink"
+              style={{ x: "-50%" }}
+              animate={mobileOpen ? { rotate: -45, y: 0 } : { rotate: 0, y: 6 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            />
           </button>
         </div>
       </nav>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-40 bg-black/15 backdrop-blur-md md:hidden"
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.97 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as const }}
-              className="fixed inset-x-4 top-20 z-50 rounded-2xl border border-zinc-200/70 bg-white/95 px-5 py-6 shadow-2xl shadow-blue-900/20 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:shadow-black/30 md:hidden"
-            >
-              <div className="flex flex-col gap-1">
-                {[
-                  { href: "#recursos", label: "Recursos", icon: Store },
-                  { href: "#como", label: "Como funciona", icon: Zap },
-                  { href: "#precos", label: "Preços", icon: BarChart3 },
-                ].map((link, i) => (
-                  <motion.div
-                    key={link.href}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: 0.05 * i,
-                      duration: 0.3,
-                      ease: [0.16, 1, 0.3, 1] as const,
-                    }}
-                  >
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium text-zinc-600 transition hover:bg-blue-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                      navigate={navigate}
-                    >
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-sky-50 text-blue-600 dark:from-blue-900/30 dark:to-sky-900/20 dark:text-blue-400">
-                        <link.icon size={15} />
-                      </span>
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="mt-5 border-t border-zinc-200 pt-5 dark:border-zinc-800">
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-ink/20 backdrop-blur-md"
+            onClick={() => setMobileOpen(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-4 top-20 border border-border bg-paper/95 px-5 py-6 shadow-xl backdrop-blur-2xl"
+            style={{ borderRadius: "18px" }}
+          >
+            <div className="flex flex-col gap-1">
+              {[
+                { href: "#plataforma", label: "plataforma", icon: TrendingUp },
+                { href: "#recursos", label: "recursos", icon: Zap },
+                { href: "#resultados", label: "resultados", icon: BarChart3 },
+                { href: "#precos", label: "preços", icon: ShoppingCart },
+              ].map((link, i) => (
                 <motion.div
+                  key={link.href}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    delay: 0.2,
+                    delay: 0.05 * i,
                     duration: 0.3,
-                    ease: [0.16, 1, 0.3, 1] as const,
+                    ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="flex flex-col gap-2"
                 >
                   <Link
-                    href="/login"
+                    href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-3 px-4 py-3.5 font-body text-[14.5px] font-semibold text-ink-2 transition hover:bg-ink/[0.04] hover:text-ink"
                     navigate={navigate}
                   >
-                    Entrar
+                    <span
+                      className="flex h-7 w-7 items-center justify-center bg-ink/[0.06] text-ink"
+                      style={{ borderRadius: "10px" }}
+                    >
+                      <link.icon size={15} />
+                    </span>
+                    {link.label}
                   </Link>
+                </motion.div>
+              ))}
+            </div>
+            <div className="mt-5 border-t border-border pt-5">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: 0.2,
+                  duration: 0.3,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className="flex flex-col gap-2"
+              >
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full flex items-center justify-center px-4 py-3.5 font-body text-[14.5px] font-semibold text-ink-2 border border-border btn-press transition hover:text-ink hover:bg-ink/[0.04]"
+                  style={{ borderRadius: "999px" }}
+                  navigate={navigate}
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-violet-600 px-5 py-3.5 font-heading font-semibold text-white shadow-lg shadow-primary/25 btn-press"
+                  style={{ borderRadius: "999px" }}
+                  navigate={navigate}
+                >
+                  Testar grátis <ArrowRight size={18} />
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Hero */}
+      <header className="relative z-[2] pt-[72px] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          {/* Hero background image */}
+          <div className="absolute inset-0 opacity-[0.06]">
+            <img
+              src="/images/landing/hero-bg.jpg"
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* Perspective grid — linhas convergentes */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                  90deg,
+                  transparent 0px,
+                  transparent 58px,
+                  rgba(26,75,240,0.05) 58px,
+                  rgba(26,75,240,0.05) 60px
+                ),
+                repeating-linear-gradient(
+                  0deg,
+                  transparent 0px,
+                  transparent 58px,
+                  rgba(26,75,240,0.04) 58px,
+                  rgba(26,75,240,0.04) 60px
+                )`,
+              maskImage:
+                "radial-gradient(ellipse 70% 60% at 50% 45%, black 20%, transparent 65%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 70% 60% at 50% 45%, black 20%, transparent 65%)",
+            }}
+          />
+          {/* Linhas diagonais de acento */}
+          <svg
+            className="absolute inset-0 w-full h-full opacity-[0.03]"
+            viewBox="0 0 1200 800"
+            preserveAspectRatio="none"
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="1200"
+              y2="800"
+              stroke="rgba(26,75,240,0.5)"
+              strokeWidth="1"
+            />
+            <line
+              x1="400"
+              y1="0"
+              x2="1200"
+              y2="533"
+              stroke="rgba(26,75,240,0.5)"
+              strokeWidth="1"
+            />
+            <line
+              x1="800"
+              y1="0"
+              x2="1200"
+              y2="267"
+              stroke="rgba(26,75,240,0.5)"
+              strokeWidth="1"
+            />
+            <line
+              x1="0"
+              y1="267"
+              x2="1200"
+              y2="267"
+              stroke="rgba(26,75,240,0.4)"
+              strokeWidth="0.5"
+            />
+            <line
+              x1="0"
+              y1="533"
+              x2="1200"
+              y2="533"
+              stroke="rgba(26,75,240,0.4)"
+              strokeWidth="0.5"
+            />
+          </svg>
+          {/* Soft gradient base */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-violet-500/[0.06]" />
+          {/* Vibrant gradient accents */}
+          <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-primary/[0.16] via-violet-500/[0.11] to-transparent blur-[100px]" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[45%] h-[45%] rounded-full bg-gradient-to-tr from-amber-400/[0.16] via-rose-500/[0.09] to-transparent blur-[90px]" />
+          <div className="absolute top-[32%] left-[8%] w-[32%] h-[32%] rounded-full bg-gradient-to-br from-emerald-400/[0.11] via-teal-400/[0.07] to-transparent blur-[90px]" />
+          {/* Noise grain */}
+          <div
+            className="absolute inset-0 opacity-[0.02] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+              backgroundSize: "256px 256px",
+            }}
+          />
+        </div>
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8">
+          <div className="flex max-sm:flex-col max-sm:gap-2.5 justify-between items-start sm:items-center pb-6 mb-8 md:mb-11 pt-8 md:pt-14">
+            <span className="inline-flex items-center gap-2 font-body text-[13px] font-semibold text-ink bg-success/10 border border-success/25 rounded-full px-4 py-1.5">
+              <span
+                className="w-[7px] h-[7px] rounded-full bg-success"
+                style={{ animation: "pulse2 2s infinite" }}
+              />
+              Lojas a vender agora em todo o país
+            </span>
+          </div>
+
+          <div className="grid md:grid-cols-[1.05fr_0.95fr] gap-10 md:gap-14 items-center">
+            <div>
+              <h1 className="font-heading text-[clamp(36px,5.2vw,68px)] font-bold tracking-[-.035em] leading-[.96] text-ink">
+                <span className="block overflow-hidden pb-[.04em]">
+                  <span
+                    className="inline-block"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    Monta
+                  </span>{" "}
+                  <span
+                    className="inline-block"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .07s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    a
+                  </span>{" "}
+                  <span
+                    className="inline-block"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .14s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    tua
+                  </span>{" "}
+                  <span
+                    className="inline-block"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .21s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    loja
+                  </span>
+                </span>
+                <span className="block overflow-hidden pb-[.04em]">
+                  <span
+                    className="inline-block"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .28s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    hoje.
+                  </span>
+                </span>
+                <span className="block overflow-hidden pb-[.04em]">
+                  <span
+                    className="inline-block text-primary"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .35s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    Começa
+                  </span>{" "}
+                  <span
+                    className="inline-block text-primary"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .42s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    a
+                  </span>{" "}
+                  <span
+                    className="inline-block text-primary"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .49s forwards",
+                      transform: "translateY(112%)",
+                    }}
+                  >
+                    vender
+                  </span>{" "}
+                  <span
+                    className="inline-block text-primary"
+                    style={{
+                      animation:
+                        "wordUp 1s cubic-bezier(.2,.85,.25,1) .56s forwards, glowPulse 2.4s ease-in-out .8s infinite",
+                      transform: "translateY(112%)",
+                      filter: "brightness(1.1)",
+                      fontFamily: "'Instrument Serif', serif",
+                      fontStyle: "italic",
+                      fontWeight: 400,
+                    }}
+                  >
+                    agora.
+                  </span>
+                </span>
+              </h1>
+
+              <style>{`
+                @keyframes wordUp { to { transform: translateY(0); } }
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+                @keyframes glowPulse {
+                  0%, 100% { filter: brightness(1) drop-shadow(0 0 0px rgba(26,75,240,0)); }
+                  50% { filter: brightness(1.25) drop-shadow(0 0 12px rgba(26,75,240,0.4)); }
+                }
+                @keyframes countFlash {
+                  0% { color: var(--primary); transform: scale(1.06); }
+                  50% { color: var(--primary); transform: scale(1.02); }
+                  100% { color: inherit; transform: scale(1); }
+                }
+                .count-flash { animation: countFlash .7s ease; }
+                .cta-glow {
+                  animation: ctaPulse 2.4s ease-in-out infinite;
+                }
+                .cta-glow:hover {
+                  animation: ctaPulse 0.6s ease-in-out infinite;
+                }
+                @keyframes ctaPulse {
+                  0%, 100% { box-shadow: 0 0 0px rgba(26,75,240,0); }
+                  50% { box-shadow: 0 0 22px -4px rgba(26,75,240,0.45), 0 0 50px -10px rgba(26,75,240,0.15); }
+                }
+              `}</style>
+
+              <p
+                className="mt-6 max-w-[440px] text-[17px] text-ink-2 leading-relaxed"
+                style={{
+                  opacity: 0,
+                  animation: "fadeUp .8s ease .5s forwards",
+                }}
+              >
+                Cria a tua loja online em minutos. Sem código, sem designer, sem
+                burocracia.{" "}
+                <b className="text-ink font-semibold">Do clique à venda.</b>
+              </p>
+
+              <div
+                className="flex gap-3.5 flex-wrap mt-7"
+                style={{
+                  opacity: 0,
+                  animation: "fadeUp .8s ease .65s forwards",
+                }}
+              >
+                <MagneticWrap strength={0.25}>
                   <Link
                     href="/signup"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/35"
+                    data-magnetic
+                    className="inline-flex items-center gap-2.5 font-heading font-semibold text-[15px] text-white bg-gradient-to-r from-primary to-violet-600 px-6 py-3.5 btn-press relative overflow-hidden cta-glow"
+                    style={{ borderRadius: "999px" }}
                     navigate={navigate}
                   >
-                    Testar grátis <ArrowRight size={18} />
+                    <span className="relative z-[1]">Testar grátis</span>{" "}
+                    <ArrowRight
+                      size={15}
+                      className="relative z-[1] transition-transform duration-200 group-hover:translate-x-1"
+                    />
                   </Link>
-                </motion.div>
+                </MagneticWrap>
+                <MagneticWrap strength={0.25}>
+                  <Link
+                    href="#plataforma"
+                    data-magnetic
+                    className="inline-flex items-center gap-2.5 font-heading font-semibold text-[15px] bg-transparent text-ink px-6 py-3.5 border-2 border-ink btn-press hover:bg-ink hover:text-paper"
+                    style={{ borderRadius: "999px" }}
+                    navigate={navigate}
+                  >
+                    Ver a plataforma
+                  </Link>
+                </MagneticWrap>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
-      <section className="relative min-h-[100dvh] pt-24 md:pt-28">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 -top-24 md:-top-28">
-          <AuroraField />
-          <div className="absolute inset-0 shadow-[inset_0_0_140px_rgba(255,255,255,0.5)] dark:shadow-[inset_0_0_140px_rgba(0,0,0,0.4)]" />
+              <div
+                className="flex gap-5 mt-5 font-body text-[13px] font-medium text-ink-2"
+                style={{
+                  opacity: 0,
+                  animation: "fadeUp .8s ease .8s forwards",
+                }}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 size={14} className="text-success" />
+                  sem cartão de crédito
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 size={14} className="text-success" />
+                  14 dias grátis
+                </span>
+              </div>
+            </div>
+
+            <div className="relative" style={{ perspective: "1600px" }}>
+              <div className="absolute -inset-4 rounded-[24px] overflow-hidden pointer-events-none z-0 opacity-[0.12] mix-blend-multiply">
+                <img
+                  src="/images/landing/loja.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {/* Floating product images */}
+              <div className="absolute -left-4 top-6 w-12 h-12 sm:-left-8 sm:top-8 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white shadow-xl z-[2]">
+                <img
+                  src="/images/landing/tenis.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute -right-3 top-12 w-10 h-10 sm:-right-6 sm:top-16 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white shadow-xl z-[2]">
+                <img
+                  src="/images/landing/gadget.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute -left-2 bottom-8 w-9 h-9 sm:-left-4 sm:bottom-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-white shadow-xl z-[2]">
+                <img
+                  src="/images/landing/bolsa.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute right-1 bottom-1 w-8 h-8 sm:right-3 sm:bottom-2 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-amber-300 shadow-xl z-[2]">
+                <img
+                  src="/images/landing/pagamentos.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute left-1/2 -top-5 w-8 h-8 sm:-top-7 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-emerald-300 shadow-xl z-[2]">
+                <img
+                  src="/images/landing/whatsapp.jpg"
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute -right-2 top-1/3 z-[2] scale-75 sm:scale-90 lg:scale-100 origin-right"
+              >
+                <div
+                  className="bg-white/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg flex items-center gap-2"
+                  style={{ borderRadius: "999px" }}
+                >
+                  <span className="w-7 h-7 rounded-full overflow-hidden">
+                    <img
+                      src="/images/landing/avatar-cliente.jpg"
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </span>
+                  <span className="font-mono text-[11px] text-ink font-semibold">
+                    +Kz 18.900
+                  </span>
+                </div>
+              </motion.div>
+              <div className="relative z-[1]">
+                <LiveDashboard />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="relative mx-auto grid w-full max-w-7xl items-center gap-16 px-5 py-14 md:px-6 lg:grid-cols-[1.02fr_0.98fr]">
-          <div>
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
-              className="relative mb-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-blue-300/70 bg-gradient-to-r from-blue-50 via-white to-sky-50 px-3.5 py-1.5 text-sm font-semibold text-blue-700 shadow-md shadow-blue-500/10 backdrop-blur-sm dark:border-blue-700 dark:from-blue-900/40 dark:via-zinc-900 dark:to-sky-900/30 dark:text-blue-300 shine-sweep"
-            >
-              <Sparkles
-                size={14}
-                className="text-blue-600 dark:text-blue-400"
-              />
-              IA que vende por ti 24h
-            </motion.div>
-
-            <motion.h1
-              initial={reduce ? false : { opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.6,
-                delay: 0.1,
-                ease: [0.16, 1, 0.3, 1] as const,
-              }}
-              className="text-[clamp(48px,7.5vw,88px)] font-bold leading-[.92] tracking-[-.045em]"
-            >
-              A tua loja.
-              <br />
-              <span className="gradient-text-live bg-gradient-to-r from-blue-600 via-sky-400 to-blue-600 bg-clip-text text-transparent">
-                A vender sozinha.
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.6,
-                delay: 0.2,
-                ease: [0.16, 1, 0.3, 1] as const,
-              }}
-              className="mt-6 max-w-lg text-lg leading-relaxed text-zinc-500 dark:text-zinc-400"
-            >
-              Enquanto tu dormes, a IA atende clientes, fecha pedidos e faz o
-              dinheiro entrar. Sem equipa, sem complicação.
-            </motion.p>
-
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.6,
-                delay: 0.3,
-                ease: [0.16, 1, 0.3, 1] as const,
-              }}
-              className="mt-10 flex flex-col gap-3 sm:flex-row"
-            >
-              <Link
-                href="/signup"
-                className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-[length:200%_auto] px-8 py-4 text-sm font-semibold text-white shadow-2xl shadow-blue-600/40 transition-[background-position,box-shadow] duration-500 hover:bg-[position:100%_0] hover:shadow-blue-600/60 active:translate-y-px"
-                navigate={navigate}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  Testar grátis{" "}
-                  <ArrowRight
-                    size={18}
-                    className="transition-transform duration-300 group-hover:translate-x-0.5"
-                  />
-                </span>
-              </Link>
-              <Link
-                href="#como"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-200 bg-white/70 px-8 py-4 text-sm font-semibold text-zinc-900 shadow-sm backdrop-blur-sm transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:translate-y-px dark:border-zinc-700 dark:bg-zinc-950/60 dark:text-zinc-100 dark:hover:border-blue-500 dark:hover:text-blue-400"
-                navigate={navigate}
-              >
-                Ver demonstração
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={reduce ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: 0.6,
-                delay: 0.6,
-                ease: [0.16, 1, 0.3, 1] as const,
-              }}
-              className="mt-8 flex items-center gap-6 text-sm text-zinc-400 dark:text-zinc-500"
-            >
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                Sem cartão de crédito
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                14 dias grátis
-              </span>
-            </motion.div>
-          </div>
-
-          <motion.div
-            initial={reduce ? false : { opacity: 0, scale: 0.94, x: 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{
-              duration: 0.9,
-              delay: 0.35,
-              ease: [0.16, 1, 0.3, 1] as const,
+        {/* Marquee strip */}
+        <div className="border-t border-border border-b border-border py-5 mt-12 overflow-hidden">
+          <p className="text-center font-body text-[12px] font-semibold text-ink-2 tracking-[.08em] uppercase mb-4">
+            +12.000 empreendedores já montaram a sua loja e começaram a vender
+          </p>
+          <div
+            className="overflow-hidden"
+            style={{
+              maskImage:
+                "linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)",
+              WebkitMaskImage:
+                "linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)",
             }}
           >
-            <DashboardMockup />
-          </motion.div>
-        </div>
-      </section>
-
-      <motion.section
-        initial={reduce ? false : { opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-        className="relative border-y border-blue-200/40 bg-gradient-to-r from-blue-50 via-white to-sky-50 py-5 dark:border-blue-900/40 dark:from-blue-950/30 dark:via-zinc-900 dark:to-sky-950/20"
-      >
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={15} className="text-blue-600" /> Cancele quando
-            quiser
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={15} className="text-blue-600" /> Suporte em
-            português
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={15} className="text-blue-600" /> Atualizações
-            grátis
-          </span>
-        </div>
-      </motion.section>
-
-      <section className="relative overflow-hidden border-b border-zinc-200/60 py-12 dark:border-zinc-800">
-        <p className="mb-6 text-center text-xs tracking-[.22em] text-zinc-400 uppercase">
-          +12.000 lojas já vendem com a Venda Express
-        </p>
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent dark:from-zinc-950" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent dark:from-zinc-950" />
-          <div
-            className="flex w-max animate-marquee gap-24"
-            style={{ animationDuration: "35s" }}
-          >
-            {[...logos, ...logos].map((name, i) => (
-              <span
-                key={i}
-                className="font-bold tracking-tight text-zinc-200 transition hover:bg-gradient-to-r hover:from-blue-600 hover:to-sky-400 hover:bg-clip-text hover:text-transparent dark:text-zinc-700"
-                style={{ fontSize: "clamp(24px,3vw,32px)" }}
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="recursos" className="py-28 md:py-36">
-        <div className="mx-auto max-w-7xl px-5 md:px-6">
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-            className="mb-16 max-w-xl"
-          >
-            <p className="mb-3 text-xs font-semibold tracking-[.18em] text-blue-600 uppercase dark:text-blue-400">
-              Recursos
-            </p>
-            <h2 className="text-[clamp(32px,4.2vw,52px)] font-bold leading-[1.02] tracking-[-.035em]">
-              Uma operação inteira,
-              <br />
-              no automático.
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Seis recursos que fazem a sua loja vender sem você precisar de uma
-              equipa.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            className="grid gap-4 md:grid-cols-3 md:grid-rows-2"
-          >
-            {features.slice(0, 1).map((f) => (
-              <motion.div
-                key={f.title}
-                variants={itemVariants}
-                className="group relative overflow-hidden rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-8 shadow-lg shadow-blue-500/5 transition hover:shadow-2xl hover:shadow-blue-500/15 dark:border-blue-900/60 dark:from-blue-900/20 dark:via-zinc-950 dark:to-sky-950/10 md:col-span-2 md:row-span-2"
-              >
-                <div className="pointer-events-none absolute -right-6 -top-6 h-48 w-48 rounded-full bg-blue-500/15 blur-3xl transition group-hover:bg-blue-500/25 dark:bg-blue-500/20" />
-                <div className="pointer-events-none absolute -bottom-10 left-1/3 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl dark:bg-sky-400/15" />
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-600/30">
-                  <Store size={22} />
-                </div>
-                <h3 className="text-xl font-bold">
-                  Sua loja online, completa e pronta para vender
-                </h3>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  {f.desc}
-                </p>
-                <ul className="mt-6 space-y-2.5 text-sm text-zinc-500 dark:text-zinc-400">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-blue-600" /> Temas
-                    responsivos e customizáveis
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-blue-600" /> Domínio
-                    próprio ou subdomínio grátis
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-blue-600" />{" "}
-                    Checkout otimizado para dispositivos móveis
-                  </li>
-                </ul>
-              </motion.div>
-            ))}
-            {features.slice(1).map((f, i) => (
-              <motion.div key={f.title} variants={itemVariants}>
-                <div className="group relative h-full overflow-hidden rounded-2xl border border-zinc-200 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-2xl hover:shadow-blue-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-700">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-500/0 blur-2xl transition duration-300 group-hover:bg-blue-500/10" />
-                  <div
-                    className={`mb-5 flex h-10 w-10 items-center justify-center rounded-xl transition group-hover:text-white ${iconTints[i % iconTints.length]}`}
-                  >
-                    <f.icon size={19} />
-                  </div>
-                  <h3 className="font-bold text-base">{f.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                    {f.desc}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      <section
-        id="como"
-        className="relative overflow-hidden border-y border-zinc-200 bg-zinc-50 py-28 md:py-36 dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-60 dark:opacity-30">
-          <div className="absolute left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-blue-500/10 blur-[100px]" />
-        </div>
-        <div className="relative mx-auto max-w-4xl px-5 md:px-6">
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-            className="mb-20 text-center"
-          >
-            <p className="mb-3 text-xs font-semibold tracking-[.18em] text-blue-600 uppercase dark:text-blue-400">
-              Como funciona
-            </p>
-            <h2 className="text-[clamp(28px,3.6vw,44px)] font-bold leading-[1.08] tracking-[-.03em]">
-              Da ideia à primeira venda em 3 passos.
-            </h2>
-          </motion.div>
-
-          <div className="relative">
-            <div className="absolute left-[19px] top-0 h-full w-px bg-gradient-to-b from-blue-500 via-sky-400 to-blue-500 opacity-40" />
-            <div className="space-y-20">
-              {steps.map((s, i) => (
-                <motion.div
-                  key={s.num}
-                  initial={reduce ? false : { opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: i * 0.15,
-                    ease: [0.16, 1, 0.3, 1] as const,
-                  }}
-                  className="relative ml-12"
+            <div className="flex w-max gap-14 animate-marquee">
+              {[...logos, ...logos].map((name, i) => (
+                <span
+                  key={i}
+                  className="font-heading text-[22px] font-semibold tracking-[-.02em] text-ink-2 whitespace-nowrap transition-colors hover:text-ink"
                 >
-                  <div className="absolute -left-12 top-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-transparent bg-gradient-to-br from-blue-600 to-sky-400 text-sm font-bold text-white shadow-lg shadow-blue-600/30">
-                    {s.num}
-                  </div>
-                  <h3 className="text-xl font-bold">{s.title}</h3>
-                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                    {s.desc}
-                  </p>
-                </motion.div>
+                  {name}
+                </span>
               ))}
             </div>
           </div>
         </div>
+      </header>
+
+      {/* Trust bar */}
+      <div className="relative z-[2] overflow-hidden border-b border-border bg-surface/60">
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(59,130,246,0.09), rgba(139,92,246,0.07), rgba(245,158,11,0.08))",
+            maskImage:
+              "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="relative z-[1] mx-auto max-w-[1220px] px-5 md:px-8 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            {
+              icon: ShieldCheck,
+              label: "pagamento 100% seguro",
+              color: "from-blue-500 to-indigo-600",
+            },
+            {
+              icon: CreditCard,
+              label: "multicaixa express + cartão",
+              color: "from-violet-500 to-purple-600",
+            },
+            {
+              icon: Clock,
+              label: "suporte em português · resposta <2h",
+              color: "from-amber-400 to-orange-500",
+            },
+            {
+              icon: Undo2,
+              label: "14 dias de garantia, sem perguntas",
+              color: "from-emerald-400 to-teal-600",
+            },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span
+                className={`w-9 h-9 shrink-0 flex items-center justify-center text-white bg-gradient-to-br ${item.color}`}
+                style={{ borderRadius: "10px" }}
+              >
+                <item.icon size={16} />
+              </span>
+              <span className="font-mono text-[12px] text-ink-2 leading-tight">
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Numbers */}
+      <section className="relative overflow-hidden">
+        <ParallaxLayer
+          speed={0.08}
+          className="pointer-events-none absolute inset-0 z-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.05] via-violet-500/[0.03] to-amber-400/[0.05]" />
+        </ParallaxLayer>
+        <CountUpSection />
       </section>
 
-      <section id="numeros" className="py-28 md:py-36">
-        <div className="mx-auto max-w-7xl px-5 md:px-6">
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-            className="mb-16 text-center"
-          >
-            <h2 className="text-[clamp(28px,3.6vw,44px)] font-bold leading-[1.08] tracking-[-.03em]">
-              Números que falam por si.
-            </h2>
-          </motion.div>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            className="grid gap-5 md:grid-cols-4"
-          >
-            {displayStats.map((st) => (
-              <motion.div
-                key={st.label}
-                variants={itemVariants}
-                className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 dark:border-zinc-800 dark:bg-zinc-900"
+      {/* Interactive Tour */}
+      <section
+        id="plataforma"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2]"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 12% 10%, rgba(59,130,246,0.12), transparent 70%), radial-gradient(55% 50% at 92% 85%, rgba(79,70,229,0.10), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #3b82f6, #4f46e5)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 to-sky-400 opacity-0 transition group-hover:opacity-100" />
-                <div className="text-[clamp(44px,5vw,64px)] font-bold leading-none tracking-[-.035em] bg-gradient-to-br from-blue-600 to-sky-400 bg-clip-text text-transparent">
-                  {st.node}
-                  {st.suffix}
-                </div>
-                <div className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-                  {st.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                plataforma
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #3b82f6, #4f46e5)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+              Vê como é fácil montar a tua loja.
+            </h2>
+            <p className="text-[16.5px] text-ink-2 mt-4 max-w-[44ch]">
+              Do registo à primeira venda em poucos cliques. Cada módulo
+              mostra como a plataforma trabalha por ti.
+            </p>
+          </div>
+          <div className="reveal">
+            <InteractiveTour />
+          </div>
         </div>
       </section>
 
+      {/* Features */}
+      <section
+        id="recursos"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 88% 8%, rgba(139,92,246,0.12), transparent 70%), radial-gradient(55% 50% at 8% 90%, rgba(147,51,234,0.09), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #8b5cf6, #9333ea)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                recursos
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #8b5cf6, #9333ea)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+              Tudo o que precisas para vender online, num só lugar.
+            </h2>
+            <p className="text-[16.5px] text-ink-2 mt-4 max-w-[44ch]">
+              Da loja ao pagamento, da logística ao suporte — a plataforma
+              completa para começar a vender já.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 border-t border-border border-l border-border">
+            {/* Feature 1 — wide */}
+            <Reveal className="md:col-span-2">
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none">
+                  <img
+                    src="/images/landing/loja.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="relative z-[1] p-8 md:p-9">
+                  <div className="font-mono text-xs text-ink-2 mb-6">01</div>
+                  <div
+                    className="bg-gradient-to-br from-amber-400 to-amber-600 text-white w-10 h-10 flex items-center justify-center mb-5 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 9h18M3 9l1.5-4.5A2 2 0 0 1 6.4 3h11.2a2 2 0 0 1 1.9 1.5L21 9M3 9v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9M9 13h6" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-2.5">
+                    Monta a tua loja em minutos
+                  </h3>
+                  <p className="text-[14.5px] text-ink-2">
+                    Temas prontos, domínio próprio e checkout ativo. Publicas
+                    hoje e começas a vender no mesmo dia.
+                  </p>
+                  <div className="mt-5 relative h-32 md:h-40 rounded-2xl overflow-hidden border border-border">
+                    <img
+                      src="/images/landing/dashboard.jpg"
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundColor: "#f59e0b",
+                        opacity: 0.18,
+                        mixBlendMode: "color",
+                      }}
+                    />
+                  </div>
+                  <ul className="mt-4 flex flex-wrap gap-2.5">
+                    {[
+                      "temas responsivos",
+                      "domínio grátis",
+                      "checkout p/ telemóvel",
+                    ].map((tag) => (
+                      <li
+                        key={tag}
+                        className="font-body text-[12.5px] font-medium text-ink bg-amber-400/10 border border-amber-400/20 px-3 py-1.5 transition-colors group-hover:border-amber-500/40"
+                        style={{ borderRadius: "999px" }}
+                      >
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </TiltCard>
+            </Reveal>
+
+            {/* Feature 2 — WhatsApp, destaque */}
+            <Reveal delay={0.06}>
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.07] pointer-events-none">
+                  <img
+                    src="/images/landing/whatsapp.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-[0.06]"
+                  style={{
+                    background:
+                      "radial-gradient(120% 120% at 80% 20%, #25D366, transparent 70%)",
+                  }}
+                />
+                <div className="relative z-[1] p-8 md:p-9">
+                  <div className="font-mono text-xs text-ink-2 mb-6">02</div>
+                  <div
+                    className="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white w-10 h-10 flex items-center justify-center mb-5 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 3a9 9 0 0 0-9 9 8.9 8.9 0 0 0 1.3 4.7L3 21l4.5-1.2A9 9 0 1 0 12 3Z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-2.5">
+                    Vendas pelo WhatsApp
+                  </h3>
+                  <p className="text-[14.5px] text-ink-2">
+                    Recebe e gere pedidos diretamente pelo chat. Simples, rápido
+                    e sem complicação.
+                  </p>
+                  <div className="mt-5 relative h-28 rounded-2xl overflow-hidden border border-border">
+                    <img
+                      src="/images/landing/whatsapp.jpg"
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundColor: "#34d399",
+                        opacity: 0.18,
+                        mixBlendMode: "color",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-4 inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold text-success">
+                    <span
+                      className="w-[5px] h-[5px] rounded-full bg-success"
+                      style={{ animation: "pulse2 1.6s infinite" }}
+                    />
+                    conetado
+                  </div>
+                </div>
+              </TiltCard>
+            </Reveal>
+
+            {/* Feature 3 */}
+            <Reveal delay={0.12}>
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none">
+                  <img
+                    src="/images/landing/pagamentos.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="relative z-[1] p-8 md:p-9">
+                  <div className="font-mono text-xs text-ink-2 mb-6">03</div>
+                  <div
+                    className="bg-gradient-to-br from-sky-400 to-blue-600 text-white w-10 h-10 flex items-center justify-center mb-5 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    >
+                      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+                      <path d="M2.5 9.5h19" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-2.5">
+                    Pagamentos integrados
+                  </h3>
+                  <p className="text-[14.5px] text-ink-2">
+                    Multicaixa, cartão ou transferência. Configuras uma vez e
+                    recebes sem stress.
+                  </p>
+                </div>
+              </TiltCard>
+            </Reveal>
+
+            {/* Feature 4 */}
+            <Reveal delay={0.18}>
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none">
+                  <img
+                    src="/images/landing/logistica.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="relative z-[1] p-8 md:p-9">
+                  <div className="font-mono text-xs text-ink-2 mb-6">04</div>
+                  <div
+                    className="bg-gradient-to-br from-teal-400 to-teal-600 text-white w-10 h-10 flex items-center justify-center mb-5 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 7h11v8H3zM14 10h4l3 3v2h-7" />
+                      <circle cx="7" cy="17" r="1.6" />
+                      <circle cx="17" cy="17" r="1.6" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-2.5">
+                    Logística integrada
+                  </h3>
+                  <p className="text-[14.5px] text-ink-2">
+                    Frete, etiquetas e rastreio calculados automaticamente para
+                    não perderes tempo.
+                  </p>
+                </div>
+              </TiltCard>
+            </Reveal>
+
+            {/* Feature 5 */}
+            <Reveal delay={0.24}>
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none">
+                  <img
+                    src="/images/landing/analytics.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="relative z-[1] p-8 md:p-9">
+                  <div className="font-mono text-xs text-ink-2 mb-6">05</div>
+                  <div
+                    className="bg-gradient-to-br from-violet-400 to-violet-600 text-white w-10 h-10 flex items-center justify-center mb-5 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    >
+                      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-2.5">
+                    Analytics em tempo real
+                  </h3>
+                  <p className="text-[14.5px] text-ink-2">
+                    Acompanha as tuas vendas, produtos mais vendidos e de onde
+                    vêm os teus clientes.
+                  </p>
+                </div>
+              </TiltCard>
+            </Reveal>
+
+            {/* Feature 6 — banner full-width */}
+            <Reveal delay={0.3} className="md:col-span-3">
+              <TiltCard
+                glare
+                className="h-full border-r border-border border-b border-border transition-colors hover:bg-surface relative overflow-hidden"
+              >
+                <div className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none">
+                  <img
+                    src="/images/landing/produtos.jpg"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="relative z-[1] p-8 md:p-9 bg-gradient-to-br from-rose/[0.03] via-transparent to-amber/[0.02]">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                    <div className="flex items-start gap-5">
+                      <div className="font-mono text-xs text-ink-2 shrink-0 mt-0.5">
+                        06
+                      </div>
+                      <div>
+                        <div
+                          className="bg-gradient-to-br from-rose-400 to-rose-600 text-white w-10 h-10 flex items-center justify-center shrink-0 mb-3 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+                          style={{ borderRadius: "12px" }}
+                        >
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                          >
+                            <path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M17 4v3h-3M7 20v-3h3" />
+                          </svg>
+                        </div>
+                        <h3 className="font-heading text-xl font-semibold tracking-[-.02em] text-ink mb-1">
+                          Migração simples
+                        </h3>
+                        <p className="text-[14.5px] text-ink-2 max-w-[52ch]">
+                          Importa produtos e clientes de outras plataformas em
+                          um clique. Mudar para a Venda Express é rápido e
+                          indolor.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-2 font-mono text-[12.5px] font-semibold text-primary whitespace-nowrap shrink-0">
+                      muda-te hoje <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </div>
+              </TiltCard>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Gallery */}
+      <section
+        id="galeria"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 15% 5%, rgba(245,158,11,0.13), transparent 70%), radial-gradient(55% 50% at 95% 95%, rgba(249,115,22,0.10), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #f59e0b, #f97316)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                galeria
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #f59e0b, #f97316)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[18ch]">
+              Vê como a tua loja pode ficar.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 reveal">
+            {[
+              {
+                img: "/images/landing/loja.jpg",
+                alt: "Loja online",
+                label: "loja virtual",
+                dot: "bg-blue-500",
+                tint: "#3b82f6",
+                big: true,
+              },
+              {
+                img: "/images/landing/dashboard.jpg",
+                alt: "Dashboard",
+                label: "dashboard",
+                dot: "bg-violet-500",
+                tint: "#8b5cf6",
+              },
+              {
+                img: "/images/landing/analytics.jpg",
+                alt: "Analytics",
+                label: "analytics",
+                dot: "bg-amber-400",
+                tint: "#fbbf24",
+              },
+              {
+                img: "/images/landing/gadget.jpg",
+                alt: "Mobile",
+                label: "mobile",
+                dot: "bg-teal-400",
+                tint: "#2dd4bf",
+              },
+              {
+                img: "/images/landing/whatsapp.jpg",
+                alt: "Chat",
+                label: "whatsapp",
+                dot: "bg-[#25D366]",
+                tint: "#25D366",
+              },
+              {
+                img: "/images/landing/pagamentos.jpg",
+                alt: "Pagamentos",
+                label: "pagamentos",
+                dot: "bg-sky-400",
+                tint: "#38bdf8",
+              },
+              {
+                img: "/images/landing/logistica.jpg",
+                alt: "Logística",
+                label: "logística",
+                dot: "bg-emerald-400",
+                tint: "#34d399",
+              },
+              {
+                img: "/images/landing/produtos.jpg",
+                alt: "Produtos",
+                label: "produtos",
+                dot: "bg-rose-400",
+                tint: "#fb7185",
+              },
+            ].map((tile, i) => (
+              <div
+                key={i}
+                data-cursor="Ver"
+                className={`relative overflow-hidden group ${tile.big ? "col-span-2 md:row-span-2" : ""}`}
+                style={{ borderRadius: "14px" }}
+              >
+                <img
+                  src={tile.img}
+                  alt={tile.alt}
+                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${tile.big ? "min-h-[280px]" : "min-h-[140px] md:min-h-[160px]"}`}
+                  loading="lazy"
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundColor: tile.tint,
+                    opacity: 0.22,
+                    mixBlendMode: "color",
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent pointer-events-none" />
+                <span
+                  className={`absolute ${tile.big ? "bottom-4 left-4" : "bottom-3 left-3"} inline-flex items-center gap-1.5 font-body text-[12px] font-medium text-white`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${tile.dot}`} />
+                  {tile.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Results */}
+      <section
+        id="resultados"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
+      >
+        <ParallaxLayer
+          speed={0.08}
+          className="pointer-events-none absolute inset-0 z-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-rose-400/[0.04] via-transparent to-violet-500/[0.05]" />
+        </ParallaxLayer>
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #fb7185, #db2777)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                resultados
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #fb7185, #db2777)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+              Lojas angolanas a crescer no piloto automático.
+            </h2>
+          </div>
+
+          <TestimonialCarousel testimonials={testimonials} />
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section
+        id="como"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 85% 10%, rgba(52,211,153,0.11), transparent 70%), radial-gradient(55% 50% at 10% 90%, rgba(13,148,136,0.09), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="pointer-events-none absolute bottom-0 right-0 z-0 w-[300px] md:w-[500px] h-full opacity-[0.03]">
+          <img
+            src="/images/landing/loja.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #34d399, #0d9488)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                como funciona
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #34d399, #0d9488)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+              Da ideia à primeira venda em 3 passos simples.
+            </h2>
+          </div>
+
+          <div className="border-t border-border reveal">
+            {[
+              {
+                sn: "01",
+                title: "Cria a tua loja",
+                desc: "Escolhe um tema, publica os teus produtos e fica online no mesmo dia. Sem complicação.",
+                bg: "rgba(245,158,11,0.1)",
+                fg: "#f59e0b",
+                img: "/images/landing/dashboard.jpg",
+              },
+              {
+                sn: "02",
+                title: "Ativa os pagamentos",
+                desc: "Multicaixa, cartão ou transferência. Configuras uma vez e recebes sem stress.",
+                bg: "rgba(26,75,240,0.08)",
+                fg: "#1a4bf0",
+                img: "/images/landing/pagamentos.jpg",
+              },
+              {
+                sn: "03",
+                title: "Começa a vender",
+                desc: "Partilha o link da tua loja e vê os pedidos a entrar. Simples, rápido, direto.",
+                bg: "rgba(31,157,87,0.1)",
+                fg: "#1f9d57",
+                img: "/images/landing/loja.jpg",
+              },
+            ].map((step, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-[36px_52px_1fr_20px] md:grid-cols-[64px_72px_1fr_auto] max-md:gap-3 gap-5 items-center py-6 md:py-8 border-b border-border transition-all hover:pl-3"
+              >
+                <span
+                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center font-body text-xs font-bold"
+                  style={{
+                    borderRadius: "10px",
+                    background: step.bg,
+                    color: step.fg,
+                  }}
+                >
+                  {step.sn}
+                </span>
+                <div
+                  className="relative w-[52px] h-[40px] md:w-[72px] md:h-[52px] overflow-hidden"
+                  style={{ borderRadius: "10px" }}
+                >
+                  <img
+                    src={step.img}
+                    alt=""
+                    className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundColor: step.fg,
+                      opacity: 0.28,
+                      mixBlendMode: "color",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h3 className="font-heading text-2xl font-semibold tracking-[-.02em] text-ink">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-ink-2 mt-1.5 max-w-[52ch]">
+                    {step.desc}
+                  </p>
+                </div>
+                <span className="font-mono text-lg" style={{ color: step.fg }}>
+                  →
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
       <section
         id="precos"
-        className="border-t border-zinc-200 bg-zinc-50 py-28 md:py-36 dark:border-zinc-800 dark:bg-zinc-900"
+        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
       >
-        <div className="mx-auto max-w-7xl px-5 md:px-6">
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-            className="mx-auto mb-16 max-w-xl text-center"
-          >
-            <p className="mb-3 text-xs font-semibold tracking-[.18em] text-blue-600 uppercase dark:text-blue-400">
-              Preços
-            </p>
-            <h2 className="text-[clamp(28px,3.6vw,44px)] font-bold leading-[1.04] tracking-[-.03em]">
-              Planos que crescem com você.
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 10% 8%, rgba(56,189,248,0.12), transparent 70%), radial-gradient(55% 50% at 90% 92%, rgba(37,99,235,0.09), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-14 reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #38bdf8, #2563eb)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                preços
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #38bdf8, #2563eb)`,
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+              Planos que crescem contigo.
             </h2>
-            <p className="mt-3 text-base text-zinc-500 dark:text-zinc-400">
+            <p className="text-[16.5px] text-ink-2 mt-4 max-w-[44ch]">
               14 dias grátis em qualquer plano. Sem cartão.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            className="grid gap-6 lg:grid-cols-3"
-          >
-            {plans.map((plan) => (
-              <motion.div
-                key={plan.name}
-                variants={itemVariants}
-                className={
-                  plan.popular
-                    ? "relative rounded-2xl p-[2px] conic-border lg:-translate-y-3"
-                    : ""
-                }
-              >
-                <div
-                  className={`relative flex h-full flex-col rounded-2xl border p-8 ${
-                    plan.popular
-                      ? "border-transparent bg-white shadow-2xl shadow-blue-500/20 dark:bg-zinc-800"
-                      : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                  }`}
+          <div className="grid md:grid-cols-3 border-t border-border border-l border-border">
+            {plans.map((plan, i) => (
+              <Reveal key={plan.name} delay={i * 0.08}>
+                <TiltCard
+                  glare
+                  className={`h-full relative border-r border-border border-b border-border p-8 md:p-9 ${plan.pop ? "bg-surface" : ""}`}
                 >
-                  {plan.popular && (
-                    <div className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-blue-600 to-sky-400 px-3 py-1 text-xs font-bold text-white shadow-md shadow-blue-600/30">
-                      Mais popular
-                    </div>
+                  <span
+                    className="absolute top-0 left-0 right-0 h-[3px] opacity-70"
+                    style={{ background: plan.color }}
+                  />
+                  {plan.pop && (
+                    <span
+                      className="absolute -top-px right-8 font-body text-[10.5px] font-semibold text-primary bg-accent-soft px-2.5 py-1 tracking-[.02em]"
+                      style={{
+                        borderRadius: "0 0 10px 10px",
+                        animation: "pulse2 2s infinite",
+                      }}
+                    >
+                      popular
+                    </span>
                   )}
-                  <h3 className="text-base font-bold">{plan.name}</h3>
-                  <p className="mb-6 mt-1.5 min-h-[40px] text-sm text-zinc-500 dark:text-zinc-400">
+                  <span
+                    className="inline-flex font-body text-[12px] font-semibold mb-3 px-2.5 py-0.5"
+                    style={{
+                      color: plan.color,
+                      backgroundColor: `${plan.color}14`,
+                      borderRadius: "999px",
+                    }}
+                  >
+                    {plan.tag}
+                  </span>
+                  <h3 className="font-heading text-[22px] font-semibold tracking-[-.02em] text-ink">
+                    {plan.name}
+                  </h3>
+                  <p className="text-[13.5px] text-ink-2 my-2 min-h-[40px]">
                     {plan.desc}
                   </p>
-                  <div className="mb-7 flex items-baseline gap-1.5">
-                    <span className="text-[clamp(36px,4vw,42px)] font-bold tracking-[-.035em]">
-                      {plan.price}
-                    </span>
-                    {plan.per && (
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {plan.per}
-                      </span>
-                    )}
+                  <div className="font-heading text-[40px] font-bold tracking-[-.03em] text-ink">
+                    {plan.price}{" "}
+                    <small className="font-body text-sm font-normal text-ink-2">
+                      {plan.per}
+                    </small>
                   </div>
-                  <Link
-                    href="/signup"
-                    className={`mb-8 rounded-xl py-3.5 text-center text-sm font-semibold transition active:translate-y-px ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50"
-                        : "border border-zinc-300 text-zinc-900 hover:border-blue-600 hover:text-blue-600 dark:border-zinc-700 dark:text-zinc-100 dark:hover:border-blue-500 dark:hover:text-blue-400"
-                    }`}
-                    navigate={navigate}
-                  >
-                    Testar grátis
-                  </Link>
-                  <div className="flex flex-col gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-700">
+                  <MagneticWrap strength={0.2}>
+                    <Link
+                      href="/signup"
+                      data-magnetic
+                      className={`w-full inline-flex items-center justify-center gap-2.5 font-heading font-semibold text-[14.5px] mt-6 mb-6 px-5 py-3.5 transition btn-press ${
+                        plan.pop
+                          ? "text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5"
+                          : "bg-transparent text-ink border-2 border-ink hover:bg-ink hover:text-paper"
+                      }`}
+                      style={{
+                        borderRadius: "999px",
+                        background: plan.pop
+                          ? `linear-gradient(90deg, ${plan.color}, #8b5cf6)`
+                          : undefined,
+                      }}
+                      navigate={navigate}
+                    >
+                      {plan.pop ? "Testar grátis →" : "Testar grátis"}
+                    </Link>
+                  </MagneticWrap>
+                  <ul className="space-y-3">
                     {plan.perks.map((perk) => (
-                      <div
+                      <li
                         key={perk}
-                        className="flex items-start gap-2.5 text-sm text-zinc-500 dark:text-zinc-400"
+                        className="flex items-start gap-2.5 text-sm text-ink-2"
                       >
-                        <CheckCircle2
-                          size={16}
-                          className="mt-0.5 shrink-0 text-blue-600"
-                        />{" "}
+                        <span
+                          className="shrink-0 font-body font-bold text-sm"
+                          style={{ color: plan.color }}
+                        >
+                          +
+                        </span>
                         {perk}
-                      </div>
+                      </li>
                     ))}
-                  </div>
-                </div>
-              </motion.div>
+                  </ul>
+                </TiltCard>
+              </Reveal>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden px-5 pb-28 pt-20 md:pb-36 md:pt-28">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as const }}
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 px-8 py-20 text-center shadow-2xl shadow-blue-600/30 dark:border-blue-900"
+      {/* Manifesto / CTA */}
+      <section className="py-[60px] md:py-[120px] text-center border-b border-border relative z-[2] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.06]">
+          <img
+            src="/images/landing/loja.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-paper/80 via-transparent to-paper/80" />
+        <ParallaxLayer
+          speed={0.1}
+          className="pointer-events-none absolute inset-0 z-0"
         >
-          <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl" />
-          <h2 className="relative text-[clamp(34px,5vw,56px)] font-bold leading-[1] tracking-[-.035em] text-white">
-            Sua próxima venda
-            <br />
-            começa hoje.
+          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[80%] h-[80%] rounded-full bg-gradient-to-b from-primary/[0.08] via-violet-500/[0.06] to-transparent blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[5%] w-[40%] h-[40%] rounded-full bg-gradient-to-tl from-amber-400/[0.07] via-rose-500/[0.04] to-transparent blur-[100px]" />
+        </ParallaxLayer>
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
+          <div className="inline-block mb-4 reveal">
+            <span
+              className="block text-[22px] md:text-[26px] italic leading-none"
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                backgroundImage: "linear-gradient(90deg, #1a4bf0, #8b5cf6)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              pronto para começar?
+            </span>
+            <span
+              className="kicker-line block mt-2 h-[2px] rounded-full"
+              style={{ background: `linear-gradient(90deg, #1a4bf0, #8b5cf6)` }}
+            />
+          </div>
+          <h2 className="font-heading text-[clamp(36px,6vw,74px)] font-bold tracking-[-.04em] leading-[1.02] max-w-[16ch] mx-auto text-ink reveal">
+            Cria a tua loja agora e<br />
+            <span className="text-primary">
+              começa a vender{" "}
+              <em
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                }}
+              >
+                hoje.
+              </em>
+            </span>
           </h2>
-          <p className="relative mx-auto mt-5 max-w-md text-base text-blue-50">
-            Monte sua loja, conecte o WhatsApp e deixe a IA vender. Grátis por
-            14 dias.
-          </p>
-          <Link
-            href="/signup"
-            className="relative mt-8 inline-flex items-center gap-2.5 rounded-xl bg-white px-9 py-4 text-base font-semibold text-blue-700 shadow-xl shadow-black/10 transition hover:bg-blue-50 active:translate-y-px"
-            navigate={navigate}
-          >
-            Testar grátis <ArrowRight size={19} />
-          </Link>
-        </motion.div>
-      </section>
-
-      <footer className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto max-w-7xl px-5 pt-16 pb-10 md:px-6">
-          <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1.2fr]">
-            <div>
+          <div className="mt-11 flex gap-4 justify-center flex-wrap reveal">
+            <MagneticWrap strength={0.25}>
               <Link
-                href="/"
-                className="group flex items-center gap-2.5 mb-4"
+                href="/signup"
+                data-magnetic
+                className="inline-flex items-center gap-2.5 font-heading font-semibold text-[15px] text-white bg-gradient-to-r from-primary to-violet-600 px-6 py-3.5 shadow-lg shadow-primary/25 transition hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 btn-press"
+                style={{ borderRadius: "999px" }}
                 navigate={navigate}
               >
-                <motion.div
-                  whileHover={reduce ? {} : { scale: 1.05, rotate: -6 }}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-400 text-[15px] font-bold text-white shadow-lg shadow-blue-500/40"
-                >
-                  V
-                </motion.div>
-                <span className="text-[17px] font-bold tracking-tight">
-                  Venda Express
-                </span>
+                Testar grátis <ArrowRight size={15} />
               </Link>
-              <p className="max-w-xs text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                A plataforma de e-commerce angolana que monta a sua loja,
-                conecta o WhatsApp e deixa a IA vender por si.
-              </p>
-              <div className="mt-6 flex gap-3">
-                {[
-                  { icon: MessageCircle, href: "#" },
-                  { icon: BarChart3, href: "#" },
-                  { icon: Zap, href: "#" },
-                ].map((s, i) => (
-                  <a
-                    key={i}
-                    href={s.href}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 text-zinc-400 transition hover:border-blue-300 hover:text-blue-600 hover:shadow-md dark:border-zinc-700 dark:hover:border-blue-600 dark:hover:text-blue-400"
-                  >
-                    <s.icon size={16} />
-                  </a>
-                ))}
+            </MagneticWrap>
+            <MagneticWrap strength={0.25}>
+              <Link
+                href="mailto:suporte@vendaexpress.com"
+                data-magnetic
+                className="inline-flex items-center gap-2.5 font-heading font-semibold text-[15px] bg-transparent text-ink px-6 py-3.5 border-2 border-ink transition hover:bg-ink hover:text-paper btn-press"
+                style={{ borderRadius: "999px" }}
+                navigate={navigate}
+              >
+                Falar connosco
+              </Link>
+            </MagneticWrap>
+          </div>
+        </div>
+        <div
+          className="mt-10 md:mt-[70px] overflow-hidden"
+          style={{
+            maskImage:
+              "linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)",
+            WebkitMaskImage:
+              "linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)",
+          }}
+        >
+          <div className="flex w-max gap-10 animate-marquee">
+            {[0, 1].flatMap((_) => [
+              <span
+                key="a"
+                className="font-heading text-[clamp(48px,9vw,120px)] font-bold tracking-[-.04em] whitespace-nowrap"
+                style={{
+                  color: "transparent",
+                  WebkitTextStroke: "1.2px var(--theme-colors-border-2)",
+                }}
+              >
+                montar uma loja
+              </span>,
+              <span
+                key="b"
+                className="text-[clamp(48px,9vw,120px)] tracking-[-.02em] text-ink whitespace-nowrap"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  fontStyle: "italic",
+                }}
+              >
+                nunca foi tão fácil.
+              </span>,
+            ])}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-[2] overflow-hidden bg-[#0b0a18]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-primary/30 via-violet-500/20 to-transparent blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-gradient-to-tl from-amber-400/20 via-rose-500/15 to-transparent blur-[110px]" />
+          <div
+            className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+              backgroundSize: "256px 256px",
+            }}
+          />
+        </div>
+
+        <div className="mx-auto max-w-[1220px] px-5 md:px-8 py-[70px] pb-10 relative z-[1]">
+          {/* Mini CTA */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pb-12 mb-12 border-b border-white/10 reveal">
+            <div>
+              <div className="inline-block mb-4 ">
+                <span
+                  className="block text-[20px] md:text-[22px] italic leading-none"
+                  style={{
+                    fontFamily: "'Instrument Serif', serif",
+                    backgroundImage: "linear-gradient(90deg, #a78bfa, #60a5fa)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  ainda sem loja?
+                </span>
+                <span
+                  className="kicker-line block mt-2 h-[2px] rounded-full"
+                  style={{
+                    background: `linear-gradient(90deg, #a78bfa, #60a5fa)`,
+                  }}
+                />
               </div>
+              <h3 className="font-heading text-[clamp(24px,3.2vw,38px)] font-bold tracking-[-.03em] text-white max-w-[20ch]">
+                Cria a tua agora e começa a vender hoje.
+              </h3>
             </div>
+            <MagneticWrap strength={0.25}>
+              <Link
+                href="/signup"
+                data-magnetic
+                className="inline-flex items-center gap-2.5 font-heading font-semibold text-[15px] text-white bg-gradient-to-r from-primary to-violet-600 px-6 py-3.5 shadow-lg shadow-primary/30 transition hover:shadow-xl hover:-translate-y-0.5 btn-press shrink-0"
+                style={{ borderRadius: "999px" }}
+                navigate={navigate}
+              >
+                Testar grátis <ArrowRight size={15} />
+              </Link>
+            </MagneticWrap>
+          </div>
 
-            <div>
-              <h4 className="mb-4 text-xs font-semibold tracking-[.15em] text-zinc-400 uppercase">
-                Produto
-              </h4>
-              <ul className="space-y-3">
-                {[
-                  { href: "#recursos", label: "Recursos" },
-                  { href: "#precos", label: "Preços" },
-                  { href: "#como", label: "Como funciona" },
-                ].map((l) => (
-                  <li key={l.href}>
+          <div className="flex justify-between items-start flex-wrap gap-10 pb-12 border-b border-white/10">
+            <div className="max-w-[280px]">
+              <div className="font-heading text-[22px] font-bold text-white flex items-center gap-2.5">
+                <span className="w-[9px] h-[9px] rounded-full bg-gradient-to-br from-primary to-violet-500" />
+                Venda Express
+              </div>
+              <p className="text-sm text-white/50 mt-3.5 leading-relaxed">
+                A plataforma de e-commerce angolana mais simples para montares a
+                tua loja e começares a vender online.
+              </p>
+            </div>
+            <div className="flex gap-[60px] flex-wrap">
+              <div>
+                <h4 className="font-body text-[11.5px] font-semibold tracking-[.06em] uppercase text-white/40 mb-4">
+                  produto
+                </h4>
+                {["plataforma", "recursos", "resultados", "preços"].map(
+                  (label, i) => (
                     <Link
-                      href={l.href}
-                      className="text-sm text-zinc-500 transition hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                      key={i}
+                      href={`#${["plataforma", "recursos", "resultados", "precos"][i]}`}
+                      className="block font-body text-sm text-white/75 mb-3 transition-colors hover:text-blue-300"
                       navigate={navigate}
                     >
-                      {l.label}
+                      {label}
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="mb-4 text-xs font-semibold tracking-[.15em] text-zinc-400 uppercase">
-                Conta
-              </h4>
-              <ul className="space-y-3">
-                {[
-                  { href: "/login", label: "Entrar" },
-                  { href: "/signup", label: "Criar loja" },
-                ].map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-sm text-zinc-500 transition hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
-                      navigate={navigate}
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="mb-4 text-xs font-semibold tracking-[.15em] text-zinc-400 uppercase">
-                Contacto
-              </h4>
-              <ul className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
-                <li>suporte@vendaexpress.com</li>
-                <li>Benguela, Angola</li>
-                <li className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Suporte 24h
-                </li>
-              </ul>
+                  ),
+                )}
+              </div>
+              <div>
+                <h4 className="font-body text-[11.5px] font-semibold tracking-[.06em] uppercase text-white/40 mb-4">
+                  conta
+                </h4>
+                <Link
+                  href="/login"
+                  className="block font-body text-sm text-white/75 mb-3 transition-colors hover:text-blue-300"
+                  navigate={navigate}
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block font-body text-sm text-white/75 mb-3 transition-colors hover:text-blue-300"
+                  navigate={navigate}
+                >
+                  Criar loja
+                </Link>
+              </div>
+              <div>
+                <h4 className="font-body text-[11.5px] font-semibold tracking-[.06em] uppercase text-white/40 mb-4">
+                  contacto
+                </h4>
+                <a
+                  href="mailto:suporte@vendaexpress.com"
+                  className="block font-body text-sm text-white/75 mb-3 transition-colors hover:text-blue-300"
+                >
+                  Email
+                </a>
+                <a
+                  href="https://wa.me/244900000000"
+                  target="_blank"
+                  rel="noopener"
+                  className="block font-body text-sm text-white/75 mb-3 transition-colors hover:text-blue-300"
+                >
+                  WhatsApp
+                </a>
+                <span className="block font-body text-sm text-white/75 mb-3">
+                  Instagram
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-8 md:flex-row dark:border-zinc-800">
-            <span className="text-xs text-zinc-400">
-              © 2026 Venda Express — Feito em Angola
+          <ParallaxLayer
+            speed={-0.08}
+            className="font-heading text-[clamp(60px,17vw,240px)] font-bold tracking-[-.05em] leading-[.85] my-8 md:my-12 overflow-hidden whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-r from-primary via-violet-400 to-amber-300"
+          >
+            Venda Express
+          </ParallaxLayer>
+
+          <div className="flex justify-between items-center flex-wrap gap-3 font-body text-xs text-white/40">
+            <span>© 2026 — feito em Benguela, Angola</span>
+            <span>
+              <a href="#" className="transition-colors hover:text-white">
+                termos
+              </a>{" "}
+              &nbsp;{" "}
+              <a href="#" className="transition-colors hover:text-white">
+                privacidade
+              </a>
             </span>
-            <div className="flex gap-6 text-xs text-zinc-400">
-              <span>Termos</span>
-              <span>Privacidade</span>
-            </div>
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp Floating FAB */}
+      <a
+        href="https://wa.me/244900000000"
+        target="_blank"
+        rel="noopener"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+        style={{
+          backgroundColor: "#25D366",
+          animation: "whatsappBounce 1.8s ease-in-out infinite",
+        }}
+        aria-label="Falar pelo WhatsApp"
+      >
+        <MessageCircle size={26} className="text-white" />
+      </a>
+
+      <style>{`
+        @keyframes whatsappBounce {
+          0%, 100% { transform: translateY(0); box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+          50% { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(37,211,102,0.5); }
+        }
+      `}</style>
     </div>
   );
 }

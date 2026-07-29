@@ -7,14 +7,7 @@ import type { PageSection } from '../../types/page';
 import type { BlockDefinition, FieldSchema, FieldType } from '../../types/block';
 import { globalBlockRegistry } from '../../core/BlockRegistry';
 
-const GRADIENT_MAP: Record<string, string> = {
-  hero: 'from-violet-500 to-purple-600',
-  products: 'from-blue-500 to-cyan-600',
-  marketing: 'from-amber-500 to-orange-600',
-  content: 'from-emerald-500 to-teal-600',
-  footer: 'from-slate-600 to-slate-800',
-  layout: 'from-rose-500 to-pink-600',
-};
+const CATEGORY_STYLE = 'bg-ink text-paper';
 
 type TabId = 'content' | 'styles' | 'layout';
 
@@ -32,15 +25,15 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
           type="color"
           value={value || '#000000'}
           onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 p-0.5"
+          className="h-8 w-8 cursor-pointer border-2 border-border p-0.5" style={{ borderRadius: '2px' }}
         />
-        <div className="absolute inset-0 rounded-lg ring-1 ring-inset ring-slate-200 pointer-events-none" />
+        <div className="absolute inset-0 ring-1 ring-inset ring-border pointer-events-none" style={{ borderRadius: '2px' }} />
       </div>
       <input
         type="text"
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-mono text-slate-600 focus:border-blue-500 focus:outline-none"
+        className="flex-1 border-2 border-border px-2 py-1 font-mono text-xs text-ink focus:border-accent focus:outline-none" style={{ borderRadius: '2px' }}
       />
     </div>
   );
@@ -52,16 +45,16 @@ function RangeInput({ value, onChange, min = 0, max = 100, step = 1, label }: {
 }) {
   return (
     <div className="space-y-1">
-      {label && <div className="text-[10px] font-medium text-slate-500">{label}</div>}
+      {label && <div className="font-mono text-[10px] font-medium text-ink-2">{label}</div>}
       <div className="flex items-center gap-2">
         <input
           type="range"
           value={value ?? 0}
           onChange={(e) => onChange(Number(e.target.value))}
           min={min} max={max} step={step}
-          className="flex-1 h-1.5 rounded-full appearance-none bg-slate-200 accent-blue-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:shadow-sm"
+          className="flex-1 h-1.5 appearance-none bg-ink/10 accent-accent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-sm" style={{ borderRadius: '2px' }}
         />
-        <span className="w-8 text-right text-xs font-medium text-slate-500 tabular-nums">{value ?? 0}</span>
+        <span className="w-8 text-right font-mono text-xs font-medium text-ink-2 tabular-nums">{value ?? 0}</span>
       </div>
     </div>
   );
@@ -72,15 +65,15 @@ function SpacingInput({ label, value, onChange }: {
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[11px] text-slate-600">{label}</span>
+      <span className="font-mono text-[11px] text-ink-2">{label}</span>
       <div className="flex items-center gap-1">
         <input
           type="number"
           value={value ?? 0}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-14 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-700 text-right focus:border-blue-500 focus:outline-none tabular-nums"
+          className="w-14 border-2 border-border px-2 py-1 font-mono text-xs text-ink text-right focus:border-accent focus:outline-none tabular-nums" style={{ borderRadius: '2px' }}
         />
-        <span className="text-[10px] text-slate-400 w-5">px</span>
+        <span className="font-mono text-[10px] text-ink-2 w-5">px</span>
       </div>
     </div>
   );
@@ -93,7 +86,8 @@ function FieldInput({ field, value, onChange }: {
 }) {
   const val = value ?? field.default;
 
-  const baseInput = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all';
+  const baseInput = 'w-full border-2 border-border bg-paper px-3 py-1.5 font-mono text-xs text-ink placeholder:text-ink-2 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-soft transition-all';
+  const baseStyle = { borderRadius: '2px' };
 
   switch (field.type) {
     case 'text':
@@ -104,7 +98,7 @@ function FieldInput({ field, value, onChange }: {
           value={val as string}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className={baseInput}
+          className={baseInput} style={baseStyle}
         />
       );
 
@@ -115,7 +109,7 @@ function FieldInput({ field, value, onChange }: {
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           rows={3}
-          className={`${baseInput} resize-y`}
+          className={`${baseInput} resize-y`} style={baseStyle}
         />
       );
 
@@ -126,7 +120,7 @@ function FieldInput({ field, value, onChange }: {
           value={val as number}
           onChange={(e) => onChange(Number(e.target.value))}
           min={field.min} max={field.max} step={field.step}
-          className={baseInput}
+          className={baseInput} style={baseStyle}
         />
       );
 
@@ -139,7 +133,7 @@ function FieldInput({ field, value, onChange }: {
     case 'select': {
       const options = field.options ?? [];
       return (
-        <select value={val as string} onChange={(e) => onChange(e.target.value)} className={baseInput}>
+        <select value={val as string} onChange={(e) => onChange(e.target.value)} className={baseInput} style={baseStyle}>
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
@@ -154,9 +148,9 @@ function FieldInput({ field, value, onChange }: {
             type="checkbox"
             checked={!!val}
             onChange={(e) => onChange(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 border-2 border-border text-accent focus:ring-accent" style={{ borderRadius: '2px' }}
           />
-          <span className="text-xs text-slate-600">{field.label}</span>
+          <span className="font-mono text-xs text-ink-2">{field.label}</span>
         </label>
       );
 
@@ -168,20 +162,20 @@ function FieldInput({ field, value, onChange }: {
             value={val as string}
             onChange={(e) => onChange(e.target.value)}
             placeholder="URL da imagem"
-            className={baseInput}
+            className={baseInput} style={baseStyle}
           />
           {val && (
-            <div className="relative h-24 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <div className="relative h-24 w-full overflow-hidden border-2 border-border bg-ink/[0.02]" style={{ borderRadius: '2px' }}>
               <img src={val as string} alt="" className="h-full w-full object-cover" />
               <button
                 onClick={() => onChange('')}
-                className="absolute right-1 top-1 rounded-md bg-white/80 px-1.5 py-0.5 text-[10px] text-slate-600 hover:bg-white shadow-sm"
+                className="absolute right-1 top-1 bg-paper/80 px-1.5 py-0.5 font-mono text-[10px] text-ink hover:bg-paper shadow-sm" style={{ borderRadius: '2px' }}
               >
                 Remover
               </button>
             </div>
           )}
-          <button className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-[10px] font-medium text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors">
+          <button className="w-full border-2 border-dashed border-border px-3 py-2 font-mono text-[10px] font-medium text-ink-2 hover:border-accent hover:text-accent transition-colors" style={{ borderRadius: '2px' }}>
             + Adicionar imagem
           </button>
         </div>
@@ -193,7 +187,7 @@ function FieldInput({ field, value, onChange }: {
           type="text"
           value={String(val ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          className={baseInput}
+          className={baseInput} style={baseStyle}
         />
       );
   }
@@ -206,9 +200,9 @@ function FieldRenderer({ field, value, onChange }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+      <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-2">
         {field.label}
-        {field.hint && <span className="ml-1 font-normal normal-case text-slate-400">— {field.hint}</span>}
+        {field.hint && <span className="ml-1 font-normal normal-case text-ink-3">— {field.hint}</span>}
       </label>
       <FieldInput field={field} value={value} onChange={onChange} />
     </div>
@@ -236,12 +230,12 @@ export function BuilderInspector({
 
   if (!section) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center bg-white">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 text-slate-300 shadow-inner">
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center bg-paper">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center bg-ink/5 text-ink-2 shadow-inner" style={{ borderRadius: '2px' }}>
           <Eye size={24} />
         </div>
-        <p className="text-sm font-medium text-slate-600">Nenhum bloco selecionado</p>
-        <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+        <p className="font-heading text-sm font-medium text-ink">Nenhum bloco selecionado</p>
+        <p className="mt-1 font-mono text-xs text-ink-2 leading-relaxed">
           Clica num bloco do editor para veres e alterares as suas propriedades.
         </p>
       </div>
@@ -259,28 +253,28 @@ export function BuilderInspector({
   ];
 
   return (
-    <div className="flex h-full flex-col border-l border-slate-200 bg-white">
+    <div className="flex h-full flex-col border-l border-border bg-paper">
       {/* Section header */}
-      <div className="border-b border-slate-200 px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${GRADIENT_MAP[section.type] || 'from-blue-500 to-blue-600'} text-white shadow-sm`}>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center ${CATEGORY_STYLE} shadow-sm`} style={{ borderRadius: '2px' }}>
             {(globalBlockRegistry.get(section.type)?.icon === 'Type' ? <Type size={14} /> : <Layout size={14} />)}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-slate-800">{block?.label ?? section.type}</div>
-            <div className="text-[10px] text-slate-400 font-mono truncate">{section.id.slice(0, 16)}</div>
+            <div className="truncate font-heading text-sm font-semibold text-ink">{block?.label ?? section.type}</div>
+            <div className="font-mono text-[10px] text-ink-2 truncate">{section.id.slice(0, 16)}</div>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => onDuplicate(section.id)}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              className="p-1.5 text-ink-2 hover:bg-ink/5 hover:text-ink transition-colors" style={{ borderRadius: '2px' }}
               title="Duplicar"
             >
               <Copy size={13} />
             </button>
             <button
               onClick={() => onRemove(section.id)}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="p-1.5 text-ink-2 hover:bg-danger/10 hover:text-danger transition-colors" style={{ borderRadius: '2px' }}
               title="Remover"
             >
               <Trash2 size={13} />
@@ -290,7 +284,7 @@ export function BuilderInspector({
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-border">
         {TABS.map((tab) => {
           const TabIcon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -298,10 +292,10 @@ export function BuilderInspector({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-medium transition-all ${
+              className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 font-mono text-xs font-medium transition-all ${
                 isActive
-                  ? 'border-blue-600 text-blue-700 bg-blue-50/50'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  ? 'border-accent text-accent bg-accent-soft'
+                  : 'border-transparent text-ink-2 hover:text-ink hover:bg-ink/5'
               }`}
             >
               <TabIcon size={13} />
@@ -316,9 +310,9 @@ export function BuilderInspector({
         {activeTab === 'content' && (
           <div className="space-y-4">
             {settingsFields.length === 0 ? (
-              <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 p-4 text-center">
-                <Type size={20} className="mx-auto mb-2 text-slate-300" />
-                <p className="text-xs text-slate-500">Este bloco não tem conteúdo configurável.</p>
+              <div className="bg-ink/5 p-4 text-center" style={{ borderRadius: '2px' }}>
+                <Type size={20} className="mx-auto mb-2 text-ink-3" />
+                <p className="font-mono text-xs text-ink-2">Este bloco não tem conteúdo configurável.</p>
               </div>
             ) : (
               settingsFields.map((field) => (
@@ -336,9 +330,9 @@ export function BuilderInspector({
         {activeTab === 'styles' && (
           <div className="space-y-4">
             {styleFields.length === 0 ? (
-              <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 p-4 text-center">
-                <Palette size={20} className="mx-auto mb-2 text-slate-300" />
-                <p className="text-xs text-slate-500">Este bloco não tem estilos configuráveis.</p>
+              <div className="bg-ink/5 p-4 text-center" style={{ borderRadius: '2px' }}>
+                <Palette size={20} className="mx-auto mb-2 text-ink-3" />
+                <p className="font-mono text-xs text-ink-2">Este bloco não tem estilos configuráveis.</p>
               </div>
             ) : (
               styleFields.map((field) => (
@@ -353,17 +347,17 @@ export function BuilderInspector({
 
             {styleFields.length > 0 && styleFields.some((f) => f.type === 'color') && (
               <div className="pt-2">
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Cores rápidas</div>
+                <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-2">Cores rápidas</div>
                 <div className="flex flex-wrap gap-1.5">
-                  {['#000000', '#ffffff', '#2563eb', '#16a34a', '#ea580c', '#dc2626', '#7c3aed', '#0d9488', '#eab308', '#64748b'].map((c) => (
+                  {['#000000', '#ffffff', '#1a4bf0', '#16a34a', '#ea580c', '#dc2626', '#7c3aed', '#0d9488', '#eab308', '#64748b'].map((c) => (
                     <button
                       key={c}
                       onClick={() => {
                         const colorField = styleFields.find((f) => f.type === 'color');
                         if (colorField) onChangeStyle({ [colorField.label]: c });
                       }}
-                      className="h-6 w-6 rounded-lg border border-slate-200 shadow-sm hover:scale-110 transition-transform"
-                      style={{ backgroundColor: c }}
+                      className="h-6 w-6 border-2 border-border shadow-sm hover:scale-110 transition-transform"
+                      style={{ backgroundColor: c, borderRadius: '2px' }}
                       title={c}
                     />
                   ))}
@@ -376,7 +370,7 @@ export function BuilderInspector({
         {activeTab === 'layout' && (
           <div className="space-y-5">
             <div>
-              <div className="flex items-center gap-1.5 mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <div className="flex items-center gap-1.5 mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-2">
                 <Layout size={12} />
                 Espaçamento
               </div>
@@ -392,18 +386,18 @@ export function BuilderInspector({
               </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-4">
-              <div className="flex items-center gap-1.5 mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center gap-1.5 mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-2">
                 <Layout size={12} />
                 Dimensões
               </div>
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-600">Largura máx.</span>
+                  <span className="font-mono text-[11px] text-ink-2">Largura máx.</span>
                   <select
                     value={(section.style?.['maxWidth'] as string) || '100%'}
                     onChange={(e) => onChangeStyle({ maxWidth: e.target.value })}
-                    className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-700 focus:border-blue-500 focus:outline-none"
+                    className="border-2 border-border px-2 py-1 font-mono text-xs text-ink focus:border-accent focus:outline-none" style={{ borderRadius: '2px' }}
                   >
                     <option value="100%">100%</option>
                     <option value="1200px">1200px</option>
@@ -414,12 +408,12 @@ export function BuilderInspector({
               </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-4">
-              <div className="flex items-center gap-1.5 mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center gap-1.5 mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-2">
                 <AlignLeft size={12} />
                 Alinhamento
               </div>
-              <div className="flex gap-1 rounded-lg border border-slate-200 p-0.5 w-fit">
+              <div className="flex gap-1 border-2 border-border p-0.5" style={{ borderRadius: '2px', width: 'fit-content' }}>
                 {[
                   { icon: AlignLeft, value: 'left' },
                   { icon: AlignCenter, value: 'center' },
@@ -428,11 +422,12 @@ export function BuilderInspector({
                   <button
                     key={value}
                     onClick={() => onChangeStyle({ textAlign: value })}
-                    className={`flex h-7 w-7 items-center justify-center rounded-md text-xs transition-colors ${
+                    className={`flex h-7 w-7 items-center justify-center text-xs transition-colors ${
                       (section.style?.textAlign as string) === value
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                        ? 'bg-accent-soft text-accent'
+                        : 'text-ink-2 hover:bg-ink/5 hover:text-ink'
                     }`}
+                    style={{ borderRadius: '2px' }}
                   >
                     <AlignIcon size={13} />
                   </button>

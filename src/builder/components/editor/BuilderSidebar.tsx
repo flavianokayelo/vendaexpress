@@ -13,15 +13,6 @@ const ICON_MAP: Record<string, typeof LayoutTemplate> = {
   ArrowDownToLine, Share2, Sparkles,
 };
 
-const GRADIENT_MAP: Record<string, string> = {
-  hero: 'from-violet-500 to-purple-600',
-  products: 'from-blue-500 to-cyan-600',
-  marketing: 'from-amber-500 to-orange-600',
-  content: 'from-emerald-500 to-teal-600',
-  footer: 'from-slate-600 to-slate-800',
-  layout: 'from-rose-500 to-pink-600',
-};
-
 function DraggableBlockCard({ block }: { block: BlockDefinition }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette-${block.type}`,
@@ -34,26 +25,27 @@ function DraggableBlockCard({ block }: { block: BlockDefinition }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`group cursor-grab rounded-xl border border-slate-200 bg-white p-3 transition-all hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] ${
-        isDragging ? 'opacity-50 ring-2 ring-blue-400 scale-95' : ''
+      className={`group cursor-grab border-2 border-border bg-paper p-3 transition-all hover:border-accent hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] ${
+        isDragging ? 'opacity-50 ring-2 ring-accent scale-95' : ''
       }`}
+      style={{ borderRadius: '2px' }}
     >
       <div className="flex items-start gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${GRADIENT_MAP[block.category] || 'from-blue-500 to-blue-600'} text-white shadow-sm`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center bg-ink text-paper`} style={{ borderRadius: '2px' }}>
           <Icon size={16} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-slate-800">{block.label}</div>
+          <div className="font-heading text-sm font-semibold text-ink">{block.label}</div>
           {block.description && (
-            <div className="mt-0.5 text-[11px] text-slate-400 leading-tight line-clamp-2">{block.description}</div>
+            <div className="mt-0.5 font-mono text-[11px] text-ink-2 leading-tight line-clamp-2">{block.description}</div>
           )}
         </div>
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-500 uppercase tracking-wider">
+        <span className="bg-ink/5 px-2 py-0.5 font-mono text-[9px] font-medium text-ink-2 uppercase tracking-wider" style={{ borderRadius: '2px' }}>
           {BLOCK_CATEGORIES[block.category as BlockCategory]?.label ?? block.category}
         </span>
-        <span className="ml-auto text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="ml-auto font-mono text-[10px] text-ink-3 opacity-0 group-hover:opacity-100 transition-opacity">
           Arrastar +
         </span>
       </div>
@@ -115,26 +107,26 @@ export function BuilderSidebar({
   const hasActiveFilter = search.trim().length > 0 || activeCategory !== null;
 
   return (
-    <div className="flex h-full flex-col border-r border-slate-200 bg-white">
+    <div className="flex h-full flex-col border-r border-border bg-paper">
       {/* Header */}
-      <div className="border-b border-slate-200 px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-slate-800">Blocos</h2>
-          <span className="text-[10px] text-slate-400 font-medium">{blocks.length} disponíveis</span>
+          <h2 className="font-heading text-sm font-semibold text-ink">Blocos</h2>
+          <span className="font-mono text-[10px] text-ink-2">{blocks.length} disponíveis</span>
         </div>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Procurar blocos..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-8 text-xs text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
+            className="w-full border-2 border-border bg-ink/[0.02] py-1.5 pl-9 pr-8 font-mono text-xs text-ink placeholder:text-ink-2 focus:border-accent focus:outline-none focus:bg-paper focus:ring-2 focus:ring-accent-soft transition-all" style={{ borderRadius: '2px' }}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-2 hover:text-ink"
             >
               <X size={14} />
             </button>
@@ -143,7 +135,7 @@ export function BuilderSidebar({
       </div>
 
       {/* Category pills */}
-      <div className="border-b border-slate-100 px-3 py-2">
+      <div className="border-b border-border px-3 py-2">
         <div className="flex flex-wrap gap-1.5">
           {CATEGORY_ORDER.map((cat) => {
             const CatIcon = CATEGORY_ICONS[cat] || LayoutTemplate;
@@ -152,11 +144,12 @@ export function BuilderSidebar({
               <button
                 key={cat}
                 onClick={() => setActiveCategory(isActive ? null : cat)}
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 font-mono text-[10px] font-medium transition-all ${
                   isActive
-                    ? 'bg-blue-100 text-blue-700 shadow-sm'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                    ? 'bg-accent-soft text-accent'
+                    : 'bg-ink/5 text-ink-2 hover:bg-ink/10 hover:text-ink'
                 }`}
+                style={{ borderRadius: '2px' }}
               >
                 <CatIcon size={10} />
                 {BLOCK_CATEGORIES[cat]?.label ?? cat}
@@ -166,7 +159,7 @@ export function BuilderSidebar({
           {hasActiveFilter && (
             <button
               onClick={() => { setSearch(''); setActiveCategory(null); }}
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1 font-mono text-[10px] font-medium bg-danger/10 text-danger hover:bg-danger/20 transition-colors" style={{ borderRadius: '2px' }}
             >
               <X size={10} /> Limpar
             </button>
@@ -180,12 +173,11 @@ export function BuilderSidebar({
           CATEGORY_ORDER.map((cat) => {
             const catBlocks = grouped[cat];
             if (!catBlocks?.length) return null;
-            const gradient = GRADIENT_MAP[cat] || 'from-blue-500 to-blue-600';
             return (
               <div key={cat} className="mb-5">
-                <div className={`mb-2 rounded-lg bg-gradient-to-r ${gradient} px-3 py-2`}>
-                  <div className="text-xs font-bold text-white">{BLOCK_CATEGORIES[cat]?.label ?? cat}</div>
-                  <div className="text-[10px] text-white/70">{BLOCK_CATEGORIES[cat]?.description}</div>
+                <div className="mb-2 bg-ink px-3 py-2" style={{ borderRadius: '2px' }}>
+                  <div className="font-heading text-xs font-bold text-paper">{BLOCK_CATEGORIES[cat]?.label ?? cat}</div>
+                  <div className="font-mono text-[10px] text-paper/70">{BLOCK_CATEGORIES[cat]?.description}</div>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {catBlocks.map((block) => (
@@ -197,11 +189,11 @@ export function BuilderSidebar({
           })
         ) : flattenFiltered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center bg-ink/5 text-ink-2" style={{ borderRadius: '2px' }}>
               <Search size={24} />
             </div>
-            <p className="text-sm font-medium text-slate-600">Nenhum bloco encontrado</p>
-            <p className="mt-1 text-xs text-slate-400">Tenta outros termos de pesquisa</p>
+            <p className="font-mono text-sm font-medium text-ink-2">Nenhum bloco encontrado</p>
+            <p className="mt-1 font-mono text-xs text-ink-3">Tenta outros termos de pesquisa</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2">

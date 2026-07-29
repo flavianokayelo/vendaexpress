@@ -10,7 +10,7 @@ type Props = {
 export function ColorPicker({ value, valueHex, onChange }: Props) {
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-[7px]">
         {COLOR_PALETTE.map((c) => {
           const selected = value === c.name;
           const iconDark = LIGHT_HEXES.has(c.hex);
@@ -20,13 +20,13 @@ export function ColorPicker({ value, valueHex, onChange }: Props) {
               type="button"
               title={c.name}
               onClick={() => onChange(c.name, c.hex)}
-              className={`relative h-8 w-8 rounded-full border transition-transform hover:scale-110 ${
-                selected ? 'ring-2 ring-blue-600 ring-offset-2' : ''
+              className={`relative h-8 w-8 border transition-all hover:scale-110 ${
+                selected ? 'ring-1 ring-ink ring-offset-1 ring-offset-paper' : ''
               }`}
-              style={{ backgroundColor: c.hex, borderColor: c.hex === '#FFFFFF' ? '#e2e8f0' : c.hex }}
+              style={{ backgroundColor: c.hex, borderColor: c.hex === '#FFFFFF' ? '#e3e1d7' : c.hex, borderRadius: '2px' }}
             >
               {selected && (
-                <Check size={14} className="absolute inset-0 m-auto" style={{ color: iconDark ? '#111827' : '#fff' }} />
+                <Check size={14} className="absolute inset-0 m-auto" style={{ color: iconDark ? '#15150e' : '#fff' }} />
               )}
             </button>
           );
@@ -34,7 +34,8 @@ export function ColorPicker({ value, valueHex, onChange }: Props) {
 
         <label
           title="Cor personalizada"
-          className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 bg-white text-sm text-slate-400 hover:border-blue-400 hover:text-blue-600"
+          className="relative flex h-8 w-8 cursor-pointer items-center justify-center border border-dashed border-border-2 bg-paper font-mono text-sm text-ink-2 hover:border-ink hover:text-ink"
+          style={{ borderRadius: '2px' }}
         >
           +
           <input
@@ -51,10 +52,10 @@ export function ColorPicker({ value, valueHex, onChange }: Props) {
       </div>
 
       {value && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-          <span className="h-3 w-3 rounded-full border border-slate-200" style={{ backgroundColor: valueHex || '#ccc' }} />
+        <div className="mt-2 flex items-center gap-2 font-mono text-[11px] text-ink-2">
+          <span className="h-3 w-3 border border-border" style={{ backgroundColor: valueHex || '#ccc', borderRadius: '2px' }} />
           {value}
-          <button type="button" onClick={() => onChange('', '')} className="ml-1 flex items-center gap-0.5 text-slate-400 hover:text-red-500">
+          <button type="button" onClick={() => onChange('', '')} className="ml-1 flex items-center gap-0.5 text-ink-2 hover:text-danger transition-colors">
             <X size={12} /> limpar
           </button>
         </div>

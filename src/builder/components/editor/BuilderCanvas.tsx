@@ -11,13 +11,13 @@ import type { PageSection } from '../../types/page';
 import type { DeviceMode } from '../../types/editor';
 import type { BlockSettings } from '../../types/block';
 
-const GRADIENT_MAP: Record<string, string> = {
-  hero: 'from-violet-500 to-purple-600',
-  products: 'from-blue-500 to-cyan-600',
-  marketing: 'from-amber-500 to-orange-600',
-  content: 'from-emerald-500 to-teal-600',
-  footer: 'from-slate-600 to-slate-800',
-  layout: 'from-rose-500 to-pink-600',
+const CATEGORY_COLORS: Record<string, string> = {
+  hero: 'bg-ink text-paper',
+  products: 'bg-ink text-paper',
+  marketing: 'bg-ink text-paper',
+  content: 'bg-ink text-paper',
+  footer: 'bg-ink text-paper',
+  layout: 'bg-ink text-paper',
 };
 
 function SectionToolbar({ section, onSelect, onRemove, onDuplicate }: {
@@ -30,31 +30,31 @@ function SectionToolbar({ section, onSelect, onRemove, onDuplicate }: {
   const block = globalBlockRegistry.get(section.type);
 
   return (
-    <div className="absolute -top-10 left-1/2 z-30 flex -translate-x-1/2 items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-1.5 py-1 shadow-lg shadow-slate-200/50 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-0.5">
+    <div className="absolute -top-10 left-1/2 z-30 flex -translate-x-1/2 items-center gap-0.5 border-2 border-border bg-paper px-1.5 py-1 shadow-lg shadow-ink/5 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-0.5" style={{ borderRadius: '2px' }}>
       <button
         {...attributes}
         {...listeners}
-        className="flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+        className="flex h-6 w-6 cursor-grab items-center justify-center text-ink-2 hover:bg-ink/5 hover:text-ink transition-colors" style={{ borderRadius: '2px' }}
         title="Arrastar"
       >
         <GripVertical size={12} />
       </button>
-      <div className="mx-0.5 h-4 w-px bg-slate-200" />
-      <div className="flex items-center gap-1 px-1.5 text-[10px] font-medium text-slate-500">
-        <div className={`h-2 w-2 rounded-full bg-gradient-to-br ${GRADIENT_MAP[section.type] || 'from-blue-500 to-blue-600'}`} />
+      <div className="mx-0.5 h-4 w-px bg-border" />
+      <div className="flex items-center gap-1 px-1.5 font-mono text-[10px] font-medium text-ink-2">
+        <div className={`h-2 w-2 ${CATEGORY_COLORS[section.type] || 'bg-ink'}`} />
         <span>{block?.label ?? section.type}</span>
       </div>
-      <div className="mx-0.5 h-4 w-px bg-slate-200" />
+      <div className="mx-0.5 h-4 w-px bg-border" />
       <button
         onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
-        className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+        className="flex h-6 w-6 items-center justify-center text-ink-2 hover:bg-accent-soft hover:text-accent transition-colors" style={{ borderRadius: '2px' }}
         title="Duplicar"
       >
         <Copy size={12} />
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(section.id); }}
-        className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+        className="flex h-6 w-6 items-center justify-center text-ink-2 hover:bg-danger/10 hover:text-danger transition-colors" style={{ borderRadius: '2px' }}
         title="Remover"
       >
         <Trash2 size={12} />
@@ -84,11 +84,12 @@ function SortableSection({ section, isSelected, onSelect, onRemove, onDuplicate,
     <div ref={setNodeRef} style={style} className="group relative">
       <div
         onClick={() => onSelect(section.id)}
-        className={`relative rounded-lg transition-all duration-200 cursor-pointer ${
+        className={`relative transition-all duration-200 cursor-pointer ${
           isSelected
-            ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white shadow-lg shadow-blue-100'
-            : 'hover:ring-1 hover:ring-blue-300/40 hover:shadow-md'
+            ? 'ring-2 ring-accent ring-offset-2 ring-offset-paper shadow-lg shadow-accent/10'
+            : 'hover:ring-1 hover:ring-accent/30 hover:shadow-md'
         }`}
+        style={{ borderRadius: '2px' }}
       >
         {block?.component && (
           <block.component
@@ -102,26 +103,26 @@ function SortableSection({ section, isSelected, onSelect, onRemove, onDuplicate,
           />
         )}
         {!block?.component && (
-          <div className="flex items-center justify-center rounded-lg bg-amber-50 px-6 py-8 text-sm text-amber-700">
+          <div className="flex items-center justify-center border-2 border-border bg-warning/10 px-6 py-8 font-mono text-sm text-warning" style={{ borderRadius: '2px' }}>
             Bloco &ldquo;{section.type}&rdquo; não encontrado
           </div>
         )}
 
-        <div className={`pointer-events-none absolute inset-0 rounded-lg transition-all duration-200 ${
+        <div className={`pointer-events-none absolute inset-0 transition-all duration-200 ${
           isSelected
-            ? 'bg-blue-500/5'
-            : 'bg-transparent group-hover:bg-blue-50/30'
-        }`} />
+            ? 'bg-accent-soft'
+            : 'bg-transparent group-hover:bg-accent-soft/20'
+        }`} style={{ borderRadius: '2px' }} />
       </div>
 
       {isSelected && (
-        <div className="absolute -left-1 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+        <div className="absolute -left-1 top-1/2 h-8 w-0.5 -translate-y-1/2 bg-accent shadow-sm shadow-accent/30" style={{ borderRadius: '2px' }} />
       )}
 
       <SectionToolbar section={section} onSelect={onSelect} onRemove={onRemove} onDuplicate={onDuplicate} />
 
       {!isSelected && (
-        <div className="mx-auto mt-0 h-px max-w-[calc(100%-4rem)] bg-transparent transition-colors group-hover:bg-blue-200/50" />
+        <div className="mx-auto mt-0 h-px max-w-[calc(100%-4rem)] bg-transparent transition-colors group-hover:bg-accent/20" />
       )}
     </div>
   );
@@ -131,18 +132,19 @@ function DeviceFrame({ device, children }: { device: DeviceMode; children: React
   if (device === 'desktop') return <>{children}</>;
 
   const frameClass = device === 'mobile'
-    ? 'rounded-[2.5rem] border-[3px] border-slate-800 shadow-2xl overflow-hidden bg-white max-w-[375px] mx-auto'
-    : 'rounded-2xl border-[2px] border-slate-300 shadow-2xl overflow-hidden bg-white max-w-[768px] mx-auto';
+    ? 'border-[3px] border-ink shadow-2xl overflow-hidden bg-paper max-w-[375px] mx-auto'
+    : 'border-[2px] border-border shadow-2xl overflow-hidden bg-paper max-w-[768px] mx-auto';
+  const frameRadius = device === 'mobile' ? '2rem' : '2px';
 
   return (
     <div className="flex flex-col items-center py-4">
       {device === 'mobile' && (
-        <div className="mb-1 h-1 w-16 rounded-full bg-slate-800" />
+        <div className="mb-1 h-1 w-16 bg-ink" style={{ borderRadius: '2px' }} />
       )}
-      <div className={frameClass}>
+      <div className={frameClass} style={{ borderRadius: frameRadius }}>
         {device === 'mobile' && (
-          <div className="flex items-center justify-center border-b border-slate-100 py-2 text-[10px] text-slate-400">
-            <div className="rounded-full bg-slate-100 px-4 py-0.5">vendaexpress.ao</div>
+          <div className="flex items-center justify-center border-b border-border py-2 font-mono text-[10px] text-ink-2">
+            <div className="bg-ink/5 px-4 py-0.5" style={{ borderRadius: '2px' }}>vendaexpress.ao</div>
           </div>
         )}
         <div className={device === 'mobile' ? 'min-h-[600px]' : 'min-h-[400px]'}>
@@ -151,9 +153,9 @@ function DeviceFrame({ device, children }: { device: DeviceMode; children: React
       </div>
       {device === 'mobile' && (
         <div className="mt-2 flex gap-1">
-          <div className="h-1 w-1 rounded-full bg-slate-300" />
-          <div className="h-1 w-8 rounded-full bg-slate-300" />
-          <div className="h-1 w-1 rounded-full bg-slate-300" />
+          <div className="h-1 w-1 bg-ink-3" style={{ borderRadius: '2px' }} />
+          <div className="h-1 w-8 bg-ink-3" style={{ borderRadius: '2px' }} />
+          <div className="h-1 w-1 bg-ink-3" style={{ borderRadius: '2px' }} />
         </div>
       )}
     </div>
@@ -187,11 +189,11 @@ export function BuilderCanvas({
         {sections.length === 0 ? (
           <div className="flex items-center justify-center py-16 px-4">
             <div className="text-center max-w-md">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-400 shadow-inner">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center bg-ink/5 text-ink-2 shadow-inner" style={{ borderRadius: '2px' }}>
                 <Sparkles size={36} />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">Página vazia</h3>
-              <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+              <h3 className="font-heading text-lg font-bold text-ink">Página vazia</h3>
+              <p className="mt-2 font-mono text-sm text-ink-2 leading-relaxed">
                 Arrasta blocos da barra lateral ou clica em algum dos botões abaixo para começares a construir a tua página.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -201,7 +203,7 @@ export function BuilderCanvas({
                     onClick={() => {
                       if (onAddBlock) onAddBlock(type);
                     }}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm hover:border-blue-300 hover:text-blue-700 hover:shadow-md transition-all"
+                    className="border-2 border-border bg-paper px-3 py-2 font-mono text-xs font-semibold text-ink shadow-sm hover:border-accent hover:text-accent hover:shadow-md transition-all" style={{ borderRadius: '2px' }}
                   >
                     + {block.label}
                   </button>
@@ -211,7 +213,7 @@ export function BuilderCanvas({
           </div>
         ) : (
           <DeviceFrame device={device}>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {sections.map((section) => (
                 <SortableSection
                   key={section.id}

@@ -1,21 +1,34 @@
-import { useEffect, useState, useCallback } from 'react';
-import { FileText, Plus, ExternalLink, Edit3, Trash2, Eye, Copy, Search } from 'lucide-react';
-import { api } from '../../lib/api';
-import { PageHeader, type DashPage } from './Shell';
-import { Button } from '../../components/ui/Button';
-import type { Page, PageTemplate } from '../../builder';
-import { PAGE_TEMPLATES } from '../../builder';
+import { useEffect, useState, useCallback } from "react";
+import {
+  FileText,
+  Plus,
+  ExternalLink,
+  Edit3,
+  Trash2,
+  Eye,
+  Copy,
+  Search,
+} from "lucide-react";
+import { api } from "../../lib/api";
+import { PageHeader, type DashPage } from "./Shell";
+import { Button } from "../../components/ui/Button";
+import type { Page, PageTemplate } from "../../builder";
+import { PAGE_TEMPLATES } from "../../builder";
 
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
-  draft: { label: 'Rascunho', class: 'bg-slate-100 text-slate-600' },
-  published: { label: 'Publicado', class: 'bg-green-100 text-green-700' },
-  archived: { label: 'Arquivado', class: 'bg-amber-100 text-amber-700' },
+  draft: { label: "Rascunho", class: "bg-slate-100 text-slate-600" },
+  published: { label: "Publicado", class: "bg-green-100 text-green-700" },
+  archived: { label: "Arquivado", class: "bg-amber-100 text-amber-700" },
 };
 
-export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void }) {
+export function PagesPage({
+  onEditPage,
+}: {
+  onEditPage: (pageId: string) => void;
+}) {
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const loadPages = useCallback(async () => {
@@ -25,7 +38,7 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
       const data = await api.pages.list();
       setPages(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar páginas');
+      setError(err instanceof Error ? err.message : "Erro ao carregar páginas");
     } finally {
       setLoading(false);
     }
@@ -36,12 +49,12 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
   }, [loadPages]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('Tens a certeza que queres eliminar esta página?')) return;
+    if (!confirm("Tens a certeza que queres eliminar esta página?")) return;
     try {
       await api.pages.remove(id);
       setPages((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao eliminar');
+      alert(err instanceof Error ? err.message : "Erro ao eliminar");
     }
   }, []);
 
@@ -57,19 +70,19 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
       });
       setPages((prev) => [...prev, created]);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao duplicar');
+      alert(err instanceof Error ? err.message : "Erro ao duplicar");
     }
   }, []);
 
   const handleCreateBlank = useCallback(() => {
-    onEditPage('new');
+    onEditPage("new");
   }, [onEditPage]);
 
   const filtered = search.trim()
     ? pages.filter(
         (p) =>
           p.title.toLowerCase().includes(search.toLowerCase()) ||
-          p.slug.toLowerCase().includes(search.toLowerCase())
+          p.slug.toLowerCase().includes(search.toLowerCase()),
       )
     : pages;
 
@@ -97,7 +110,10 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
         action={
           <div className="flex gap-2">
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
               <input
                 type="text"
                 value={search}
@@ -115,14 +131,20 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
       />
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
       {!loading && pages.length === 0 && (
         <div className="mb-8">
-          <h2 className="mb-4 text-sm font-semibold text-slate-700">Criar primeira página</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-700">
+            Criar primeira página
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.keys(PAGE_TEMPLATES).map((t) => groupedByTemplate(t as PageTemplate))}
+            {Object.keys(PAGE_TEMPLATES).map((t) =>
+              groupedByTemplate(t as PageTemplate),
+            )}
           </div>
         </div>
       )}
@@ -149,19 +171,28 @@ export function PagesPage({ onEditPage }: { onEditPage: (pageId: string) => void
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-slate-900">{page.title}</span>
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${statusStyle.class}`}>
+                    <span className="truncate text-sm font-semibold text-slate-900">
+                      {page.title}
+                    </span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${statusStyle.class}`}
+                    >
                       {statusStyle.label}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
                     <span>/{page.slug}</span>
                     <span>·</span>
-                    <span>{PAGE_TEMPLATES[page.template]?.label ?? page.template}</span>
+                    <span>
+                      {PAGE_TEMPLATES[page.template]?.label ?? page.template}
+                    </span>
                     <span>·</span>
                     <span>{page.sections?.length ?? 0} secções</span>
                     <span>·</span>
-                    <span>Atualizada {new Date(page.updatedAt).toLocaleDateString('pt-PT')}</span>
+                    <span>
+                      Atualizada{" "}
+                      {new Date(page.updatedAt).toLocaleDateString("pt-PT")}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

@@ -29,11 +29,11 @@ const GRADIENT_MAP: Record<string, string> = {
 function PaletteDragPreview({ type, block }: { type: string; block?: BlockDefinition }) {
   const Icon = LayoutTemplate;
   return (
-    <div className="flex items-center gap-3 rounded-xl border-2 border-blue-400 bg-white px-4 py-3 shadow-2xl rotate-[1deg] scale-[1.02]">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${GRADIENT_MAP[block?.category || ''] || 'from-blue-500 to-blue-600'} text-white shadow-sm`}>
+    <div className="flex items-center gap-3 border-2 border-ink bg-paper px-4 py-3 shadow-2xl rotate-[1deg] scale-[1.02]" style={{ borderRadius: '2px' }}>
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center bg-ink text-paper`} style={{ borderRadius: '2px' }}>
         <Icon size={16} />
       </div>
-      <div className="text-sm font-semibold text-slate-800">{block?.label ?? type}</div>
+      <div className="font-mono text-sm font-semibold text-ink">{block?.label ?? type}</div>
     </div>
   );
 }
@@ -41,7 +41,7 @@ function PaletteDragPreview({ type, block }: { type: string; block?: BlockDefini
 function SectionDragPreview({ section }: { section: PageSection }) {
   const block = globalBlockRegistry.get(section.type);
   return (
-    <div className="rounded-xl border-2 border-blue-400 bg-white shadow-2xl opacity-90 rotate-[1deg] scale-[1.02]">
+    <div className="border-2 border-ink bg-paper shadow-2xl opacity-90 rotate-[1deg] scale-[1.02]" style={{ borderRadius: '2px' }}>
       {block?.component && (
         <block.component
           id={section.id}
@@ -271,7 +271,7 @@ export function BuilderEditor({
 
   if (mode === 'preview') {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-paper">
         <BuilderToolbar
           device={device}
           mode={mode}
@@ -314,7 +314,7 @@ export function BuilderEditor({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 antialiased">
+    <div className="flex h-screen flex-col bg-paper antialiased">
       <BuilderToolbar
         device={device}
         mode={mode}
@@ -345,13 +345,13 @@ export function BuilderEditor({
       >
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar — block library */}
-          <aside className="w-64 shrink-0 border-r border-slate-200 bg-white">
+          <aside className="w-64 shrink-0 border-r border-border bg-paper">
             <BuilderSidebar blocks={availableBlocks} onAddBlock={handleAddBlock} />
           </aside>
 
           {/* Center — canvas */}
           <main
-            className="flex flex-1 flex-col overflow-hidden bg-slate-100/70"
+            className="flex flex-1 flex-col overflow-hidden bg-ink/[0.02]"
             onClick={handleDeselect}
           >
             <div className="flex-1 overflow-y-auto px-8 py-8">
@@ -376,20 +376,20 @@ export function BuilderEditor({
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-2 text-[11px] text-slate-400">
+            <div className="flex items-center justify-between border-t border-border bg-paper px-4 py-2 font-mono text-[11px] text-ink-2">
               <div className="flex items-center gap-3">
                 <span>{sections.length} secção{sections.length !== 1 ? 'ões' : ''}</span>
-                <span className="text-slate-200">|</span>
+                <span className="text-border-2">|</span>
                 <span>Zoom: {zoom}%</span>
               </div>
               <div className="flex items-center gap-3">
-                <span>Estado: <span className={dirty ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{dirty ? 'modificado' : 'guardado'}</span></span>
+                <span>Estado: <span className={dirty ? 'text-warning font-semibold' : 'text-success font-semibold'}>{dirty ? 'modificado' : 'guardado'}</span></span>
               </div>
             </div>
           </main>
 
           {/* Right sidebar — inspector */}
-          <aside className="w-72 shrink-0 border-l border-slate-200 bg-white">
+          <aside className="w-72 shrink-0 border-l border-border bg-paper">
             <BuilderInspector
               section={selectedSection}
               block={selectedBlock}

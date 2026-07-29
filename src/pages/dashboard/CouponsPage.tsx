@@ -1,56 +1,63 @@
-import { useEffect, useState } from 'react';
-import { Plus, Ticket, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../lib/auth';
-import { PageHeader } from './Shell';
-import { Button } from '../../components/ui/Button';
-import { Input, Field } from '../../components/ui/Field';
-import { Modal } from '../../components/ui/Modal';
-import { Badge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/Feedback';
-import type { Coupon } from '../../lib/types';
+import { useEffect, useState } from "react";
+import { Plus, Ticket, Trash2 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/auth";
+import { PageHeader } from "./Shell";
+import { Button } from "../../components/ui/Button";
+import { Input, Field } from "../../components/ui/Field";
+import { Modal } from "../../components/ui/Modal";
+import { Badge } from "../../components/ui/Badge";
+import { EmptyState } from "../../components/ui/Feedback";
+import type { Coupon } from "../../lib/types";
 
 export function CouponsPage() {
   const { store } = useAuth();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [code, setCode] = useState('');
-  const [percent, setPercent] = useState('');
+  const [code, setCode] = useState("");
+  const [percent, setPercent] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
     if (!store) return;
-    const { data } = await supabase.from('coupons').select('*').eq('store_id', store.id).order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from("coupons")
+      .select("*")
+      .eq("store_id", store.id)
+      .order("created_at", { ascending: false });
     setCoupons((data as Coupon[]) ?? []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [store]);
+  useEffect(() => {
+    load();
+  }, [store]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!store) return;
     setSaving(true);
-    await supabase.from('coupons').insert({
+    await supabase.from("coupons").insert({
       store_id: store.id,
       code: code.toUpperCase().trim(),
       discount_percent: Number(percent) || 0,
     });
     setSaving(false);
     setModalOpen(false);
-    setCode(''); setPercent('');
+    setCode("");
+    setPercent("");
     load();
   };
 
   const toggle = async (c: Coupon) => {
-    await supabase.from('coupons').update({ active: !c.active }).eq('id', c.id);
+    await supabase.from("coupons").update({ active: !c.active }).eq("id", c.id);
     load();
   };
 
   const remove = async (c: Coupon) => {
     if (!confirm(`Eliminar cupom "${c.code}"?`)) return;
-    await supabase.from('coupons').delete().eq('id', c.id);
+    await supabase.from("coupons").delete().eq("id", c.id);
     load();
   };
 
@@ -59,43 +66,99 @@ export function CouponsPage() {
       <PageHeader
         title="Cupons"
         subtitle="Cria cupões de desconto para os teus clientes"
-        action={<Button onClick={() => setModalOpen(true)}><Plus size={16} /> Novo cupom</Button>}
+        action={
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus size={16} /> Novo cupom
+          </Button>
+        }
       />
       {loading ? (
         <div className="text-slate-400">A carregar...</div>
       ) : coupons.length === 0 ? (
-        <EmptyState icon={<Ticket size={28} />} title="Sem cupons" description="Cria cupões de desconto para promover vendas." action={<Button onClick={() => setModalOpen(true)}><Plus size={16} /> Novo cupom</Button>} />
+        <EmptyState
+          icon={<Ticket size={28} />}
+          title="Sem cupons"
+          description="Cria cupões de desconto para promover vendas."
+          action={
+            <Button onClick={() => setModalOpen(true)}>
+              <Plus size={16} /> Novo cupom
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {coupons.map((c) => (
-            <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
+            <div
+              key={c.id}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4"
+            >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-900">{c.code}</span>
-                  <Badge color={c.active ? 'green' : 'slate'}>{c.active ? 'Ativo' : 'Inativo'}</Badge>
+                  <span className="font-mono font-bold text-slate-900">
+                    {c.code}
+                  </span>
+                  <Badge color={c.active ? "green" : "slate"}>
+                    {c.active ? "Ativo" : "Inativo"}
+                  </Badge>
                 </div>
-                <div className="mt-1 text-sm text-slate-500">{c.discount_percent}% de desconto</div>
+                <div className="mt-1 text-sm text-slate-500">
+                  {c.discount_percent}% de desconto
+                </div>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => toggle(c)} className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">{c.active ? 'Desativar' : 'Ativar'}</button>
-                <button onClick={() => remove(c)} className="rounded-lg p-2 text-red-500 hover:bg-red-50"><Trash2 size={16} /></button>
+                <button
+                  onClick={() => toggle(c)}
+                  className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                >
+                  {c.active ? "Desativar" : "Ativar"}
+                </button>
+                <button
+                  onClick={() => remove(c)}
+                  className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo cupom">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Novo cupom"
+      >
         <form onSubmit={save} className="space-y-4">
           <Field label="Código do cupom">
-            <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} required placeholder="PROMO10" />
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              required
+              placeholder="PROMO10"
+            />
           </Field>
           <Field label="Percentagem de desconto (%)">
-            <Input type="number" min="1" max="100" value={percent} onChange={(e) => setPercent(e.target.value)} required />
+            <Input
+              type="number"
+              min="1"
+              max="100"
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              required
+            />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'A guardar...' : 'Guardar'}</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "A guardar..." : "Guardar"}
+            </Button>
           </div>
         </form>
       </Modal>

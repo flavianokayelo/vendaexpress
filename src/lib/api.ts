@@ -1,5 +1,5 @@
-const API_URL = 'http://localhost:4000/api';
-export const BACKEND_ORIGIN = 'http://localhost:4000';
+const API_URL = 'http://192.168.100.196:4000/api';
+export const BACKEND_ORIGIN = 'http://192.168.100.196:4000';
 const TOKEN_KEY = 've_token';
 
 export function getToken(): string | null {
