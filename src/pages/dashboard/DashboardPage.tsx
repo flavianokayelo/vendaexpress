@@ -76,9 +76,6 @@ export function DashboardPage({
       {page === "orders" && <OrdersPage />}
       {page === "customers" && <CustomersPage />}
       {page === "coupons" && <CouponsPage />}
-      {page === "pages" && (
-        <PagesPage onEditPage={(id) => setEditingPageId(id)} />
-      )}
       {page === "appearance" && <AppearancePage />}
       {page === "themes" && <ThemesPage />}
       {page === "settings" && <SettingsPage />}

@@ -52,26 +52,26 @@ export function CustomersPage() {
           description="Os clientes que fizerem pedidos aparecerão aqui."
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="overflow-hidden border border-border bg-paper" style={{ borderRadius: '2px' }}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nome</th>
-                <th className="px-4 py-3 font-medium">Telefone</th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Desde</th>
-                <th className="px-4 py-3 font-medium">Ações</th>
+            <thead>
+                  <tr className="border-b border-border bg-accent-soft/30">
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Nome</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Telefone</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Email</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Desde</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {customers.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={c.id} className="transition-colors hover:bg-ink/[0.02]">
+                  <td className="px-4 py-3 font-mono text-[13px] font-semibold text-ink">
                     {c.name}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{c.phone ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">{c.email ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 font-mono text-[13px] text-ink-2">{c.phone ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-[13px] text-ink-2">{c.email ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-[12px] text-ink-2">
                     {formatDate(c.created_at)}
                   </td>
                   <td className="px-4 py-3">
@@ -81,13 +81,14 @@ export function CustomersPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Conversar no WhatsApp"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100"
+                        className="inline-flex items-center gap-1.5 border border-border-2 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink-2 transition-colors hover:border-ink hover:text-ink"
+                        style={{ borderRadius: '2px' }}
                       >
-                        <MessageCircle size={14} />
+                        <MessageCircle size={13} />
                         WhatsApp
                       </a>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="font-mono text-[11px] text-ink-2/50">—</span>
                     )}
                   </td>
                 </tr>

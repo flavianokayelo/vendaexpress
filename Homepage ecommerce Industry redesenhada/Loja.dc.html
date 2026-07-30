@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/industry-d15c60b4-2c67-455e-b21a-6d484f882384/styles.css">
+<script src="_ds/industry-d15c60b4-2c67-455e-b21a-6d484f882384/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  a { color: var(--color-accent); text-underline-offset: 3px; }
+  a:hover { color: var(--color-accent-700); }
+  .lojafoot a { color: color-mix(in srgb, #ffffff 68%, transparent); text-decoration: none; }
+  .lojafoot a:hover { color: #ffffff; }
+  @keyframes cartpulse { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
+  .icobtn:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+  .tab:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+  .catcard:hover { box-shadow: 0 10px 26px rgba(29,31,32,.12); transform: translateY(-3px); }
+  .arrbtn:hover { background: #fff; box-shadow: 0 4px 14px rgba(29,31,32,.18); }
+  .wa-nav:hover { background: #1eb257 !important; }
+  .wa-float:hover { background: #1eb257 !important; }
+</style>
+</helmet>
+<div ref="{{ setRoot }}" style="background:#f4f4f6;color:var(--color-text);font-family:var(--font-body);min-height:100vh;">
+
+  <!-- ═══ NAV ═══ -->
+  <header style="position:sticky;top:0;z-index:40;background:#ffffff;border-bottom:1px solid var(--color-divider);box-shadow:0 1px 3px rgba(29,31,32,.04);">
+    <div style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:20px;">
+      <a href="#top" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:none;">
+        <span style="width:36px;height:36px;display:grid;place-items:center;background:var(--color-accent);color:#fff;border-radius:9px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>
+        </span>
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:22px;letter-spacing:-0.01em;">{{ store }}</span>
+      </a>
+
+      <div style="flex:1;max-width:580px;position:relative;">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:color-mix(in srgb,var(--color-text) 45%,transparent);pointer-events:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </span>
+        <input class="input" type="search" placeholder="Procurar produtos…" aria-label="Procurar produtos" style="padding-left:40px;height:44px;border-radius:999px;background:#f4f4f6;">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex:none;">
+        <button type="button" class="icobtn" aria-label="Favoritos" style="width:44px;height:44px;display:grid;place-items:center;background:transparent;border:0;border-radius:10px;cursor:pointer;color:var(--color-text);transition:background .15s ease;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+        </button>
+        <button type="button" class="icobtn" aria-label="Carrinho" style="position:relative;width:44px;height:44px;display:grid;place-items:center;background:transparent;border:0;border-radius:10px;cursor:pointer;color:var(--color-text);transition:background .15s ease;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <sc-if value="{{ cartHas }}" hint-placeholder-val="{{ false }}">
+            <span key="{{ cart }}" style="position:absolute;top:2px;right:2px;min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;background:#e0483f;color:#fff;font-family:var(--font-heading);font-weight:600;font-size:12px;border-radius:999px;animation:cartpulse .4s ease;">{{ cart }}</span>
+          </sc-if>
+        </button>
+        <a href="{{ whatsHref }}" target="_blank" rel="noopener" class="wa-nav" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;background:#25D366;color:#fff;text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:15px;border-radius:999px;transition:background .15s ease;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+          <span style="white-space:nowrap;">WhatsApp</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- category pills -->
+    <div style="border-top:1px solid var(--color-divider);">
+      <div style="max-width:1240px;margin:0 auto;padding:10px 24px;display:flex;gap:8px;">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="3">
+          <button type="button" onClick="{{ c.onClick }}" style="background:transparent;border:0;cursor:pointer;padding:0;border-radius:999px;">
+            <sc-if value="{{ c.active }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;padding:8px 18px;border-radius:999px;background:var(--color-accent);color:#fff;font-family:var(--font-heading);font-weight:600;font-size:15px;">{{ c.label }}</span></sc-if>
+            <sc-if value="{{ c.notActive }}" hint-placeholder-val="{{ false }}"><span class="tab" style="display:inline-block;padding:8px 18px;border-radius:999px;color:color-mix(in srgb,var(--color-text) 65%,transparent);font-family:var(--font-heading);font-weight:600;font-size:15px;transition:background .15s ease;">{{ c.label }}</span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </header>
+
+  <div id="top"></div>
+
+  <!-- ═══ HERO CAROUSEL ═══ -->
+  <section style="max-width:1240px;margin:24px auto 0;padding:0 24px;">
+    <div style="position:relative;overflow:hidden;border-radius:18px;background:var(--color-surface);box-shadow:0 4px 20px rgba(29,31,32,.08);">
+      <div style="display:flex;height:clamp(320px,40vw,440px);transform:translateX({{ trackTransform }});transition:transform .55s cubic-bezier(.4,0,.2,1);">
+
+        <div style="min-width:100%;display:grid;grid-template-columns:1.05fr 1fr;">
+          <div style="padding:clamp(28px,4vw,60px);padding-left:clamp(72px,6vw,80px);background:var(--color-accent-900);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:16px;">
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-300);">Ofertas da semana</span>
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:clamp(30px,3.6vw,50px);line-height:1.04;letter-spacing:-0.01em;margin:0;">Tecnologia que trabalha por ti.</h2>
+            <p style="font-size:15px;line-height:1.5;max-width:40ch;margin:0;color:color-mix(in srgb,#fff 82%,transparent);">Preços directos, garantia real e entrega rápida em todo o país. Encontra o essencial ao melhor preço.</p>
+            <div style="margin-top:6px;"><a href="#promocao" style="display:inline-flex;align-items:center;height:46px;padding:0 24px;border-radius:10px;background:#fff;color:var(--color-text);text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:15px;">Ver promoções</a></div>
+          </div>
+          <div style="position:relative;background:var(--color-surface);">
+            <image-slot id="hero-slide-1" shape="rect" fit="cover" placeholder="Imagem do banner" style="width:100%;height:100%;"></image-slot>
+          </div>
+        </div>
+
+        <div style="min-width:100%;display:grid;grid-template-columns:1fr 1.05fr;">
+          <div style="position:relative;background:var(--color-surface);">
+            <image-slot id="hero-slide-2" shape="rect" fit="cover" placeholder="Imagem do banner" style="width:100%;height:100%;"></image-slot>
+          </div>
+          <div style="padding:clamp(28px,4vw,60px);background:#ffffff;display:flex;flex-direction:column;justify-content:center;gap:16px;">
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-700);">Recondicionados</span>
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:clamp(30px,3.6vw,50px);line-height:1.04;letter-spacing:-0.01em;margin:0;">Como novos. Com garantia.</h2>
+            <p style="font-size:15px;line-height:1.5;max-width:40ch;margin:0;color:color-mix(in srgb,var(--color-text) 72%,transparent);">Cada equipamento é testado, higienizado e verificado ponto por ponto antes de chegar até ti.</p>
+            <div style="margin-top:6px;"><a href="#novidades" style="display:inline-flex;align-items:center;height:46px;padding:0 24px;border-radius:10px;background:var(--color-accent);color:#fff;text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:15px;">Explorar</a></div>
+          </div>
+        </div>
+
+        <div style="min-width:100%;display:grid;grid-template-columns:1.05fr 1fr;">
+          <div style="padding:clamp(28px,4vw,60px);padding-left:clamp(72px,6vw,80px);background:var(--color-accent-700);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:16px;">
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-200);">Entrega express</span>
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:clamp(30px,3.6vw,50px);line-height:1.04;letter-spacing:-0.01em;margin:0;">Do carrinho à tua porta em 48h.</h2>
+            <p style="font-size:15px;line-height:1.5;max-width:40ch;margin:0;color:color-mix(in srgb,#fff 82%,transparent);">Combina a entrega com o lojista e acompanha o teu pedido pelo WhatsApp, do início ao fim.</p>
+            <div style="margin-top:6px;"><a href="{{ whatsHref }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;height:46px;padding:0 24px;border-radius:10px;background:#fff;color:var(--color-text);text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:15px;">Como funciona</a></div>
+          </div>
+          <div style="position:relative;background:var(--color-surface);">
+            <image-slot id="hero-slide-3" shape="rect" fit="cover" placeholder="Imagem do banner" style="width:100%;height:100%;"></image-slot>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="button" class="arrbtn" onClick="{{ prev }}" aria-label="Anterior" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.9);border:0;border-radius:999px;cursor:pointer;color:var(--color-text);box-shadow:0 2px 8px rgba(29,31,32,.14);transition:box-shadow .15s ease;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button type="button" class="arrbtn" onClick="{{ next }}" aria-label="Seguinte" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.9);border:0;border-radius:999px;cursor:pointer;color:var(--color-text);box-shadow:0 2px 8px rgba(29,31,32,.14);transition:box-shadow .15s ease;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <div style="position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:8px;">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
+          <button type="button" onClick="{{ d.onClick }}" aria-label="Ir para banner" style="border:0;cursor:pointer;padding:0;background:transparent;">
+            <sc-if value="{{ d.active }}" hint-placeholder-val="{{ true }}"><span style="display:block;width:28px;height:6px;border-radius:999px;background:#fff;"></span></sc-if>
+            <sc-if value="{{ d.notActive }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:10px;height:6px;border-radius:999px;background:rgba(255,255,255,.55);"></span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BENEFITS BAR ═══ -->
+  <section style="max-width:1240px;margin:0 auto;padding:22px 24px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid var(--color-divider);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(29,31,32,.04);">
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-right:1px solid var(--color-divider);">
+        <span style="width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:999px;background:var(--color-accent-100);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M5 18H3V6h11v12h-3"/><path d="M14 9h4l3 3v6h-2"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/></svg></span>
+        <div><div style="font-family:var(--font-heading);font-weight:600;font-size:15px;">Entrega combinada</div><div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 58%,transparent);">Directo com o lojista</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-right:1px solid var(--color-divider);">
+        <span style="width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:999px;background:var(--color-accent-100);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <div><div style="font-family:var(--font-heading);font-weight:600;font-size:15px;">Compra segura</div><div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 58%,transparent);">Pagamento protegido</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-right:1px solid var(--color-divider);background:#e7f8ee;">
+        <span style="width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:999px;background:#25D366;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg></span>
+        <div><div style="font-family:var(--font-heading);font-weight:600;font-size:15px;color:#0f7a43;">Suporte via WhatsApp</div><div style="font-size:12px;color:#128a4e;">Resposta em minutos</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;">
+        <span style="width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:999px;background:var(--color-accent-100);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span>
+        <div><div style="font-family:var(--font-heading);font-weight:600;font-size:15px;">Trocas fáceis</div><div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 58%,transparent);">Até 7 dias</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SHOP BY CATEGORY ═══ -->
+  <section style="max-width:1240px;margin:0 auto;padding:26px 24px;">
+    <h2 style="font-family:var(--font-heading);font-weight:600;font-size:26px;letter-spacing:-0.01em;margin:0 0 18px;">Comprar por categoria</h2>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+      <button type="button" onClick="{{ catMob }}" class="catcard" style="text-align:left;cursor:pointer;background:#fff;border:1px solid var(--color-divider);border-radius:14px;display:flex;align-items:center;gap:18px;padding:18px;transition:box-shadow .2s ease, transform .2s ease;box-shadow:0 1px 2px rgba(29,31,32,.04);">
+        <span style="width:82px;height:82px;flex:none;background:#f4f4f6;border-radius:12px;overflow:hidden;display:block;"><image-slot id="cat-mobilidade" shape="rect" fit="cover" placeholder="Mobilidade" style="width:100%;height:100%;"></image-slot></span>
+        <span style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:21px;">Mobilidade</span>
+          <span style="font-size:13px;color:color-mix(in srgb,var(--color-text) 58%,transparent);">Telemóveis, trotinetes e mais</span>
+        </span>
+      </button>
+      <button type="button" onClick="{{ catTech }}" class="catcard" style="text-align:left;cursor:pointer;background:#fff;border:1px solid var(--color-divider);border-radius:14px;display:flex;align-items:center;gap:18px;padding:18px;transition:box-shadow .2s ease, transform .2s ease;box-shadow:0 1px 2px rgba(29,31,32,.04);">
+        <span style="width:82px;height:82px;flex:none;background:#f4f4f6;border-radius:12px;overflow:hidden;display:block;"><image-slot id="cat-tech" shape="rect" fit="cover" placeholder="Tech" style="width:100%;height:100%;"></image-slot></span>
+        <span style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:21px;">Tech</span>
+          <span style="font-size:13px;color:color-mix(in srgb,var(--color-text) 58%,transparent);">Portáteis, áudio, consolas e TV</span>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══ EM PROMOÇÃO ═══ -->
+  <section id="promocao" style="max-width:1240px;margin:0 auto;padding:20px 24px;">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px;">
+      <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:#fdecec;color:#c93b33;font-family:var(--font-heading);font-weight:600;font-size:14px;letter-spacing:0.02em;text-transform:uppercase;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 14.5c1 2 2.5 3 3.5 3s2.5-1 3.5-3M12 2c-1.5 3-4 4.5-4 8a4 4 0 0 0 8 0c0-1.2-.5-2.2-1-3 .8.4 2 1.6 2 3.5a6 6 0 1 1-12 0C5 6.5 9.5 4.5 12 2Z"/></svg>Em promoção
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:20px;">
+      <sc-for list="{{ promo }}" as="item" hint-placeholder-count="3">
+        <dc-import name="ProductCard" p="{{ item }}" hint-size="100%,430px"></dc-import>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ═══ NOVIDADES ═══ -->
+  <section id="novidades" style="max-width:1240px;margin:0 auto;padding:20px 24px;">
+    <h2 style="font-family:var(--font-heading);font-weight:600;font-size:26px;letter-spacing:-0.01em;margin:0 0 18px;">Novidades</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:20px;">
+      <sc-for list="{{ novid }}" as="item" hint-placeholder-count="4">
+        <dc-import name="ProductCard" p="{{ item }}" hint-size="100%,430px"></dc-import>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ═══ VÍDEOS ═══ -->
+  <section style="background:var(--color-accent-900);color:#fff;margin-top:30px;">
+    <div style="max-width:1240px;margin:0 auto;padding:36px 24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-300)" stroke-width="1.5"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="1"/></svg>
+        <h2 style="font-family:var(--font-heading);font-weight:600;font-size:26px;margin:0;">Vídeos</h2>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+        <div style="width:250px;flex:none;border-radius:16px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.3);">
+          <div style="position:relative;aspect-ratio:9/16;background:var(--color-accent-700);">
+            <image-slot id="video-1" shape="rect" fit="cover" placeholder="Vídeo do produto" style="width:100%;height:100%;"></image-slot>
+            <span style="position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;"><span style="width:56px;height:56px;border-radius:999px;background:rgba(255,255,255,.92);display:grid;place-items:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="var(--color-accent-900)" stroke="none"><path d="M8 5v14l11-7z"/></svg></span></span>
+            <span style="position:absolute;left:0;right:0;bottom:0;padding:16px;background:linear-gradient(to top,rgba(0,0,0,.75),transparent);pointer-events:none;color:#fff;">
+              <span style="display:block;font-family:var(--font-heading);font-weight:600;font-size:17px;">Galaxy A55 5G</span>
+              <span style="display:block;font-family:var(--font-heading);font-weight:600;font-size:16px;">185 000 Kz</span>
+            </span>
+          </div>
+        </div>
+        <div style="max-width:360px;">
+          <h3 style="font-family:var(--font-heading);font-weight:600;font-size:24px;margin:0 0 10px;">Vê antes de comprar</h3>
+          <p style="font-size:15px;line-height:1.55;color:color-mix(in srgb,#fff 82%,transparent);margin:0 0 18px;">Vídeos curtos gravados pelo lojista, com preço e detalhes reais — para comprares com confiança.</p>
+          <a href="{{ whatsHref }}" target="_blank" rel="noopener" class="wa-nav" style="display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 20px;background:#25D366;color:#fff;text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:15px;border-radius:999px;transition:background .15s ease;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+            Pedir por WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TODOS OS PRODUTOS ═══ -->
+  <section style="max-width:1240px;margin:0 auto;padding:32px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+      <h2 style="font-family:var(--font-heading);font-weight:600;font-size:26px;letter-spacing:-0.01em;margin:0;">Todos os produtos</h2>
+      <span style="font-size:13px;color:color-mix(in srgb,var(--color-text) 55%,transparent);">{{ activeCatLabel }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:20px;">
+      <sc-for list="{{ products }}" as="item" hint-placeholder-count="8">
+        <dc-import name="ProductCard" p="{{ item }}" hint-size="100%,430px"></dc-import>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="lojafoot" style="background:var(--color-accent-900);color:color-mix(in srgb,#fff 75%,transparent);margin-top:20px;">
+    <div style="max-width:1240px;margin:0 auto;padding:46px 24px 0;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span style="width:32px;height:32px;display:grid;place-items:center;background:var(--color-accent);color:#fff;border-radius:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></span>
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:21px;color:#fff;">{{ store }}</span>
+        </div>
+        <p style="font-size:14px;line-height:1.55;max-width:34ch;margin:0;">{{ tagline }}</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:14px;">Categorias</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;"><a href="#top">Mobilidade</a><a href="#top">Tech</a></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:14px;">Apoio</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;"><a href="#top">Entregas e prazos</a><a href="#top">Trocas e devoluções</a><a href="#top">Garantia</a><a href="#top">Perguntas frequentes</a></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:14px;">Contacto</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;"><a href="{{ whatsHref }}" target="_blank" rel="noopener">{{ whats }}</a></div>
+      </div>
+    </div>
+    <div style="max-width:1240px;margin:36px auto 0;padding:24px;border-top:1px solid color-mix(in srgb,#fff 16%,transparent);font-size:13px;color:color-mix(in srgb,#fff 55%,transparent);">© 2026 {{ store }}. Loja criada com Venda Express.</div>
+  </footer>
+
+  <!-- ═══ FLOATING WHATSAPP ═══ -->
+  <a href="{{ whatsHref }}" target="_blank" rel="noopener" class="wa-float" aria-label="Falar no WhatsApp" style="position:fixed;right:22px;bottom:22px;z-index:60;display:inline-flex;align-items:center;gap:10px;height:54px;padding:0 22px;background:#25D366;color:#fff;text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:16px;border-radius:999px;box-shadow:0 8px 24px rgba(37,211,102,.45);transition:background .15s ease;">
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+    <span>Falar agora</span>
+  </a>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;storeName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Wahshop&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Loja&quot;},&quot;storeTagline&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;A melhor loja de do país — recondicionados, novidades e entrega rápida.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Loja&quot;},&quot;whatsappNumber&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;+244 9956519417&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Loja&quot;},&quot;showBadges&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Loja&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5980a6&quot;,&quot;options&quot;:[&quot;#5980a6&quot;,&quot;#1d7a54&quot;,&quot;#a65959&quot;,&quot;#5b5980&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Estilo&quot;}}">
+class Component extends DCLogic {
+  state = { cat: 'Todos', slide: 0, cart: 0, addedId: null, wish: [] };
+
+  PRODUCTS = [
+    { id:'a55',   name:'Galaxy A55 5G',      category:'Mobilidade', categoryLabel:'Mobilidade', color:'Preto',    colorHex:'#1d1f20', price:185000, oldPrice:null,   stockBadge:null,        conditionBadge:null,             promo:false, isNew:true,  rating:'4.6', reviews:214 },
+    { id:'mba',   name:'MacBook Air M2',     category:'Tech',       categoryLabel:'Tech',       color:'Prateado', colorHex:'#c9ccce', price:950000, oldPrice:null,   stockBadge:null,        conditionBadge:null,             promo:false, isNew:true,  rating:'4.9', reviews:98 },
+    { id:'app',   name:'AirPods Pro 2',      category:'Tech',       categoryLabel:'Tech',       color:'Branco',   colorHex:'#f4f4f4', price:120000, oldPrice:150000, stockBadge:null,        conditionBadge:null,             promo:true,  isNew:false, rating:'4.8', reviews:512 },
+    { id:'tv',    name:'Smart TV 55" 4K',    category:'Tech',       categoryLabel:'Tech',       color:'Preto',    colorHex:'#1d1f20', price:320000, oldPrice:380000, stockBadge:null,        conditionBadge:null,             promo:true,  isNew:true,  rating:'4.5', reviews:76 },
+    { id:'ip13',  name:'iPhone 13',          category:'Mobilidade', categoryLabel:'Mobilidade', color:'Azul',     colorHex:'#2f4a6b', price:420000, oldPrice:null,   stockBadge:'Só 2 un.',  conditionBadge:'Recondicionado', promo:false, isNew:false, rating:'4.7', reviews:333 },
+    { id:'ps5',   name:'PlayStation 5',      category:'Tech',       categoryLabel:'Tech',       color:'Branco',   colorHex:'#f0f0f0', price:680000, oldPrice:null,   stockBadge:'Só 1 un.',  conditionBadge:null,             promo:false, isNew:true,  rating:'4.9', reviews:187 },
+    { id:'jbl',   name:'Fone JBL Tune',      category:'Tech',       categoryLabel:'Tech',       color:'Preto',    colorHex:'#1d1f20', price:25000,  oldPrice:null,   stockBadge:null,        conditionBadge:'Usado',          promo:false, isNew:false, rating:'4.3', reviews:59 },
+    { id:'scoot', name:'Trotinete Elétrica', category:'Mobilidade', categoryLabel:'Mobilidade', color:'Cinza',    colorHex:'#8a8d90', price:240000, oldPrice:290000, stockBadge:null,        conditionBadge:null,             promo:true,  isNew:false, rating:'4.4', reviews:41 },
+  ];
+
+  componentDidMount() {
+    this.applyAccent();
+    this._t = setInterval(() => this.setState(s => ({ slide: (s.slide + 1) % 3 })), 6500);
+  }
+  componentDidUpdate() { this.applyAccent(); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._a); }
+
+  applyAccent() {
+    const a = this.props.accent;
+    if (this.rootRef && a) this.rootRef.style.setProperty('--color-accent', a);
+  }
+
+  fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Kz'; }
+
+  add(id) {
+    this.setState(s => ({ cart: s.cart + 1, addedId: id }));
+    clearTimeout(this._a);
+    this._a = setTimeout(() => this.setState({ addedId: null }), 1500);
+  }
+  toggleWish(id) {
+    this.setState(s => ({ wish: s.wish.includes(id) ? s.wish.filter(x => x !== id) : [...s.wish, id] }));
+  }
+
+  decorate(p, ctx) {
+    const showBadges = this.props.showBadges ?? true;
+    const wished = this.state.wish.includes(p.id);
+    const added = this.state.addedId === p.id;
+    const hasOld = !!p.oldPrice;
+    const pct = hasOld ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+    return {
+      ...p,
+      slotId: ctx + '-' + p.id,
+      priceLabel: this.fmt(p.price),
+      oldPriceLabel: hasOld ? this.fmt(p.oldPrice) : null,
+      hasOld, notOld: !hasOld,
+      discountLabel: hasOld ? ('-' + pct + '%') : null,
+      stockBadge: showBadges ? p.stockBadge : null,
+      conditionBadge: showBadges ? p.conditionBadge : null,
+      wishlisted: wished, notWish: !wished,
+      added, notAdded: !added,
+      onAdd: () => this.add(p.id),
+      onWish: () => this.toggleWish(p.id),
+    };
+  }
+
+  renderVals() {
+    const cat = this.state.cat;
+    const all = this.PRODUCTS.map(p => this.decorate(p, 'all'));
+    const filtered = cat === 'Todos' ? all : all.filter(p => p.category === cat);
+    const promo = this.PRODUCTS.filter(p => p.oldPrice).map(p => this.decorate(p, 'promo'));
+    const novid = this.PRODUCTS.filter(p => p.isNew).map(p => this.decorate(p, 'new'));
+    const tabs = [
+      { id: 'Todos', label: 'Todos' },
+      { id: 'Mobilidade', label: 'Mobilidade' },
+      { id: 'Tech', label: 'Tech' },
+    ].map(t => ({ ...t, active: t.id === cat, notActive: t.id !== cat, onClick: () => this.setState({ cat: t.id }) }));
+    const dots = [0, 1, 2].map(i => ({ active: i === this.state.slide, notActive: i !== this.state.slide, onClick: () => this.setState({ slide: i }) }));
+    const num = (this.props.whatsappNumber ?? '+244 900 000 000').replace(/[^0-9]/g, '');
+    const catNames = { Todos: 'Todos os artigos', Mobilidade: 'Mobilidade', Tech: 'Tech' };
+
+    return {
+      store: this.props.storeName ?? 'Aquiles',
+      tagline: this.props.storeTagline ?? 'A melhor loja de tecnologia do país — recondicionados, novidades e entrega rápida.',
+      whats: this.props.whatsappNumber ?? '+244 900 000 000',
+      whatsHref: 'https://wa.me/' + num,
+      cats: tabs,
+      products: filtered,
+      promo, novid,
+      activeCatLabel: catNames[cat],
+      cart: this.state.cart,
+      cartHas: this.state.cart > 0,
+      trackTransform: (-this.state.slide * 100) + '%',
+      next: () => this.setState(s => ({ slide: (s.slide + 1) % 3 })),
+      prev: () => this.setState(s => ({ slide: (s.slide - 1 + 3) % 3 })),
+      dots,
+      catMob: () => this.setState({ cat: 'Mobilidade' }),
+      catTech: () => this.setState({ cat: 'Tech' }),
+      setRoot: (el) => { this.rootRef = el; this.applyAccent(); },
+    };
+  }
+}
+</script>
+</body>
+</html>

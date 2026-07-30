@@ -2,11 +2,11 @@
   "id": "standard",
   "name": "standard",
   "label": "Standard",
-  "description": "Tema padrão universal para lojas de e-commerce",
+  "description": "Tema clean e moderno com paleta inspirada na landing page — fundo paper, azul vibrante e toques violeta",
   "author": { "name": "Venda Express", "url": "https://vendaexpress.com" },
   "version": "1.0.0",
   "minimumStorefrontVersion": "1.0.0",
-  "tags": ["universal", "clean", "professional"],
+  "tags": ["universal", "clean", "professional", "warm", "modern"],
   "supportsDarkMode": false,
   "premium": false
 }

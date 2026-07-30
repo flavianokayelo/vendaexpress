@@ -90,33 +90,36 @@ export function CouponsPage() {
           {coupons.map((c) => (
             <div
               key={c.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4"
+              className="flex items-center justify-between border border-border bg-paper p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm"
+              style={{ borderRadius: '2px' }}
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-900">
+                  <span className="font-mono font-bold text-[15px] tracking-[-.01em] text-ink">
                     {c.code}
                   </span>
-                  <Badge color={c.active ? "green" : "slate"}>
+                  <Badge color={c.active ? "green" : "ink"}>
                     {c.active ? "Ativo" : "Inativo"}
                   </Badge>
                 </div>
-                <div className="mt-1 text-sm text-slate-500">
+                <div className="mt-1 font-mono text-[12px] text-ink-2">
                   {c.discount_percent}% de desconto
                 </div>
               </div>
               <div className="flex gap-1">
                 <button
                   onClick={() => toggle(c)}
-                  className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                  className="px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
+                  style={{ borderRadius: '2px' }}
                 >
                   {c.active ? "Desativar" : "Ativar"}
                 </button>
                 <button
                   onClick={() => remove(c)}
-                  className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                  className="p-2 text-ink-2 transition-colors hover:text-danger hover:bg-danger/5"
+                  style={{ borderRadius: '2px' }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             </div>

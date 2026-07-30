@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import Lenis from "lenis";
+import { useAuth } from "../lib/auth";
 import {
   motion,
   AnimatePresence,
@@ -32,7 +33,9 @@ import {
   CreditCard,
   Clock,
   Undo2,
+  User,
 } from "lucide-react";
+import { resolveMediaUrl } from "../lib/api";
 
 function Link({
   href,
@@ -660,6 +663,12 @@ const testimonials = [
   },
 ];
 
+const gradients = [
+  "linear-gradient(135deg, #ec4899, #8b5cf6)",
+  "linear-gradient(135deg, #8b5cf6, #a78bfa)",
+  "linear-gradient(135deg, #f97316, #ec4899)",
+];
+
 function TestimonialCarousel({
   testimonials,
 }: {
@@ -676,8 +685,6 @@ function TestimonialCarousel({
     return () => clearInterval(t);
   }, [testimonials.length]);
 
-  const activeT = testimonials[active];
-
   return (
     <div className="relative">
       <div className="grid md:grid-cols-3 gap-5 min-h-[320px]">
@@ -689,30 +696,37 @@ function TestimonialCarousel({
               data-cursor="Ler"
               onClick={() => setActive(i)}
               whileHover={!reduce ? { scale: 1.01 } : undefined}
-              className={`h-full bg-surface border text-left p-7 md:p-8 transition-all duration-500 ${
-                isActive ? "" : "border-border opacity-60 hover:opacity-90"
+              className={`h-full text-left p-7 md:p-8 transition-all duration-500 ${
+                isActive
+                  ? "bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.15)] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]"
+                  : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] opacity-50 hover:opacity-80"
               }`}
               style={{
-                borderRadius: "18px",
-                ...(isActive
-                  ? {
-                      borderColor: `${t.color}66`,
-                      boxShadow: `0 0 30px -8px ${t.color}26`,
-                    }
-                  : {}),
+                borderRadius: "16px",
+                borderWidth: "1px",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
               }}
             >
               <Quote
                 size={22}
-                className="mb-3 transition-all duration-500"
-                style={{ color: t.color, opacity: isActive ? 0.5 : 0.2 }}
+                className="mb-3"
+                style={{ color: "#ec4899", opacity: 0.3 }}
               />
-              <div className="font-heading text-[58px] font-bold tracking-[-.04em] leading-none text-ink">
-                <em className="not-italic" style={{ color: t.color }}>
-                  {t.num}
-                </em>
+              <div
+                className="font-heading text-[58px] font-bold tracking-[-.04em] leading-none"
+                style={{
+                  background: gradients[i],
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                {t.num}
               </div>
-              <div className="font-mono text-xs text-ink-2 mt-2">{t.lab}</div>
+              <div className="font-[family-name:var(--font-mono)] text-xs text-[#9ca3af] mt-2">
+                {t.lab}
+              </div>
               <div
                 className="relative overflow-hidden mt-5"
                 style={{ height: "4.5em" }}
@@ -725,36 +739,38 @@ function TestimonialCarousel({
                       animate={{ opacity: 1, y: 0 }}
                       exit={!reduce ? { opacity: 0, y: -10 } : undefined}
                       transition={{ duration: 0.35, ease: "easeOut" }}
-                      className="text-sm text-ink leading-relaxed absolute inset-0"
+                      className="text-sm text-[#9ca3af] leading-relaxed absolute inset-0"
                     >
                       &ldquo;{t.quote}&rdquo;
                     </motion.p>
                   )}
                 </AnimatePresence>
               </div>
-              <div className="flex items-center gap-3 border-t border-border pt-4 mt-5">
-                <div
-                  className={`w-[34px] h-[34px] overflow-hidden transition-all duration-500 shrink-0 ${
-                    isActive ? "scale-110" : ""
-                  }`}
-                  style={{
-                    borderRadius: "999px",
-                    boxShadow: isActive ? `0 0 0 2px ${t.color}4d` : undefined,
-                  }}
-                >
-                  <img
-                    src={t.avatar}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div>
-                  <div className="font-heading text-[14.5px] font-semibold text-ink">
-                    {t.name}
+              <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 mt-5">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-[34px] h-[34px] overflow-hidden transition-all duration-500 shrink-0 ${
+                      isActive ? "scale-110" : ""
+                    }`}
+                    style={{
+                      borderRadius: "999px",
+                      boxShadow: isActive ? "0 0 0 2px rgba(255,255,255,0.15)" : undefined,
+                    }}
+                  >
+                    <img
+                      src={t.avatar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
-                  <div className="font-mono text-[11.5px] text-ink-2">
-                    {t.role}
+                  <div>
+                    <div className="font-heading text-[14.5px] font-semibold text-[#f5f5f5]">
+                      {t.name}
+                    </div>
+                    <div className="font-[family-name:var(--font-mono)] text-[11.5px] text-[#6b7280]">
+                      {t.role}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -764,21 +780,16 @@ function TestimonialCarousel({
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center gap-2.5 mt-6">
+      <div className="flex justify-center items-center gap-2.5 mt-6">
         {testimonials.map((_, i) => (
           <button
             key={i}
             onClick={() => setActive(i)}
             className={`transition-all duration-500 rounded-full ${
               i === active
-                ? "w-7 h-[6px]"
-                : "w-[6px] h-[6px] bg-border-2 hover:bg-ink-2"
+                ? "w-8 h-[6px] bg-[#ec4899]"
+                : "w-[6px] h-[6px] bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.3)]"
             }`}
-            style={
-              i === active
-                ? { backgroundColor: testimonials[active].color }
-                : undefined
-            }
             aria-label={`testemunho ${i + 1}`}
           />
         ))}
@@ -1444,6 +1455,7 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const [introDone, setIntroDone] = useState(false);
+  const { user, store } = useAuth();
 
   // Opening curtain — a brief branded reveal instead of dropping straight into the hero.
   // Purely visual (the opaque overlay already covers everything): it must NOT touch
@@ -1581,6 +1593,13 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
     return () => io.disconnect();
   }, []);
 
+  const [annual, setAnnual] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(-1);
+  const annualMap: Record<string, { price: string; saved: string }> = {
+    "Início": { price: "Kz 3.900", saved: "20%" },
+    "Crescimento": { price: "Kz 11.900", saved: "20%" },
+  };
+
   return (
     <div className="min-h-screen bg-paper text-ink-2 selection:bg-primary selection:text-paper font-body">
       <AnimatePresence>
@@ -1709,25 +1728,50 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
           </div>
 
           <div className="hidden md:flex items-center gap-[18px]">
-            <Link
-              href="/login"
-              className="font-body text-[14.5px] font-medium text-ink transition hover:text-primary"
-              navigate={navigate}
-            >
-              Entrar
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 font-heading font-semibold text-[14.5px] text-white px-5 py-3 bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/25 transition hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 btn-press"
-              style={{ borderRadius: "999px" }}
-              navigate={navigate}
-            >
-              Testar grátis{" "}
-              <ArrowRight
-                size={15}
-                className="transition-transform group-hover:translate-x-1"
-              />
-            </Link>
+            {user ? (
+              <Link
+                href="/app"
+                className="inline-flex items-center gap-2.5 font-heading font-semibold text-[14px] text-white px-4 py-2.5 bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/25 transition hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 btn-press"
+                style={{ borderRadius: "999px" }}
+                navigate={navigate}
+              >
+                {store?.logo_url ? (
+                  <img
+                    src={resolveMediaUrl(store.logo_url) ?? ""}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[12px] font-bold uppercase">
+                    {user.email[0]}
+                  </span>
+                )}
+                Ir para loja
+              </Link>
+
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="font-body text-[14.5px] font-medium text-ink transition hover:text-primary"
+                  navigate={navigate}
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-2 font-heading font-semibold text-[14.5px] text-white px-5 py-3 bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/25 transition hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 btn-press"
+                  style={{ borderRadius: "999px" }}
+                  navigate={navigate}
+                >
+                  Testar grátis{" "}
+                  <ArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -1819,24 +1863,49 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                 }}
                 className="flex flex-col gap-2"
               >
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="w-full flex items-center justify-center px-4 py-3.5 font-body text-[14.5px] font-semibold text-ink-2 border border-border btn-press transition hover:text-ink hover:bg-ink/[0.04]"
-                  style={{ borderRadius: "999px" }}
-                  navigate={navigate}
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-violet-600 px-5 py-3.5 font-heading font-semibold text-white shadow-lg shadow-primary/25 btn-press"
-                  style={{ borderRadius: "999px" }}
-                  navigate={navigate}
-                >
-                  Testar grátis <ArrowRight size={18} />
-                </Link>
+                {user ? (
+                  <Link
+                    href="/app"
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full flex items-center justify-center gap-2.5 bg-gradient-to-r from-primary to-violet-600 px-5 py-3.5 font-heading font-semibold text-white shadow-lg shadow-primary/25 btn-press"
+                    style={{ borderRadius: "999px" }}
+                    navigate={navigate}
+                  >
+                    {store?.logo_url ? (
+                      <img
+                        src={resolveMediaUrl(store.logo_url) ?? ""}
+                        alt=""
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[12px] font-bold uppercase">
+                        {user.email[0]}
+                      </span>
+                    )}
+                    Ir para loja
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="w-full flex items-center justify-center px-4 py-3.5 font-body text-[14.5px] font-semibold text-ink-2 border border-border btn-press transition hover:text-ink hover:bg-ink/[0.04]"
+                      style={{ borderRadius: "999px" }}
+                      navigate={navigate}
+                    >
+                      Entrar
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-violet-600 px-5 py-3.5 font-heading font-semibold text-white shadow-lg shadow-primary/25 btn-press"
+                      style={{ borderRadius: "999px" }}
+                      navigate={navigate}
+                    >
+                      Testar grátis <ArrowRight size={18} />
+                    </Link>
+                  </>
+                )}
               </motion.div>
             </div>
           </motion.div>
@@ -2361,8 +2430,8 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
               Vê como é fácil montar a tua loja.
             </h2>
             <p className="text-[16.5px] text-ink-2 mt-4 max-w-[44ch]">
-              Do registo à primeira venda em poucos cliques. Cada módulo
-              mostra como a plataforma trabalha por ti.
+              Do registo à primeira venda em poucos cliques. Cada módulo mostra
+              como a plataforma trabalha por ti.
             </p>
           </div>
           <div className="reveal">
@@ -2897,37 +2966,82 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
       {/* Results */}
       <section
         id="resultados"
-        className="border-b border-border py-[60px] md:py-[100px] relative z-[2] overflow-hidden"
+        className="relative z-[2] overflow-hidden py-[60px] md:py-[100px] border-b border-border"
       >
-        <ParallaxLayer
-          speed={0.08}
-          className="pointer-events-none absolute inset-0 z-0"
+        {/* Plain dark bg — mobile only (desktop uses the mask div below) */}
+        <div className="absolute inset-0 z-0 bg-[#0a0a0f] md:hidden" />
+
+        {/* Desktop mask + decorations */}
+        <div
+          className="absolute inset-0 z-0 hidden md:block"
+          style={{
+            WebkitMaskImage: "url(/svg/divider.svg)",
+            WebkitMaskRepeat: "no-repeat",
+            WebkitMaskSize: "100% 100%",
+            maskImage: "url(/svg/divider.svg)",
+            maskRepeat: "no-repeat",
+            maskSize: "100% 100%",
+            backgroundColor: "#0a0a0f",
+          }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-rose-400/[0.04] via-transparent to-violet-500/[0.05]" />
-        </ParallaxLayer>
-        <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
-          <div className="mb-10 md:mb-14 reveal">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-rose-400/[0.04] via-transparent to-violet-500/[0.05]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.05]">
+            <svg
+              className="w-full h-full"
+              xmlns="http://www.w3.org/2000/svg"
+              preserveAspectRatio="none"
+              viewBox="0 0 13 10"
+            >
+              <defs>
+                <pattern
+                  id="result-pattern"
+                  x="0"
+                  y="0"
+                  width="13"
+                  height="10"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 0 0 L 9 0 M 9 0 L 10 1 L 13 1 L 13 10 L 4 10 L 3 9 L 0 9 L 0 0"
+                    fill="#fff"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#result-pattern)" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Mobile accent strips */}
+        <div
+          className="absolute top-0 left-0 right-0 z-10 h-[3px] md:hidden"
+          style={{
+            background: "linear-gradient(135deg, #ec4899, #a855f7)",
+            clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 50%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10 h-[3px] md:hidden"
+          style={{
+            background: "linear-gradient(135deg, #ec4899, #a855f7)",
+            clipPath: "polygon(0% 50%, 100% 0%, 100% 100%, 0% 100%)",
+          }}
+        />
+
+        <div className="relative z-[11] mx-auto max-w-[1220px] px-5 md:px-8">
+           <div className="mb-10 md:mb-14 reveal">
             <div className="inline-block mb-4">
               <span
-                className="block text-[20px] md:text-[22px] italic leading-none"
+                className="block text-[20px] md:text-[22px] italic leading-none text-[#ec4899]"
                 style={{
                   fontFamily: "'Instrument Serif', serif",
-                  backgroundImage: "linear-gradient(90deg, #fb7185, #db2777)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
                 }}
               >
                 resultados
               </span>
-              <span
-                className="kicker-line block mt-2 h-[2px] rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, #fb7185, #db2777)`,
-                }}
-              />
+              <span className="kicker-line block mt-2 h-[2px] rounded-full bg-[#ec4899]" />
             </div>
-            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-ink max-w-[16ch]">
+            <h2 className="font-heading text-[clamp(32px,4.6vw,52px)] font-bold tracking-[-.03em] text-[#f5f5f5] max-w-[16ch]">
               Lojas angolanas a crescer no piloto automático.
             </h2>
           </div>
@@ -2987,77 +3101,111 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
             </h2>
           </div>
 
-          <div className="border-t border-border reveal">
+          <style>{`
+            .step-card {
+              --r: 18px;
+              --s: 26px;
+              --x: 0px;
+              --y: 0px;
+              border-radius: var(--r);
+              transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s ease;
+            }
+            .step-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 32px -8px rgba(0,0,0,0.08);
+            }
+            .step-mask {
+              --_m: / calc(2 * var(--r)) calc(2 * var(--r)) radial-gradient(#000 70%, #0000 72%);
+              --_g: conic-gradient(from 180deg at var(--r) calc(100% - var(--r)), #0000 25%, #000 0);
+              --_d: calc(var(--s) + var(--r));
+              mask:
+                calc(var(--_d) + var(--x)) 100% var(--_m),
+                0 calc(100% - var(--_d) - var(--y)) var(--_m),
+                radial-gradient(var(--s) at 0 100%, #0000 99%, #000 calc(100% + 1px))
+                  calc(var(--r) + var(--x)) calc(-1 * var(--r) - var(--y)),
+                var(--_g) calc(var(--_d) + var(--x)) 0,
+                var(--_g) 0 calc(-1 * var(--_d) - var(--y));
+              mask-repeat: no-repeat;
+            }
+          `}</style>
+
+          <div className="space-y-5 reveal">
             {[
               {
                 sn: "01",
                 title: "Cria a tua loja",
                 desc: "Escolhe um tema, publica os teus produtos e fica online no mesmo dia. Sem complicação.",
-                bg: "rgba(245,158,11,0.1)",
-                fg: "#f59e0b",
+                bg: "rgba(52,211,153,0.08)",
+                fg: "#34d399",
                 img: "/images/landing/dashboard.jpg",
               },
               {
                 sn: "02",
                 title: "Ativa os pagamentos",
                 desc: "Multicaixa, cartão ou transferência. Configuras uma vez e recebes sem stress.",
-                bg: "rgba(26,75,240,0.08)",
-                fg: "#1a4bf0",
+                bg: "rgba(20,184,166,0.10)",
+                fg: "#14b8a6",
                 img: "/images/landing/pagamentos.jpg",
               },
               {
                 sn: "03",
                 title: "Começa a vender",
                 desc: "Partilha o link da tua loja e vê os pedidos a entrar. Simples, rápido, direto.",
-                bg: "rgba(31,157,87,0.1)",
-                fg: "#1f9d57",
+                bg: "rgba(13,148,136,0.12)",
+                fg: "#0d9488",
                 img: "/images/landing/loja.jpg",
               },
             ].map((step, i) => (
               <div
                 key={i}
-                className="grid grid-cols-[36px_52px_1fr_20px] md:grid-cols-[64px_72px_1fr_auto] max-md:gap-3 gap-5 items-center py-6 md:py-8 border-b border-border transition-all hover:pl-3"
+                className="step-card step-mask relative overflow-hidden border border-border/60"
+                style={{ background: step.bg }}
               >
-                <span
-                  className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center font-body text-xs font-bold"
-                  style={{
-                    borderRadius: "10px",
-                    background: step.bg,
-                    color: step.fg,
-                  }}
-                >
-                  {step.sn}
-                </span>
-                <div
-                  className="relative w-[52px] h-[40px] md:w-[72px] md:h-[52px] overflow-hidden"
-                  style={{ borderRadius: "10px" }}
-                >
-                  <img
-                    src={step.img}
-                    alt=""
-                    className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div
-                    className="absolute inset-0 pointer-events-none"
+                <div className="grid grid-cols-[36px_52px_1fr_20px] md:grid-cols-[64px_72px_1fr_auto] max-md:gap-3 gap-5 items-center py-5 md:py-7 px-5 md:px-8">
+                  <span
+                    className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center font-body text-xs font-bold text-white"
                     style={{
-                      backgroundColor: step.fg,
-                      opacity: 0.28,
-                      mixBlendMode: "color",
+                      borderRadius: "999px",
+                      background: `linear-gradient(135deg, ${step.fg}, ${step.fg}dd)`,
+                      boxShadow: `0 2px 8px ${step.fg}33`,
                     }}
-                  />
+                  >
+                    {step.sn}
+                  </span>
+                  <div
+                    className="relative w-[52px] h-[40px] md:w-[72px] md:h-[52px] overflow-hidden"
+                    style={{ borderRadius: "10px" }}
+                  >
+                    <img
+                      src={step.img}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundColor: step.fg,
+                        opacity: 0.28,
+                        mixBlendMode: "color",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-2xl font-semibold tracking-[-.02em] text-ink">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-ink-2 mt-1.5 max-w-[52ch]">
+                      {step.desc}
+                    </p>
+                  </div>
+                  <span
+                    className="font-mono text-lg"
+                    style={{ color: step.fg }}
+                  >
+                    →
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-heading text-2xl font-semibold tracking-[-.02em] text-ink">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-ink-2 mt-1.5 max-w-[52ch]">
-                    {step.desc}
-                  </p>
-                </div>
-                <span className="font-mono text-lg" style={{ color: step.fg }}>
-                  →
-                </span>
               </div>
             ))}
           </div>
@@ -3081,7 +3229,8 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
           }}
         />
         <div className="mx-auto max-w-[1220px] px-5 md:px-8 relative z-[1]">
-          <div className="mb-10 md:mb-14 reveal">
+          {/* Header */}
+          <div className="mb-10 md:mb-12 reveal">
             <div className="inline-block mb-4">
               <span
                 className="block text-[20px] md:text-[22px] italic leading-none"
@@ -3110,92 +3259,180 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 border-t border-border border-l border-border">
-            {plans.map((plan, i) => (
-              <Reveal key={plan.name} delay={i * 0.08}>
-                <TiltCard
-                  glare
-                  className={`h-full relative border-r border-border border-b border-border p-8 md:p-9 ${plan.pop ? "bg-surface" : ""}`}
-                >
-                  <span
-                    className="absolute top-0 left-0 right-0 h-[3px] opacity-70"
-                    style={{ background: plan.color }}
+          {/* Billing toggle */}
+          <div className="flex justify-center mb-10 reveal">
+            <div className="inline-flex items-center bg-surface rounded-full p-1 border border-border">
+              <button
+                onClick={() => setAnnual(false)}
+                className={`relative px-5 py-2 font-heading text-[14px] font-semibold rounded-full transition-colors ${
+                  !annual ? "text-white" : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                {!annual && (
+                  <motion.span
+                    layoutId="bill-bg"
+                    className="absolute inset-0 bg-gradient-to-r from-primary to-violet-600 rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
-                  {plan.pop && (
-                    <span
-                      className="absolute -top-px right-8 font-body text-[10.5px] font-semibold text-primary bg-accent-soft px-2.5 py-1 tracking-[.02em]"
-                      style={{
-                        borderRadius: "0 0 10px 10px",
-                        animation: "pulse2 2s infinite",
-                      }}
-                    >
-                      popular
-                    </span>
-                  )}
-                  <span
-                    className="inline-flex font-body text-[12px] font-semibold mb-3 px-2.5 py-0.5"
-                    style={{
-                      color: plan.color,
-                      backgroundColor: `${plan.color}14`,
-                      borderRadius: "999px",
-                    }}
+                )}
+                <span className="relative z-[1]">Mensal</span>
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className={`relative px-5 py-2 font-heading text-[14px] font-semibold rounded-full transition-colors ${
+                  annual ? "text-white" : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                {annual && (
+                  <motion.span
+                    layoutId="bill-bg"
+                    className="absolute inset-0 bg-gradient-to-r from-primary to-violet-600 rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-[1]">Anual</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Cards */}
+          <div className="grid md:grid-cols-3 gap-6 items-start">
+            {plans.map((plan, i) => {
+              const isPopular = plan.pop;
+              const annualInfo = annualMap[plan.name];
+              const displayPrice = annual && annualInfo ? annualInfo.price : plan.price;
+              const displayPer = annual && annualInfo ? "/mês (fact. anual)" : plan.per;
+
+              return (
+                <Reveal key={plan.name} delay={i * 0.08}>
+                  <TiltCard
+                    glare
+                    className={`h-full relative rounded-2xl border p-8 md:p-9 ${
+                      isPopular
+                        ? "bg-gradient-to-b from-[#0f1929] to-[#0a0e1a] border-primary/30 shadow-xl shadow-primary/10 scale-100 md:scale-[1.05]"
+                        : "bg-surface border-border"
+                    }`}
                   >
-                    {plan.tag}
-                  </span>
-                  <h3 className="font-heading text-[22px] font-semibold tracking-[-.02em] text-ink">
-                    {plan.name}
-                  </h3>
-                  <p className="text-[13.5px] text-ink-2 my-2 min-h-[40px]">
-                    {plan.desc}
-                  </p>
-                  <div className="font-heading text-[40px] font-bold tracking-[-.03em] text-ink">
-                    {plan.price}{" "}
-                    <small className="font-body text-sm font-normal text-ink-2">
-                      {plan.per}
-                    </small>
-                  </div>
-                  <MagneticWrap strength={0.2}>
-                    <Link
-                      href="/signup"
-                      data-magnetic
-                      className={`w-full inline-flex items-center justify-center gap-2.5 font-heading font-semibold text-[14.5px] mt-6 mb-6 px-5 py-3.5 transition btn-press ${
-                        plan.pop
-                          ? "text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5"
-                          : "bg-transparent text-ink border-2 border-ink hover:bg-ink hover:text-paper"
-                      }`}
-                      style={{
-                        borderRadius: "999px",
-                        background: plan.pop
-                          ? `linear-gradient(90deg, ${plan.color}, #8b5cf6)`
-                          : undefined,
-                      }}
-                      navigate={navigate}
-                    >
-                      {plan.pop ? "Testar grátis →" : "Testar grátis"}
-                    </Link>
-                  </MagneticWrap>
-                  <ul className="space-y-3">
-                    {plan.perks.map((perk) => (
-                      <li
-                        key={perk}
-                        className="flex items-start gap-2.5 text-sm text-ink-2"
-                      >
+                    {/* Popular badge */}
+                    {isPopular && (
+                      <div className="absolute -top-[13px] left-1/2 -translate-x-1/2">
                         <span
-                          className="shrink-0 font-body font-bold text-sm"
-                          style={{ color: plan.color }}
+                          className="inline-flex items-center gap-1.5 text-white font-body text-[11px] font-semibold px-4 py-1.5 tracking-wide"
+                          style={{
+                            background: "linear-gradient(90deg, #1a4bf0, #8b5cf6)",
+                            borderRadius: "999px",
+                            boxShadow: "0 4px 20px rgba(26,75,240,0.35)",
+                          }}
                         >
-                          +
                         </span>
-                        {perk}
-                      </li>
-                    ))}
-                  </ul>
-                </TiltCard>
-              </Reveal>
-            ))}
+                      </div>
+                    )}
+
+                    {/* Tag */}
+                    <span
+                      className="inline-flex font-body text-[11px] font-semibold mb-3 px-2.5 py-0.5 uppercase tracking-[.06em]"
+                      style={{
+                        color: plan.color,
+                        backgroundColor: `${plan.color}14`,
+                        borderRadius: "999px",
+                      }}
+                    >
+                      {plan.tag}
+                    </span>
+
+                    {/* Name + desc */}
+                    <h3 className={`font-heading text-[22px] font-semibold tracking-[-.02em] ${isPopular ? "text-white" : "text-ink"}`}>
+                      {plan.name}
+                    </h3>
+                    <p className={`text-[13.5px] mt-1 mb-4 min-h-[36px] ${isPopular ? "text-white/60" : "text-ink-2"}`}>
+                      {plan.desc}
+                    </p>
+
+                    {/* Price */}
+                    <div className={`font-heading font-bold tracking-[-.03em] ${isPopular ? "text-white" : "text-ink"}`}>
+                      <span className="text-[30px] md:text-[38px]">{displayPrice}</span>
+                      <small className={`font-body text-sm font-normal ${isPopular ? "text-white/50" : "text-ink-2"}`}>
+                        {" "}{displayPer}
+                      </small>
+                    </div>
+
+                    {/* Annual hint */}
+                    {annual && annualInfo && (
+                      <span className="block text-[12px] font-medium mt-1" style={{ color: "#22c55e" }}>
+                        Poupa {annualInfo.saved} ao ano
+                      </span>
+                    )}
+                    {!annual && annualInfo && (
+                      <span className="block text-[12px] font-medium mt-1 text-ink-3">
+                        ~{annualInfo.price}/mês no plano anual
+                      </span>
+                    )}
+                    {plan.name === "Enterprise" && (
+                      <span className="block text-[12px] font-medium mt-1 text-ink-3">
+                        Sob medida para o teu negócio
+                      </span>
+                    )}
+
+                    {/* CTA */}
+                    <MagneticWrap strength={0.2}>
+                      <Link
+                        href={plan.name === "Enterprise" ? "mailto:suporte@vendaexpress.com" : "/signup"}
+                        data-magnetic
+                        className={`w-full inline-flex items-center justify-center gap-2.5 font-heading font-semibold text-[14px] mt-6 mb-6 px-5 py-3 transition-all btn-press ${
+                          isPopular
+                            ? "text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/35"
+                            : plan.name === "Enterprise"
+                            ? "bg-transparent text-ink border-2 border-border hover:border-ink hover:bg-ink hover:text-paper"
+                            : "bg-transparent text-ink border-2 border-ink hover:bg-ink hover:text-paper"
+                        }`}
+                        style={{
+                          borderRadius: "999px",
+                          background: isPopular
+                            ? "linear-gradient(90deg, #1a4bf0, #8b5cf6)"
+                            : undefined,
+                        }}
+                        navigate={navigate}
+                      >
+                        {isPopular ? "Começar agora →" : plan.name === "Enterprise" ? "Falar connosco" : "Testar grátis"}
+                      </Link>
+                    </MagneticWrap>
+
+                    {/* Divider */}
+                    <div className={`h-px mb-6 ${isPopular ? "bg-white/10" : "bg-border"}`} />
+
+                    {/* Perks */}
+                    <ul className="space-y-3.5">
+                      {plan.perks.map((perk) => (
+                        <li
+                          key={perk}
+                          className="flex items-start gap-2.5 text-sm"
+                          style={{ color: isPopular ? "rgba(255,255,255,0.7)" : undefined }}
+                        >
+                          <CheckCircle2
+                            size={16}
+                            className="shrink-0 mt-0.5"
+                            style={{ color: plan.color }}
+                          />
+                          {perk}
+                        </li>
+                      ))}
+                    </ul>
+                  </TiltCard>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
+
+      {/* Zigzag divider */}
+      <div
+        className="relative z-[2] h-[70px] bg-[#0b0a18]"
+        style={{
+          clipPath:
+            "polygon(0 0,100% 0,100% 100%,calc(50% + 64.97px) 100%,50% calc(100% - 64.97px),calc(50% - 64.97px) 100%,0 100%)",
+        }}
+      />
 
       {/* Manifesto / CTA */}
       <section className="py-[60px] md:py-[120px] text-center border-b border-border relative z-[2] overflow-hidden">
@@ -3306,6 +3543,139 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                 nunca foi tão fácil.
               </span>,
             ])}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-b border-border py-[60px] md:py-[100px] relative z-[2]">
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(50% 45% at 50% 40%, rgba(52,211,153,0.06), transparent 70%), radial-gradient(45% 40% at 80% 80%, rgba(56,189,248,0.06), transparent 65%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)",
+          }}
+        />
+        <div className="mx-auto max-w-[720px] px-5 md:px-8 relative z-[1]">
+          <div className="mb-10 md:mb-12 text-center reveal">
+            <div className="inline-block mb-4">
+              <span
+                className="block text-[20px] md:text-[22px] italic leading-none"
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  backgroundImage: "linear-gradient(90deg, #34d399, #14b8a6)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                dúvidas
+              </span>
+              <span
+                className="kicker-line block mt-2 h-[2px] rounded-full mx-auto"
+                style={{
+                  background: "linear-gradient(90deg, #34d399, #14b8a6)",
+                  width: "40px",
+                }}
+              />
+            </div>
+            <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-bold tracking-[-.03em] text-ink">
+              Perguntas frequentes
+            </h2>
+            <p className="text-[16.5px] text-ink-2 mt-4 max-w-[48ch] mx-auto">
+              Tudo o que precisas de saber antes de criar a tua loja.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 reveal">
+            {[
+              {
+                q: "Preciso de conhecimentos técnicos para criar a minha loja?",
+                a: "Não. A VendaExpress foi feita para qualquer pessoa — não precisas de saber programar, desenhar ou configurar nada. Escolhes um tema, adicionas os teus produtos e a loja fica online no mesmo dia.",
+              },
+              {
+                q: "Que métodos de pagamento são aceites?",
+                a: "Os teus clientes podem pagar com Multicaixa (ATM e online), cartões de crédito/débito (Visa, Mastercard) e transferência bancária. Nós tratamos de toda a integração — tu só precisas de ativar nos settings.",
+              },
+              {
+                q: "Quanto custa?",
+                a: "Tens 14 dias grátis em qualquer plano para testar sem compromisso. Depois disso, podes escolher entre os planos Basic, Pro ou Unlimited conforme o volume de vendas. Sem taxas escondidas e sem surpresas.",
+              },
+              {
+                q: "Posso usar o meu próprio domínio?",
+                a: "Sim. Em qualquer plano podes conectar o teu domínio personalizado (ex: a tuacompanhia.co.ao). Nós damos-te um subdomínio grátis para começares, e a configuração do domínio próprio é feita em poucos passos.",
+              },
+              {
+                q: "Como funciona o suporte?",
+                a: "O suporte é feito por email (suporte@vendaexpress.com) e WhatsApp. Respondemos em menos de 24 horas em dias úteis, e estamos a trabalhar para ter chat ao vivo em breve.",
+              },
+              {
+                q: "Posso cancelar quando quiser?",
+                a: "Sim. Não tens fidelização. Podes cancelar a qualquer momento diretamente no painel, e continuas com acesso até ao final do período já pago. Sem burocracia.",
+              },
+            ].map((faq, i) => {
+              const open = faqOpen === i;
+              return (
+                <div
+                  key={i}
+                  className="overflow-hidden border border-border/60 transition hover:border-border"
+                  style={{ borderRadius: "14px" }}
+                >
+                  <button
+                    onClick={() => setFaqOpen(open ? -1 : i)}
+                    className="flex w-full items-center justify-between gap-4 bg-surface/50 px-5 py-4 md:px-6 md:py-5 text-left transition hover:bg-surface/80"
+                  >
+                    <span className="font-heading text-[15px] md:text-[16.5px] font-semibold text-ink leading-snug">
+                      {faq.q}
+                    </span>
+                    <motion.span
+                      animate={{ rotate: open ? 45 : 0 }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-border text-ink-2"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <path
+                          d="M6 1v10M1 6h10"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </motion.span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 md:px-6 pb-4 md:pb-5">
+                          <p className="font-body text-[15px] md:text-[15.5px] text-ink-2 leading-relaxed">
+                            {faq.a}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -3460,28 +3830,6 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
           </div>
         </div>
       </footer>
-
-      {/* WhatsApp Floating FAB */}
-      <a
-        href="https://wa.me/244900000000"
-        target="_blank"
-        rel="noopener"
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
-        style={{
-          backgroundColor: "#25D366",
-          animation: "whatsappBounce 1.8s ease-in-out infinite",
-        }}
-        aria-label="Falar pelo WhatsApp"
-      >
-        <MessageCircle size={26} className="text-white" />
-      </a>
-
-      <style>{`
-        @keyframes whatsappBounce {
-          0%, 100% { transform: translateY(0); box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
-          50% { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(37,211,102,0.5); }
-        }
-      `}</style>
     </div>
   );
 }

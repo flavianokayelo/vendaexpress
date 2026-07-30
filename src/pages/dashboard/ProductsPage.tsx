@@ -29,7 +29,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Badge } from "../../components/ui/Badge";
 import { EmptyState } from "../../components/ui/Feedback";
 import { ColorPicker } from "../../components/ui/ColorPicker";
-import type { Product, Category, ProductCondition } from "../../lib/types";
+import type { Product, Category, Subcategory, ProductCondition } from "../../lib/types";
 
 const MAX_PHOTOS = 5;
 const MAX_VIDEO_MB = 20;
@@ -55,6 +55,7 @@ const empty = {
   size: "",
   item_condition: "novo" as ProductCondition,
   category_id: "",
+  subcategory_id: "",
   return_policy: DEFAULT_RETURN_POLICY,
   active: true,
 };
@@ -219,7 +220,7 @@ function ProductCard({
         )}
         {!p.active && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
-            <Badge color="slate">Inativo</Badge>
+            <Badge color="ink">Inativo</Badge>
           </div>
         )}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
@@ -292,6 +293,7 @@ export function ProductsPage() {
   const { store } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -318,12 +320,14 @@ export function ProductsPage() {
   const load = async () => {
     if (!store) return;
     try {
-      const [p, c] = await Promise.all([
+      const [p, c, s] = await Promise.all([
         api.products.list(),
         api.categories.list(),
+        api.subcategories.list(),
       ]);
       setProducts(p);
       setCategories(c);
+      setSubcategories(s);
     } catch (err) {
       console.error(err);
     } finally {
@@ -366,6 +370,7 @@ export function ProductsPage() {
       size: p.size ?? "",
       item_condition: p.item_condition ?? "novo",
       category_id: p.category_id ?? "",
+      subcategory_id: p.subcategory_id ?? "",
       return_policy: p.return_policy ?? DEFAULT_RETURN_POLICY,
       active: p.active,
     });
@@ -497,6 +502,7 @@ export function ProductsPage() {
         color: color || f.color,
         color_hex: matchedColor ? matchedColor.hex : f.color_hex,
         category_id: matchedCategory ? matchedCategory.id : f.category_id,
+        subcategory_id: matchedCategory && matchedCategory.id !== f.category_id ? "" : f.subcategory_id,
       }));
       setAiImageFromCache(from_cache);
     } catch (err: any) {
@@ -554,6 +560,7 @@ export function ProductsPage() {
         size: form.size || null,
         item_condition: form.item_condition,
         category_id: form.category_id || null,
+        subcategory_id: form.subcategory_id || null,
         images: finalImages,
         video: finalVideo,
         active: form.active,
@@ -852,7 +859,7 @@ export function ProductsPage() {
               <Select
                 value={form.category_id}
                 onChange={(e) =>
-                  setForm({ ...form, category_id: e.target.value })
+                  setForm({ ...form, category_id: e.target.value, subcategory_id: "" })
                 }
               >
                 <option value="">—</option>
@@ -879,6 +886,26 @@ export function ProductsPage() {
               </Select>
             </Field>
           </div>
+
+          {form.category_id && subcategories.filter((s) => s.category_id === form.category_id).length > 0 && (
+            <Field label="Sub-categoria">
+              <Select
+                value={form.subcategory_id}
+                onChange={(e) =>
+                  setForm({ ...form, subcategory_id: e.target.value })
+                }
+              >
+                <option value="">—</option>
+                {subcategories
+                  .filter((s) => s.category_id === form.category_id)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Cor" hint="Opcional">

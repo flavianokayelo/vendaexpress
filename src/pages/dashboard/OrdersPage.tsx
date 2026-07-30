@@ -12,11 +12,11 @@ import type { Order, OrderItem, OrderStatus } from "../../lib/types";
 
 const STATUS_COLOR: Record<
   string,
-  "amber" | "green" | "blue" | "slate" | "red"
+  "amber" | "green" | "blue" | "ink" | "red"
 > = {
   pending: "amber",
   paid: "blue",
-  shipped: "slate",
+  shipped: "ink",
   delivered: "green",
   cancelled: "red",
 };
@@ -82,28 +82,27 @@ export function OrdersPage() {
           description="Os pedidos dos teus clientes aparecerão aqui."
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Telefone</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Data</th>
-                <th className="px-4 py-3 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+            <div className="overflow-hidden border border-border bg-paper" style={{ borderRadius: '2px' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-accent-soft/30">
+                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Cliente</th>
+                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Total</th>
+                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Estado</th>
+                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Data</th>
+                    <th className="px-4 py-3 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Ações</th>
+                  </tr>
+                </thead>
+            <tbody className="divide-y divide-border">
               {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={o.id} className="transition-colors hover:bg-ink/[0.02]">
+                  <td className="px-4 py-3 font-mono text-[13px] font-semibold text-ink">
                     {o.customer_name}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 font-mono text-[13px] text-ink-2">
                     {o.customer_phone ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">
+                  <td className="px-4 py-3 font-mono text-[13px] text-ink">
                     {formatCurrency(Number(o.total), store?.currency)}
                   </td>
                   <td className="px-4 py-3">
@@ -112,7 +111,7 @@ export function OrdersPage() {
                       onChange={(e) =>
                         updateStatus(o, e.target.value as OrderStatus)
                       }
-                      className="!py-1 !text-xs"
+                      className="!py-1 !text-[11px] !font-mono !font-semibold"
                     >
                       {Object.entries(STATUS_LABEL).map(([v, l]) => (
                         <option key={v} value={v}>
@@ -121,15 +120,16 @@ export function OrdersPage() {
                       ))}
                     </Select>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 font-mono text-[12px] text-ink-2">
                     {formatDateTime(o.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => view(o)}
-                      className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+                      className="flex h-7 w-7 items-center justify-center text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
+                      style={{ borderRadius: '2px' }}
                     >
-                      <Eye size={16} />
+                      <Eye size={15} />
                     </button>
                   </td>
                 </tr>
