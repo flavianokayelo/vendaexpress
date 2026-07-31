@@ -90,7 +90,7 @@ export function VideoCard({
     <div
       ref={containerRef}
       onClick={togglePlay}
-      className="relative aspect-[9/16] w-40 flex-shrink-0 cursor-pointer snap-center overflow-hidden rounded-2xl bg-slate-900 sm:w-48"
+      className="relative aspect-[9/16] w-40 flex-shrink-0 cursor-pointer snap-center overflow-hidden rounded-2xl bg-slate-900 transition-transform duration-200 hover:scale-[1.02] sm:w-48"
     >
       <video
         ref={videoRef}
@@ -107,8 +107,8 @@ export function VideoCard({
 
       {!playing && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-white">
-            <Play size={20} fill="white" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-[#2f3b46] shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+            <Play size={22} fill="currentColor" stroke="none" />
           </div>
         </div>
       )}

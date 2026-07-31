@@ -40,6 +40,8 @@ export function StorefrontThemeProvider({
       '--sf-line': theme.colors.line,
       '--sf-success': theme.colors.success,
       '--sf-danger': theme.colors.danger,
+      '--sf-font-heading': theme.typography.fontDisplay,
+      '--sf-font-body': theme.typography.fontBody,
       '--sf-radius-sm': px(theme.radius.sm),
       '--sf-radius-md': px(theme.radius.md),
       '--sf-radius-lg': px(theme.radius.lg),

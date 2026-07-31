@@ -263,6 +263,7 @@ function StorefrontPageInner({
     promoProducts.slice(0, 3).forEach((p) => {
       list.push({
         image: productThumb(p),
+        kicker: "Em promoção",
         title: p.name,
         subtitle: "Promoção especial por tempo limitado",
         cta: "Ver oferta",
@@ -332,7 +333,7 @@ function StorefrontPageInner({
   }
 
   return (
-    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-slate-50">
+    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-[#f4f4f6]">
       <AnnouncementBar theme={theme} />
 
       <Header
@@ -368,8 +369,12 @@ function StorefrontPageInner({
       )}
 
       <Section
-        title="Em promoção"
-        icon={<Flame size={20} className="text-red-500" />}
+        icon={
+          <span className="inline-flex items-center gap-[7px] rounded-[var(--sf-radius-pill)] bg-[#fdecec] px-3 py-1 font-display text-[14px] font-semibold uppercase tracking-[0.02em] text-[#c93b33]">
+            <Flame size={15} strokeWidth={1.6} />
+            Em promoção
+          </span>
+        }
       >
         <ProductGrid
           products={promoProducts}
@@ -419,16 +424,23 @@ function StorefrontPageInner({
         </Section>
       )}
 
-      <div ref={catalogRef} className="mx-auto max-w-6xl px-4 pt-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Tag size={20} className="text-slate-400" />
-          <h2 className="text-lg font-bold text-[var(--sf-ink)]">
-            Todos os produtos
-          </h2>
+      <div ref={catalogRef} className="mx-auto max-w-[1240px] px-4 pt-10 sm:px-6">
+        <div className="mb-5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--sf-primary)]/[0.1] text-[var(--sf-primary)]">
+              <Tag size={20} />
+            </span>
+            <h2 className="font-display text-[28px] font-semibold tracking-[-0.015em] text-[var(--sf-ink)]">
+              Todos os produtos
+            </h2>
+          </div>
+          <span className="flex-shrink-0 font-display text-[15px] font-semibold text-[var(--sf-ink)]/55">
+            {selectedCat ? categoryNames.get(selectedCat) : "Todos"} · {filtered.length}
+          </span>
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-12">
+      <div className="mx-auto max-w-[1240px] px-4 pb-16 sm:px-6">
         {filtered.length === 0 ? (
           <EmptyState
             icon={<StoreIcon size={28} />}
@@ -450,7 +462,14 @@ function StorefrontPageInner({
         )}
       </div>
 
-      <Footer store={store} categories={categories} />
+      <Footer
+        store={store}
+        categories={categories}
+        onSelectCategory={(id) => {
+          setSelectedCat(id);
+          catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      />
 
       <WishlistDrawer
         currency={store.currency}

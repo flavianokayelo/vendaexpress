@@ -15,24 +15,31 @@ export const THEME_IDS = ['standard', 'luxury', 'minimal', 'fashion', 'electroni
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const themePresets: Record<string, ThemeConfigOverride> = {
-  // Indigo — o pack "standard" original (src/themes/standard/tokens.ts)
+  // "Industry" — steel-blue #5980a6 sobre fundo técnico claro, Barlow Condensed
+  // (headings) + Barlow (body), cards/botões como blueprint objects (borders
+  // hairline, cantos suavizados, hover lift). Redesign da homepage de
+  // referência "Homepage ecommerce Industry redesenhada".
   standard: {
     colors: {
-      primary: '#6366f1',
-      primaryHover: '#4f46e5',
-      accent: '#f59e0b',
-      ink: '#0f172a',
-      inkSecondary: '#64748b',
+      primary: '#5980a6',
+      primaryHover: '#416180',
+      accent: '#5980a6',
+      ink: '#1d1f20',
+      inkSecondary: '#76787a',
       surface: '#ffffff',
-      surfaceMuted: '#f1f5f9',
-      line: '#e2e8f0',
-      success: '#22c55e',
-      danger: '#ef4444',
-      warning: '#f59e0b',
+      surfaceMuted: '#f4f4f6',
+      line: '#d9d9da',
+      success: '#0f7a43',
+      danger: '#e0483f',
+      warning: '#e6a817',
     },
-    radius: { sm: 4, md: 8, lg: 12, pill: 9999 },
+    typography: {
+      fontDisplay: "'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif",
+      fontBody: "'Barlow', ui-sans-serif, system-ui, sans-serif",
+    },
+    radius: { sm: 8, md: 10, lg: 14, pill: 9999 },
     buttons: { style: 'solid', radius: 'md' },
-    card: { style: 'padded-tint' },
+    card: { style: 'bordered', imageAspect: '1:1', hoverEffect: 'lift' },
   },
 
   // Navy + dourado, serif, cantos curtos (src/themes/luxury/tokens.ts)

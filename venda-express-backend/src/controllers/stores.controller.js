@@ -133,11 +133,30 @@ async function getMyStoreStats(req, res) {
       [storeId]
     );
 
+    // Receita por mês (últimos 12 meses) — usado no gráfico do Resumo.
+    const [revenueRows] = await pool.query(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, SUM(total) AS total
+       FROM orders
+       WHERE store_id = ? AND status IN ('paid', 'shipped', 'delivered')
+         AND created_at >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH)
+       GROUP BY ym`,
+      [storeId]
+    );
+    const byMonth = new Map(revenueRows.map((r) => [r.ym, Number(r.total)]));
+    const revenueByMonth = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      revenueByMonth.push(byMonth.get(key) ?? 0);
+    }
+
     return res.json({
       products: productsCount.count,
       orders: ordersCount.count,
       customers: customersCount.count,
       revenue: Number(revenueRow.revenue),
+      revenueByMonth,
       recentOrders,
     });
   } catch (err) {

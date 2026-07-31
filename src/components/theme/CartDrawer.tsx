@@ -48,7 +48,7 @@ export function CartDrawer({
       <div className="relative h-full w-full max-w-md bg-[var(--sf-surface)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--sf-line)] px-5 py-4">
           <h2 className="text-lg font-bold text-[var(--sf-ink)]">Carrinho</h2>
-          <button onClick={() => setCartOpen(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+          <button onClick={() => setCartOpen(false)} className="rounded-lg p-1 text-[var(--sf-ink-secondary)] hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)]">
             <X size={20} />
           </button>
         </div>
@@ -65,10 +65,10 @@ export function CartDrawer({
                       <div className="truncate text-sm font-medium text-[var(--sf-ink)]">{item.product.name}</div>
                       <div className="text-xs text-[var(--sf-ink-secondary)]">{formatCurrency(Number(item.product.price), currency)}</div>
                       <div className="mt-1 flex items-center gap-2">
-                        <button onClick={() => updateQty(item.product.id, -1)} className="rounded p-1 hover:bg-slate-100"><Minus size={14} /></button>
+                        <button onClick={() => updateQty(item.product.id, -1)} className="rounded p-1 text-[var(--sf-ink-secondary)] hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)]"><Minus size={14} /></button>
                         <span className="text-sm font-medium">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.product.id, 1)} className="rounded p-1 hover:bg-slate-100"><Plus size={14} /></button>
-                        <button onClick={() => removeFromCart(item.product.id)} className="ml-auto rounded p-1 text-red-500 hover:bg-red-50"><Trash2 size={14} /></button>
+                        <button onClick={() => updateQty(item.product.id, 1)} className="rounded p-1 text-[var(--sf-ink-secondary)] hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)]"><Plus size={14} /></button>
+                        <button onClick={() => removeFromCart(item.product.id)} className="ml-auto rounded p-1 text-red-500 hover:bg-[color-mix(in_srgb,#dc2626_8%,transparent)]"><Trash2 size={14} /></button>
                       </div>
                     </div>
                   </div>

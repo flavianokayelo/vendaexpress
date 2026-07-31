@@ -10,7 +10,6 @@ import { CouponsPage } from "./CouponsPage";
 import { AppearancePage } from "./AppearancePage";
 import { ThemesPage } from "./ThemesPage";
 import { SettingsPage } from "./SettingsPage";
-import { PagesPage } from "./PagesPage";
 import { BuilderPageView } from "./BuilderPageView";
 import { TrialBanner } from "../../components/TrialBanner";
 import { PageLoader } from "../../components/ui/Feedback";
@@ -68,9 +67,7 @@ export function DashboardPage({
           e não tem botão de fechar. Só desaparece quando o plano for pago. */}
       <TrialBanner />
 
-      {page === "overview" && (
-        <OverviewPage navigate={navigate} onGoToTab={setPage} />
-      )}
+      {page === "overview" && <OverviewPage onGoToTab={setPage} />}
       {page === "products" && <ProductsPage />}
       {page === "categories" && <CategoriesPage />}
       {page === "orders" && <OrdersPage />}

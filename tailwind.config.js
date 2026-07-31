@@ -26,7 +26,8 @@ export default {
       },
       fontFamily: {
         storefront: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['var(--theme-typography-font-family)'],
+        body: ['var(--sf-font-body)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--sf-font-heading)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
         heading: ['var(--theme-typography-font-family-heading)'],
         mono: ['var(--theme-typography-font-family-mono)'],
       },

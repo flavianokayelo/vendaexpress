@@ -9,6 +9,7 @@ import {
   Copy,
   Check,
   ArrowUpRight,
+  ArrowDownRight,
   Sparkles,
 } from "lucide-react";
 import { api } from "../../lib/api";
@@ -70,10 +71,8 @@ function RevenueSparkline({
 }
 
 export function OverviewPage({
-  navigate,
   onGoToTab,
 }: {
-  navigate: (to: string) => void;
   onGoToTab: (page: DashPage) => void;
 }) {
   const { store } = useAuth();
@@ -83,6 +82,7 @@ export function OverviewPage({
     customers: 0,
     revenue: 0,
   });
+  const [revenueByMonth, setRevenueByMonth] = useState<number[]>([]);
   const [recent, setRecent] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -96,6 +96,7 @@ export function OverviewPage({
         customers: data.customers,
         revenue: data.revenue,
       });
+      setRevenueByMonth(data.revenueByMonth ?? []);
       setRecent(data.recentOrders ?? []);
     } catch (err) {
       console.error(err);
@@ -120,7 +121,12 @@ export function OverviewPage({
 
   if (loading) return <div className="text-ink-2">A carregar...</div>;
 
-  const sparkData = [40, 75, 60, 90, 85, 110, 95, 130, 120, 145, 170, 160];
+  const sparkData = revenueByMonth.length > 0 ? revenueByMonth : Array(12).fill(0);
+  const revenue12 = sparkData.reduce((a, b) => a + b, 0);
+  const first = sparkData[0] ?? 0;
+  const last = sparkData[sparkData.length - 1] ?? 0;
+  const deltaPct =
+    first > 0 ? Math.round(((last - first) / first) * 100) : last > 0 ? 100 : 0;
 
   return (
     <div className="space-y-8">
@@ -155,7 +161,10 @@ export function OverviewPage({
             variant="outline"
             size="sm"
             onClick={() => {
-              if (store) navigate(`/s/${store.slug}`);
+              if (store) {
+                const url = `${window.location.origin}${window.location.pathname}#/s/${store.slug}`;
+                window.open(url, "_blank", "noopener,noreferrer");
+              }
             }}
           >
             <ExternalLink size={15} /> Ver loja
@@ -228,19 +237,15 @@ export function OverviewPage({
               Receita (últimos 12 meses)
             </span>
             <span className="font-heading text-[22px] font-bold tracking-[-.02em] text-ink">
-              {formatCurrency(stats.revenue, store?.currency)}
+              {formatCurrency(revenue12, store?.currency)}
             </span>
           </div>
           <div className="flex justify-between items-end">
             <RevenueSparkline data={sparkData} accent="#8b5cf6" />
             <div className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-success">
-              <ArrowUpRight size={14} />+
-              {(
-                ((sparkData[sparkData.length - 1] - sparkData[0]) /
-                  sparkData[0]) *
-                100
-              ).toFixed(0)}
-              %
+              {deltaPct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              {deltaPct >= 0 ? "+" : ""}
+              {deltaPct}%
             </div>
           </div>
         </div>

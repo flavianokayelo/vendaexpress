@@ -69,9 +69,9 @@ export function ProductGrid({
 
   if (layout === 'rail') {
     return (
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 scroll-smooth">
+      <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 scroll-smooth">
         {visible.map((p, i) => (
-          <div key={p.id} className="w-40 flex-shrink-0 snap-start sm:w-56">
+          <div key={p.id} className="w-[200px] flex-shrink-0 snap-start sm:w-[238px]">
             {renderCard(p, i)}
           </div>
         ))}
@@ -81,7 +81,7 @@ export function ProductGrid({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(238px,1fr))] gap-5">
         {visible.map((p, i) => renderCard(p, i))}
       </div>
       {paginate && visibleCount < products.length && (

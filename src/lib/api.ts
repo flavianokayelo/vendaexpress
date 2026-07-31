@@ -2,6 +2,8 @@ const API_URL = 'http://192.168.100.196:4000/api';
 export const BACKEND_ORIGIN = 'http://192.168.100.196:4000';
 const TOKEN_KEY = 've_token';
 
+import type { Order } from './types';
+
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -269,9 +271,14 @@ export const api = {
   stores: {
     getMine: () => request<any>('/stores/mine'),
     getStats: () =>
-      request<{ products: number; orders: number; customers: number; revenue: number; recentOrders: any[] }>(
-        '/stores/mine/stats'
-      ),
+      request<{
+        products: number;
+        orders: number;
+        customers: number;
+        revenue: number;
+        revenueByMonth: number[];
+        recentOrders: Order[];
+      }>('/stores/mine/stats'),
     create: (payload: { name: string; slug: string; plan_id: string }) =>
       request<any>('/stores', { method: 'POST', body: JSON.stringify(payload) }),
     update: (payload: { theme_primary?: string; theme_id?: string; description?: string | null; logo_url?: string | null; banner_urls?: string[] }) =>

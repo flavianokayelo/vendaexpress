@@ -20,8 +20,8 @@ export const defaultTheme: ThemeConfig = {
     warning: '#D97706',
   },
   typography: {
-    fontDisplay: 'font-storefront',
-    fontBody: 'font-storefront',
+    fontDisplay: "'Inter', ui-sans-serif, system-ui, sans-serif",
+    fontBody: "'Inter', ui-sans-serif, system-ui, sans-serif",
   },
   radius: { sm: 8, md: 12, lg: 18, pill: 9999 },
   spacing: { unit: 8, sectionGap: 48 },
