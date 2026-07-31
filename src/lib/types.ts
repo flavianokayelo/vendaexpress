@@ -27,6 +27,7 @@ export type Store = {
   slug: string;
   status: 'trial' | 'active' | 'suspended';
   theme_primary: string;
+  theme_id?: string | null;
   theme_config?: Record<string, unknown> | null;
   description: string | null;
   logo_url: string | null;

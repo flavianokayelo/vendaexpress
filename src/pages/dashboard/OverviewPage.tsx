@@ -28,7 +28,13 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
-function RevenueSparkline({ data, accent }: { data: number[]; accent: string }) {
+function RevenueSparkline({
+  data,
+  accent,
+}: {
+  data: number[];
+  accent: string;
+}) {
   const w = 120;
   const h = 36;
   const max = Math.max(...data, 1);
@@ -124,9 +130,15 @@ export function OverviewPage({
       />
 
       {/* Store URL banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border border-border bg-paper p-5" style={{ borderRadius: '2px' }}>
+      <div
+        className="flex flex-wrap items-center justify-between gap-4 border border-border bg-paper p-5"
+        style={{ borderRadius: "2px" }}
+      >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center bg-primary text-white" style={{ borderRadius: '2px' }}>
+          <div
+            className="flex h-10 w-10 items-center justify-center bg-primary text-white"
+            style={{ borderRadius: "2px" }}
+          >
             <ExternalLink size={18} />
           </div>
           <div>
@@ -161,9 +173,13 @@ export function OverviewPage({
             }}
           >
             {copied ? (
-              <><Check size={15} /> Copiado!</>
+              <>
+                <Check size={15} /> Copiado!
+              </>
             ) : (
-              <><Copy size={15} /> Copiar link</>
+              <>
+                <Copy size={15} /> Copiar link
+              </>
             )}
           </Button>
         </div>
@@ -203,9 +219,14 @@ export function OverviewPage({
 
       {/* Revenue mini chart & Quick actions */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border border-border bg-paper p-5 lg:col-span-2" style={{ borderRadius: '2px' }}>
+        <div
+          className="border border-border bg-paper p-5 lg:col-span-2"
+          style={{ borderRadius: "2px" }}
+        >
           <div className="flex items-center justify-between mb-4">
-            <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">Receita (últimos 12 meses)</span>
+            <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
+              Receita (últimos 12 meses)
+            </span>
             <span className="font-heading text-[22px] font-bold tracking-[-.02em] text-ink">
               {formatCurrency(stats.revenue, store?.currency)}
             </span>
@@ -213,55 +234,92 @@ export function OverviewPage({
           <div className="flex justify-between items-end">
             <RevenueSparkline data={sparkData} accent="#8b5cf6" />
             <div className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-success">
-              <ArrowUpRight size={14} />
-              +{((sparkData[sparkData.length - 1] - sparkData[0]) / sparkData[0] * 100).toFixed(0)}%
+              <ArrowUpRight size={14} />+
+              {(
+                ((sparkData[sparkData.length - 1] - sparkData[0]) /
+                  sparkData[0]) *
+                100
+              ).toFixed(0)}
+              %
             </div>
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2 px-1">Atalhos</span>
+          <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2 px-1">
+            Atalhos
+          </span>
           <button
             onClick={() => onGoToTab("products")}
             className="group flex items-center gap-3 border border-border bg-paper px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            <span className="flex h-8 w-8 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white" style={{ borderRadius: '2px' }}>
+            <span
+              className="flex h-8 w-8 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white"
+              style={{ borderRadius: "2px" }}
+            >
               <Package size={15} />
             </span>
             <div>
-              <div className="font-mono text-[13px] font-semibold text-ink">Adicionar produto</div>
-              <div className="font-mono text-[11px] text-ink-2">Novo item ao catálogo</div>
+              <div className="font-mono text-[13px] font-semibold text-ink">
+                Adicionar produto
+              </div>
+              <div className="font-mono text-[11px] text-ink-2">
+                Novo item ao catálogo
+              </div>
             </div>
-            <ArrowUpRight size={14} className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]" />
+            <ArrowUpRight
+              size={14}
+              className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]"
+            />
           </button>
           <button
             onClick={() => onGoToTab("orders")}
             className="group flex items-center gap-3 border border-border bg-paper px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            <span className="flex h-8 w-8 items-center justify-center bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-foreground" style={{ borderRadius: '2px' }}>
+            <span
+              className="flex h-8 w-8 items-center justify-center bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-foreground"
+              style={{ borderRadius: "2px" }}
+            >
               <ShoppingCart size={15} />
             </span>
             <div>
-              <div className="font-mono text-[13px] font-semibold text-ink">Ver pedidos</div>
-              <div className="font-mono text-[11px] text-ink-2">Gerir vendas recebidas</div>
+              <div className="font-mono text-[13px] font-semibold text-ink">
+                Ver pedidos
+              </div>
+              <div className="font-mono text-[11px] text-ink-2">
+                Gerir vendas recebidas
+              </div>
             </div>
-            <ArrowUpRight size={14} className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]" />
+            <ArrowUpRight
+              size={14}
+              className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]"
+            />
           </button>
           <button
             onClick={() => onGoToTab("appearance")}
             className="group flex items-center gap-3 border border-border bg-paper px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            <span className="flex h-8 w-8 items-center justify-center bg-teal-50 text-teal transition-colors group-hover:bg-teal group-hover:text-white" style={{ borderRadius: '2px' }}>
+            <span
+              className="flex h-8 w-8 items-center justify-center bg-teal-50 text-teal transition-colors group-hover:bg-teal group-hover:text-white"
+              style={{ borderRadius: "2px" }}
+            >
               <Sparkles size={15} />
             </span>
             <div>
-              <div className="font-mono text-[13px] font-semibold text-ink">Personalizar loja</div>
-              <div className="font-mono text-[11px] text-ink-2">Aparência e temas</div>
+              <div className="font-mono text-[13px] font-semibold text-ink">
+                Personalizar loja
+              </div>
+              <div className="font-mono text-[11px] text-ink-2">
+                Aparência e temas
+              </div>
             </div>
-            <ArrowUpRight size={14} className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]" />
+            <ArrowUpRight
+              size={14}
+              className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]"
+            />
           </button>
         </div>
       </div>
@@ -286,19 +344,33 @@ export function OverviewPage({
             description="Assim que receberes pedidos, eles aparecerão aqui."
           />
         ) : (
-          <div className="overflow-hidden border border-border bg-paper" style={{ borderRadius: '2px' }}>
+          <div
+            className="overflow-hidden border border-border bg-paper"
+            style={{ borderRadius: "2px" }}
+          >
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-accent-soft/30">
-                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Cliente</th>
-                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Total</th>
-                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Estado</th>
-                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Data</th>
+                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">
+                    Cliente
+                  </th>
+                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">
+                    Total
+                  </th>
+                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">
+                    Estado
+                  </th>
+                  <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">
+                    Data
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {recent.map((o) => (
-                  <tr key={o.id} className="transition-colors hover:bg-ink/[0.02]">
+                  <tr
+                    key={o.id}
+                    className="transition-colors hover:bg-ink/[0.02]"
+                  >
                     <td className="px-4 py-3 font-mono text-[13px] font-semibold text-ink">
                       {o.customer_name}
                     </td>
