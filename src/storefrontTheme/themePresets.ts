@@ -15,31 +15,31 @@ export const THEME_IDS = ['standard', 'luxury', 'minimal', 'fashion', 'electroni
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const themePresets: Record<string, ThemeConfigOverride> = {
-  // "Industry" — steel-blue #5980a6 sobre fundo técnico claro, Barlow Condensed
-  // (headings) + Barlow (body), cards/botões como blueprint objects (borders
-  // hairline, cantos suavizados, hover lift). Redesign da homepage de
-  // referência "Homepage ecommerce Industry redesenhada".
+  // Clone fiel do visual da Shopee: laranja-vermelho #EE4D2D exato, tipografia
+  // simples/utilitária (sem display font decorativo), cantos quase retos,
+  // tudo denso e compacto — não é sobre elegância, é sobre densidade de
+  // catálogo e familiaridade imediata com o marketplace de referência.
   standard: {
     colors: {
-      primary: '#5980a6',
-      primaryHover: '#416180',
-      accent: '#5980a6',
-      ink: '#1d1f20',
-      inkSecondary: '#76787a',
+      primary: '#EE4D2D',
+      primaryHover: '#D7411F',
+      accent: '#FFC300',
+      ink: '#222222',
+      inkSecondary: '#757575',
       surface: '#ffffff',
-      surfaceMuted: '#f4f4f6',
-      line: '#d9d9da',
-      success: '#0f7a43',
-      danger: '#e0483f',
-      warning: '#e6a817',
+      surfaceMuted: '#F5F5F5',
+      line: '#EAEAEA',
+      success: '#26AA99',
+      danger: '#EE4D2D',
+      warning: '#FFB800',
     },
     typography: {
-      fontDisplay: "'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif",
-      fontBody: "'Barlow', ui-sans-serif, system-ui, sans-serif",
+      fontDisplay: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+      fontBody: "ui-sans-serif, system-ui, -apple-system, sans-serif",
     },
-    radius: { sm: 8, md: 10, lg: 14, pill: 9999 },
-    buttons: { style: 'solid', radius: 'md' },
-    card: { style: 'bordered', imageAspect: '1:1', hoverEffect: 'lift' },
+    radius: { sm: 2, md: 3, lg: 4, pill: 9999 },
+    buttons: { style: 'solid', radius: 'sm' },
+    card: { style: 'flat', imageAspect: '1:1', hoverEffect: 'none' },
   },
 
   // Navy + dourado, serif, cantos curtos (src/themes/luxury/tokens.ts)

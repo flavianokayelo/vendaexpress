@@ -19,6 +19,13 @@ export type SubscriptionStatus = {
   store_status?: string;
 };
 
+export type BannerSlide = {
+  url: string;
+  title?: string;
+  subtitle?: string;
+  cta?: string;
+};
+
 export type Store = {
   id: string;
   owner_id: string;
@@ -35,7 +42,7 @@ export type Store = {
   whatsapp: string | null;
   currency: string;
   created_at: string;
-  banner_urls?: string[] | null;
+  banner_urls?: BannerSlide[] | null;
 
   // --- subscrição ---
   trial_ends_at: string | null;
@@ -153,7 +160,13 @@ export type Coupon = {
   code: string;
   discount_percent: number;
   active: boolean;
+  is_public: boolean;
   created_at: string;
+};
+
+export type PublicCoupon = {
+  code: string;
+  discount_percent: number;
 };
 
 export type StoreStaff = {

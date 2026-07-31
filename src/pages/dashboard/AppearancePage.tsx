@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Palette, Check, Upload, X, ImagePlus, Store, Hash } from "lucide-react";
+import { Palette, Check, Upload, X, ImagePlus, Store, Hash, Plus } from "lucide-react";
 import { api, resolveMediaUrl, uploadStoreLogo, uploadStoreBanner } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
 import { Input, Field, Textarea } from "../../components/ui/Field";
+import type { BannerSlide } from "../../lib/types";
+import type { SupportItem } from "../../storefrontTheme/types";
 
 const PRESET_COLORS = [
   "#1d4ed8", "#1e3a8a", "#0c4a6e", "#075985",
@@ -14,15 +16,22 @@ const PRESET_COLORS = [
 ];
 
 const MAX_BANNERS = 5;
+const MAX_SUPPORT_ITEMS = 8;
+
+function readSupportItems(themeConfig: Record<string, unknown> | null | undefined): SupportItem[] {
+  const footer = (themeConfig as { footer?: { supportItems?: SupportItem[] } } | null | undefined)?.footer;
+  return Array.isArray(footer?.supportItems) ? footer!.supportItems! : [];
+}
 
 export function AppearancePage() {
   const { store, refreshStore } = useAuth();
   const [color, setColor] = useState(store?.theme_primary ?? "#1d4ed8");
   const [description, setDescription] = useState(store?.description ?? "");
   const [logoUrl, setLogoUrl] = useState<string | null>(store?.logo_url ?? null);
-  const [bannerUrls, setBannerUrls] = useState<string[]>(
-    store?.banner_urls ?? (store?.banner_url ? [store.banner_url] : []),
+  const [banners, setBanners] = useState<BannerSlide[]>(
+    store?.banner_urls ?? (store?.banner_url ? [{ url: store.banner_url }] : []),
   );
+  const [supportItems, setSupportItems] = useState<SupportItem[]>(readSupportItems(store?.theme_config));
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -39,9 +48,10 @@ export function AppearancePage() {
       setColor(store.theme_primary);
       setDescription(store.description ?? "");
       setLogoUrl(store.logo_url ?? null);
-      setBannerUrls(
-        store.banner_urls ?? (store.banner_url ? [store.banner_url] : []),
+      setBanners(
+        store.banner_urls ?? (store.banner_url ? [{ url: store.banner_url }] : []),
       );
+      setSupportItems(readSupportItems(store.theme_config));
     }
   }, [store]);
 
@@ -72,7 +82,7 @@ export function AppearancePage() {
     e.target.value = "";
     if (files.length === 0) return;
 
-    const remaining = MAX_BANNERS - bannerUrls.length;
+    const remaining = MAX_BANNERS - banners.length;
     if (remaining <= 0) {
       setUploadError(
         `Só podes ter até ${MAX_BANNERS} fotos no banner. Remove alguma antes de adicionar mais.`,
@@ -91,7 +101,7 @@ export function AppearancePage() {
     setUploadingBanner(true);
     try {
       const { urls } = await uploadStoreBanner(toUpload);
-      setBannerUrls((prev) => [...prev, ...urls].slice(0, MAX_BANNERS));
+      setBanners((prev) => [...prev, ...urls.map((url) => ({ url }))].slice(0, MAX_BANNERS));
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "Erro ao enviar as fotos do banner",
@@ -102,7 +112,22 @@ export function AppearancePage() {
   };
 
   const removeBanner = (url: string) => {
-    setBannerUrls((prev) => prev.filter((u) => u !== url));
+    setBanners((prev) => prev.filter((b) => b.url !== url));
+  };
+
+  const updateBanner = (url: string, patch: Partial<BannerSlide>) => {
+    setBanners((prev) => prev.map((b) => (b.url === url ? { ...b, ...patch } : b)));
+  };
+
+  const addSupportItem = () => {
+    if (supportItems.length >= MAX_SUPPORT_ITEMS) return;
+    setSupportItems((prev) => [...prev, { title: "", content: "" }]);
+  };
+  const updateSupportItem = (index: number, patch: Partial<SupportItem>) => {
+    setSupportItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+  };
+  const removeSupportItem = (index: number) => {
+    setSupportItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const save = async (e: React.FormEvent) => {
@@ -114,7 +139,12 @@ export function AppearancePage() {
         theme_primary: color,
         description: description || null,
         logo_url: logoUrl,
-        banner_urls: bannerUrls,
+        banner_urls: banners,
+        theme_config: {
+          footer: {
+            supportItems: supportItems.filter((it) => it.title.trim() && it.content.trim()),
+          },
+        },
       });
       await refreshStore();
       setSaved(true);
@@ -259,9 +289,12 @@ export function AppearancePage() {
               <ImagePlus size={14} />
             </span>
             <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
-              Fotos do banner <span className="font-normal text-ink-2/60">({bannerUrls.length}/{MAX_BANNERS})</span>
+              Fotos do banner <span className="font-normal text-ink-2/60">({banners.length}/{MAX_BANNERS})</span>
             </span>
           </div>
+          <p className="mb-4 font-mono text-[11px] text-ink-2/70">
+            Cada foto pode ter um título, subtítulo e botão — aparece por cima da imagem na loja.
+          </p>
 
           <input
             ref={bannerInputRef}
@@ -272,37 +305,109 @@ export function AppearancePage() {
             onChange={onBannersSelected}
           />
 
-          <div className="flex flex-wrap gap-3">
-            {bannerUrls.map((url) => (
+          <div className="space-y-3">
+            {banners.map((b) => (
               <div
-                key={url}
-                className="group relative h-24 w-40 overflow-hidden border border-border bg-ink/[0.02]"
+                key={b.url}
+                className="group relative flex flex-col gap-3 border border-border p-3 sm:flex-row"
                 style={{ borderRadius: '2px' }}
               >
-                <img src={resolveMediaUrl(url) ?? ""} alt="Banner" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeBanner(url)}
-                  className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center bg-ink/50 text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
-                  style={{ borderRadius: '2px' }}
-                >
-                  <X size={13} />
-                </button>
+                <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-ink/[0.02] sm:w-40" style={{ borderRadius: '2px' }}>
+                  <img src={resolveMediaUrl(b.url) ?? ""} alt="Banner" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeBanner(b.url)}
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center bg-ink/50 text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
+                    style={{ borderRadius: '2px' }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+                <div className="grid flex-1 gap-2 sm:grid-cols-2">
+                  <Input
+                    value={b.title ?? ""}
+                    onChange={(e) => updateBanner(b.url, { title: e.target.value })}
+                    placeholder="Título (opcional)"
+                    maxLength={80}
+                  />
+                  <Input
+                    value={b.cta ?? ""}
+                    onChange={(e) => updateBanner(b.url, { cta: e.target.value })}
+                    placeholder="Texto do botão (opcional)"
+                    maxLength={30}
+                  />
+                  <Input
+                    value={b.subtitle ?? ""}
+                    onChange={(e) => updateBanner(b.url, { subtitle: e.target.value })}
+                    placeholder="Subtítulo (opcional)"
+                    maxLength={160}
+                    className="sm:col-span-2"
+                  />
+                </div>
               </div>
             ))}
-            {bannerUrls.length < MAX_BANNERS && (
+            {banners.length < MAX_BANNERS && (
               <button
                 type="button"
                 onClick={pickBanners}
                 disabled={uploadingBanner}
-                className="flex h-24 w-40 flex-col items-center justify-center gap-1.5 border border-dashed border-border-2 text-ink-2/60 transition-colors hover:border-ink/30 hover:text-ink-2"
+                className="flex h-16 w-full flex-row items-center justify-center gap-1.5 border border-dashed border-border-2 text-ink-2/60 transition-colors hover:border-ink/30 hover:text-ink-2"
                 style={{ borderRadius: '2px' }}
               >
-                <ImagePlus size={20} />
+                <ImagePlus size={18} />
                 <span className="font-mono text-[11px]">
                   {uploadingBanner ? "A enviar..." : "Adicionar foto"}
                 </span>
               </button>
+            )}
+          </div>
+        </section>
+
+        {/* Apoio ao cliente / FAQ */}
+        <section className="border border-border bg-paper p-6" style={{ borderRadius: '2px' }}>
+          <div className="flex items-center gap-2.5 mb-5">
+            <span className="flex h-6 w-6 items-center justify-center bg-teal-50 text-teal" style={{ borderRadius: '2px' }}>
+              <Store size={14} />
+            </span>
+            <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
+              Apoio ao cliente <span className="font-normal text-ink-2/60">({supportItems.length}/{MAX_SUPPORT_ITEMS})</span>
+            </span>
+          </div>
+          <p className="mb-4 font-mono text-[11px] text-ink-2/70">
+            Aparece no rodapé da loja (entrega, trocas, garantia, perguntas frequentes). Fica escondido até teres pelo menos um item preenchido.
+          </p>
+
+          <div className="space-y-3">
+            {supportItems.map((item, i) => (
+              <div key={i} className="group relative space-y-2 border border-border p-3" style={{ borderRadius: '2px' }}>
+                <button
+                  type="button"
+                  onClick={() => removeSupportItem(i)}
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center text-ink-2/50 opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
+                  style={{ borderRadius: '2px' }}
+                >
+                  <X size={13} />
+                </button>
+                <Input
+                  value={item.title}
+                  onChange={(e) => updateSupportItem(i, { title: e.target.value })}
+                  placeholder="Título (ex: Entregas e prazos)"
+                  maxLength={60}
+                  className="pr-8"
+                />
+                <Textarea
+                  rows={2}
+                  value={item.content}
+                  onChange={(e) => updateSupportItem(i, { content: e.target.value })}
+                  placeholder="Texto que o cliente vê ao abrir este tópico"
+                  maxLength={600}
+                />
+              </div>
+            ))}
+            {supportItems.length < MAX_SUPPORT_ITEMS && (
+              <Button type="button" variant="outline" size="sm" onClick={addSupportItem}>
+                <Plus size={14} /> Adicionar tópico
+              </Button>
             )}
           </div>
         </section>
@@ -317,8 +422,8 @@ export function AppearancePage() {
           </div>
 
           <div className="mx-auto max-w-[280px] overflow-hidden border border-border" style={{ borderRadius: '2px' }}>
-            {bannerUrls[0] ? (
-              <img src={resolveMediaUrl(bannerUrls[0]) ?? ""} alt="Banner" className="h-28 w-full object-cover" />
+            {banners[0] ? (
+              <img src={resolveMediaUrl(banners[0].url) ?? ""} alt="Banner" className="h-28 w-full object-cover" />
             ) : (
               <div className="h-28 w-full" style={{ backgroundColor: color }} />
             )}

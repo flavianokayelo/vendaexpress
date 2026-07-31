@@ -3,12 +3,34 @@ const pool = require('../db');
 const { evaluateSubscription, TRIAL_DAYS } = require('../middleware/subscription.middleware');
 const { DEFAULT_THEME_CONFIG } = require('../constants');
 
+// Aceita tanto o formato antigo (array de strings) como o novo (array de
+// objectos {url, title?, subtitle?, cta?}) — normaliza sempre para o novo.
+function normalizeBanners(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b) => (typeof b === 'string' ? { url: b } : b))
+    .filter((b) => b && typeof b.url === 'string' && b.url);
+}
+
+// Whitelist estrito — só aceitamos escrever footer.supportItems em
+// theme_config por agora (não um merge genérico de JSON arbitrário do cliente).
+function sanitizeSupportItems(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((it) => ({
+      title: typeof it?.title === 'string' ? it.title.trim().slice(0, 60) : '',
+      content: typeof it?.content === 'string' ? it.content.trim().slice(0, 600) : '',
+    }))
+    .filter((it) => it.title && it.content)
+    .slice(0, 8);
+}
+
 function parseStore(row) {
   if (!row) return null;
   let banner_urls = [];
   if (row.banner_urls) {
     try {
-      banner_urls = typeof row.banner_urls === 'string' ? JSON.parse(row.banner_urls) : row.banner_urls;
+      banner_urls = normalizeBanners(typeof row.banner_urls === 'string' ? JSON.parse(row.banner_urls) : row.banner_urls);
     } catch {
       banner_urls = [];
     }
@@ -167,29 +189,64 @@ async function getMyStoreStats(req, res) {
 
 async function updateMyStore(req, res) {
   try {
-    const { theme_primary, theme_id, description, logo_url, banner_urls, whatsapp } = req.body;
+    const { name, theme_primary, theme_id, description, logo_url, banner_urls, whatsapp, currency, theme_config } = req.body;
 
-    const [storeRows] = await pool.query('SELECT id FROM stores WHERE owner_id = ?', [req.userId]);
+    const [storeRows] = await pool.query('SELECT id, theme_config FROM stores WHERE owner_id = ?', [req.userId]);
     if (storeRows.length === 0) return res.status(404).json({ error: 'Loja não encontrada' });
     const storeId = storeRows[0].id;
 
     const validThemeIds = ['standard', 'luxury', 'minimal', 'fashion', 'electronics'];
     const resolvedThemeId = theme_id && validThemeIds.includes(theme_id) ? theme_id : undefined;
 
-    const bannerList = Array.isArray(banner_urls) ? banner_urls.slice(0, 5) : [];
+    const validCurrencies = ['AOA', 'USD', 'EUR', 'BRL'];
+    if (currency !== undefined && !validCurrencies.includes(currency)) {
+      return res.status(400).json({ error: 'Moeda inválida' });
+    }
+    if (name !== undefined && !name.trim()) {
+      return res.status(400).json({ error: 'Nome da loja é obrigatório' });
+    }
+
+    const trim = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined);
+    const bannerList = normalizeBanners(banner_urls)
+      .slice(0, 5)
+      .map((b) => ({
+        url: b.url,
+        ...(trim(b.title, 80) && { title: trim(b.title, 80) }),
+        ...(trim(b.subtitle, 160) && { subtitle: trim(b.subtitle, 160) }),
+        ...(trim(b.cta, 30) && { cta: trim(b.cta, 30) }),
+      }));
 
     const fields = [];
     const values = [];
 
+    if (name !== undefined) { fields.push('name = ?'); values.push(name.trim().slice(0, 255)); }
+    if (currency !== undefined) { fields.push('currency = ?'); values.push(currency); }
     if (theme_primary !== undefined) { fields.push('theme_primary = ?'); values.push(theme_primary || null); }
     if (resolvedThemeId !== undefined) { fields.push('theme_id = ?'); values.push(resolvedThemeId); }
     if (description !== undefined) { fields.push('description = ?'); values.push(description || null); }
     if (logo_url !== undefined) { fields.push('logo_url = ?'); values.push(logo_url || null); }
     if (banner_urls !== undefined) {
       fields.push('banner_url = ?', 'banner_urls = ?');
-      values.push(bannerList[0] || null, JSON.stringify(bannerList));
+      values.push(bannerList[0]?.url || null, JSON.stringify(bannerList));
     }
     if (whatsapp !== undefined) { fields.push('whatsapp = ?'); values.push(whatsapp || null); }
+
+    if (theme_config?.footer?.supportItems !== undefined) {
+      let current = {};
+      try {
+        current = storeRows[0].theme_config
+          ? (typeof storeRows[0].theme_config === 'string' ? JSON.parse(storeRows[0].theme_config) : storeRows[0].theme_config)
+          : {};
+      } catch {
+        current = {};
+      }
+      const merged = {
+        ...current,
+        footer: { ...current.footer, supportItems: sanitizeSupportItems(theme_config.footer.supportItems) },
+      };
+      fields.push('theme_config = ?');
+      values.push(JSON.stringify(merged));
+    }
 
     if (fields.length === 0) {
       const [rows] = await pool.query('SELECT * FROM stores WHERE id = ?', [storeId]);

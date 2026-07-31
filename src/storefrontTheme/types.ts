@@ -67,6 +67,13 @@ export interface FooterColumn {
   links: { label: string; href: string }[];
 }
 
+/** Item de apoio ao cliente (entrega, trocas, garantia, FAQ) — texto real
+ * escrito pelo lojista, mostrado como acordeão no rodapé da loja. */
+export interface SupportItem {
+  title: string;
+  content: string;
+}
+
 export type FooterVariant = 'full' | 'compact';
 
 export interface ThemeFooter {
@@ -74,6 +81,7 @@ export interface ThemeFooter {
   showPaymentBadges: boolean;
   showNewsletter: boolean;
   columns: FooterColumn[];
+  supportItems: SupportItem[];
 }
 
 export interface HeroSlideConfig {

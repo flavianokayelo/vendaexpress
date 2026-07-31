@@ -20,7 +20,7 @@ async function listCoupons(req, res) {
 
 async function createCoupon(req, res) {
   try {
-    const { code, discount_percent, active } = req.body;
+    const { code, discount_percent, active, is_public } = req.body;
     if (!code || !code.trim()) {
       return res.status(400).json({ error: 'Código do cupão é obrigatório' });
     }
@@ -42,8 +42,8 @@ async function createCoupon(req, res) {
 
     const id = uuidv4();
     await pool.query(
-      'INSERT INTO coupons (id, store_id, code, discount_percent, active) VALUES (?, ?, ?, ?, ?)',
-      [id, storeId, code.toUpperCase().trim(), discount, active === undefined ? 1 : (active ? 1 : 0)]
+      'INSERT INTO coupons (id, store_id, code, discount_percent, active, is_public) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, storeId, code.toUpperCase().trim(), discount, active === undefined ? 1 : (active ? 1 : 0), is_public ? 1 : 0]
     );
 
     const [rows] = await pool.query('SELECT * FROM coupons WHERE id = ?', [id]);
@@ -57,7 +57,7 @@ async function createCoupon(req, res) {
 async function updateCoupon(req, res) {
   try {
     const { id } = req.params;
-    const { code, discount_percent, active } = req.body;
+    const { code, discount_percent, active, is_public } = req.body;
 
     const storeId = await storeService.getOwnedStoreId(req.userId);
     if (!storeId) return res.status(404).json({ error: 'Loja não encontrada' });
@@ -81,6 +81,10 @@ async function updateCoupon(req, res) {
     if (active !== undefined) {
       updates.push('active = ?');
       params.push(active ? 1 : 0);
+    }
+    if (is_public !== undefined) {
+      updates.push('is_public = ?');
+      params.push(is_public ? 1 : 0);
     }
 
     if (updates.length === 0) {

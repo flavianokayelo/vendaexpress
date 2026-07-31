@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Ticket, Trash2 } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
@@ -17,17 +17,20 @@ export function CouponsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [code, setCode] = useState("");
   const [percent, setPercent] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
     if (!store) return;
-    const { data } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("store_id", store.id)
-      .order("created_at", { ascending: false });
-    setCoupons((data as Coupon[]) ?? []);
-    setLoading(false);
+    try {
+      const data = await api.coupons.list();
+      setCoupons(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -38,26 +41,38 @@ export function CouponsPage() {
     e.preventDefault();
     if (!store) return;
     setSaving(true);
-    await supabase.from("coupons").insert({
-      store_id: store.id,
-      code: code.toUpperCase().trim(),
-      discount_percent: Number(percent) || 0,
-    });
-    setSaving(false);
-    setModalOpen(false);
-    setCode("");
-    setPercent("");
-    load();
+    setSaveError(null);
+    try {
+      await api.coupons.create({
+        code: code.toUpperCase().trim(),
+        discount_percent: Number(percent) || 0,
+        is_public: isPublic,
+      });
+      setModalOpen(false);
+      setCode("");
+      setPercent("");
+      setIsPublic(false);
+      await load();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erro ao criar cupão");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggle = async (c: Coupon) => {
-    await supabase.from("coupons").update({ active: !c.active }).eq("id", c.id);
+    await api.coupons.update(c.id, { active: !c.active });
+    load();
+  };
+
+  const togglePublic = async (c: Coupon) => {
+    await api.coupons.update(c.id, { is_public: !c.is_public });
     load();
   };
 
   const remove = async (c: Coupon) => {
     if (!confirm(`Eliminar cupom "${c.code}"?`)) return;
-    await supabase.from("coupons").delete().eq("id", c.id);
+    await api.coupons.remove(c.id);
     load();
   };
 
@@ -101,12 +116,21 @@ export function CouponsPage() {
                   <Badge color={c.active ? "green" : "ink"}>
                     {c.active ? "Ativo" : "Inativo"}
                   </Badge>
+                  {c.is_public && <Badge color="amber">Público</Badge>}
                 </div>
                 <div className="mt-1 font-mono text-[12px] text-ink-2">
                   {c.discount_percent}% de desconto
                 </div>
               </div>
               <div className="flex gap-1">
+                <button
+                  onClick={() => togglePublic(c)}
+                  title={c.is_public ? "Deixar de mostrar na loja" : "Mostrar publicamente na loja"}
+                  className="px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
+                  style={{ borderRadius: '2px' }}
+                >
+                  {c.is_public ? "Ocultar" : "Publicar"}
+                </button>
                 <button
                   onClick={() => toggle(c)}
                   className="px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
@@ -133,6 +157,9 @@ export function CouponsPage() {
         title="Novo cupom"
       >
         <form onSubmit={save} className="space-y-4">
+          {saveError && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{saveError}</div>
+          )}
           <Field label="Código do cupom">
             <Input
               value={code}
@@ -151,6 +178,15 @@ export function CouponsPage() {
               required
             />
           </Field>
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="rounded"
+            />
+            Mostrar publicamente na loja (faixa de cupões)
+          </label>
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"

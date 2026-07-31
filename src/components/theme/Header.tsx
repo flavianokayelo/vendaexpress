@@ -1,12 +1,11 @@
-import { Search, Heart, ShoppingCart, Zap, MessageCircle } from 'lucide-react';
+import { Search, Heart, ShoppingCart, Store as StoreIcon, HelpCircle, MessageCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { resolveMediaUrl } from '../../lib/api';
-import { Input } from '../ui/Field';
 import type { Store, Category } from '../../lib/types';
 
 function CountBadge({ n }: { n: number }) {
   return (
-    <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[var(--sf-danger)] px-1 font-display text-[12px] font-semibold leading-none text-white">
+    <span className="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-extrabold leading-none text-[var(--sf-primary)]">
       {n > 9 ? '9+' : n}
     </span>
   );
@@ -23,6 +22,7 @@ export function Header({
   categories,
   selectedCategoryId = '',
   onSelectCategory,
+  onHelpClick,
 }: {
   store: Store;
   search: string;
@@ -34,6 +34,7 @@ export function Header({
   categories?: Category[];
   selectedCategoryId?: string;
   onSelectCategory?: (id: string) => void;
+  onHelpClick?: () => void;
 }) {
   const waDigits = store.whatsapp ? store.whatsapp.replace(/\D/g, '') : '';
 
@@ -50,109 +51,109 @@ export function Header({
     prevCount.current = cartCount;
   }, [cartCount]);
 
+  const SearchField = (
+    <div className="flex h-9 overflow-hidden rounded-[4px] bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] sm:h-10">
+      <input
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={`Buscar na ${store.name}`}
+        aria-label="Buscar"
+        className="min-w-0 flex-1 border-0 bg-transparent px-3.5 text-[13px] text-[var(--sf-ink)] outline-none sm:text-[14px]"
+      />
+      <button
+        type="button"
+        aria-label="Procurar"
+        className="m-[3px] flex w-11 flex-shrink-0 items-center justify-center rounded-[3px] bg-[var(--sf-primary)] text-white hover:brightness-110 sm:w-[52px]"
+      >
+        <Search size={16} strokeWidth={2} />
+      </button>
+    </div>
+  );
+
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-[0_1px_3px_rgba(29,31,32,0.04)]">
-      {/* Barra principal */}
-      <div className="border-b border-[var(--sf-line)]">
-        <div className="mx-auto flex max-w-[1240px] items-center gap-6 px-4 py-[18px] sm:px-6">
-          <div className="flex flex-shrink-0 items-center gap-3">
-            {store.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ''} alt={store.name} className="h-10 w-10 rounded-[11px] object-cover" />
-            ) : (
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[var(--sf-accent)] text-white">
-                <Zap size={21} strokeWidth={1.8} fill="currentColor" />
-              </div>
-            )}
-            <div className="hidden min-w-0 sm:block">
-              <div className="truncate font-display text-[23px] font-semibold leading-tight tracking-[-0.02em] text-[var(--sf-ink)]">
-                {store.name}
-              </div>
-            </div>
-          </div>
-
-          {/* Pesquisa — pill 999px */}
-          <div className="relative hidden flex-1 sm:block" style={{ maxWidth: 580 }}>
-            <div className="relative">
-              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--sf-ink-secondary)]" />
-              <Input
-                className="!h-11 !rounded-[var(--sf-radius-pill)] !bg-[var(--sf-surface-muted)] pl-10 focus:!ring-1"
-                placeholder="Procurar produtos…"
-                value={search}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-shrink-0 items-center gap-2">
-            <button
-              onClick={onWishlistClick}
-              className="relative flex h-11 w-11 items-center justify-center rounded-[10px] text-[var(--sf-ink)] transition-colors hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)]"
-            >
-              <Heart size={20} strokeWidth={1.5} />
-              {wishlistCount > 0 && <CountBadge n={wishlistCount} />}
+    <header className="sticky top-0 z-40 shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
+      <div className="bg-[var(--sf-primary)]">
+        {/* barra utilitária */}
+        <div className="mx-auto hidden max-w-[1240px] items-center justify-between px-4 text-[12.5px] text-white sm:flex" style={{ height: 34 }}>
+          <nav className="flex items-center gap-4">
+            <button type="button" onClick={onHelpClick} className="opacity-90 transition-opacity hover:opacity-100 hover:underline">
+              Perguntas frequentes
             </button>
-
-            <button
-              onClick={onCartClick}
-              className={`relative flex h-11 w-11 items-center justify-center rounded-[10px] text-[var(--sf-ink)] transition-colors hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)] ${
-                cartPulsing ? 'animate-sf-cartpulse' : ''
-              }`}
-            >
-              <ShoppingCart size={20} strokeWidth={1.5} />
-              {cartCount > 0 && <CountBadge n={cartCount} />}
+            <button type="button" onClick={onHelpClick} className="opacity-90 transition-opacity hover:opacity-100 hover:underline">
+              Trocas e devoluções
             </button>
-
+          </nav>
+          <nav className="flex items-center gap-4">
             {waDigits && (
               <a
                 href={`https://wa.me/${waDigits}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden h-11 items-center gap-2 rounded-[var(--sf-radius-pill)] bg-[#25D366] px-[18px] font-display text-[15px] font-semibold text-white transition-colors hover:bg-[#1eb257] md:inline-flex"
+                className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100 hover:underline"
               >
-                <MessageCircle size={18} strokeWidth={1.7} />
-                <span className="whitespace-nowrap">WhatsApp</span>
+                <MessageCircle size={13} /> Fale connosco
               </a>
             )}
+            <button type="button" onClick={onHelpClick} className="flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100 hover:underline">
+              <HelpCircle size={13} /> Ajuda
+            </button>
+          </nav>
+        </div>
+
+        {/* header principal */}
+        <div className="mx-auto grid max-w-[1240px] grid-cols-[auto_1fr_auto] items-center gap-4 px-2 py-2.5 sm:gap-7 sm:px-4 sm:py-0" style={{ minHeight: 74 }}>
+          <div className="flex flex-shrink-0 items-center gap-2.5">
+            {store.logo_url ? (
+              <img
+                src={resolveMediaUrl(store.logo_url) ?? ''}
+                alt={store.name}
+                className="h-9 w-9 rounded-[9px] object-cover sm:h-[38px] sm:w-[38px]"
+              />
+            ) : (
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[9px] bg-white text-[var(--sf-primary)] sm:h-[38px] sm:w-[38px]">
+                <StoreIcon size={19} strokeWidth={2} />
+              </div>
+            )}
+            <span className="hidden truncate text-[20px] font-extrabold tracking-[-0.02em] text-white sm:block sm:text-[26px]">
+              {store.name}
+            </span>
+          </div>
+
+          <div className="hidden sm:block">{SearchField}</div>
+
+          <div className="flex flex-shrink-0 items-center gap-4 justify-self-end">
+            <button onClick={onWishlistClick} className="relative text-white">
+              <Heart size={22} strokeWidth={1.8} />
+              {wishlistCount > 0 && <CountBadge n={wishlistCount} />}
+            </button>
+            <button onClick={onCartClick} className={`relative text-white ${cartPulsing ? 'animate-sf-cartpulse' : ''}`}>
+              <ShoppingCart size={26} strokeWidth={1.8} />
+              {cartCount > 0 && <CountBadge n={cartCount} />}
+            </button>
           </div>
         </div>
 
-        {/* Pesquisa — mobile */}
-        <div className="mx-auto max-w-[1240px] px-4 pb-3 sm:hidden">
-          <div className="relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--sf-ink-secondary)]" />
-            <Input
-              className="w-full !rounded-[var(--sf-radius-pill)] !bg-[var(--sf-surface-muted)] pl-10"
-              placeholder="Procurar produtos…"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
+        {/* pesquisa — mobile */}
+        <div className="px-2 pb-2 sm:hidden">{SearchField}</div>
 
-      {/* Barra de categorias — pills claras */}
-      {categories && categories.length > 0 && onSelectCategory && (
-        <div className="border-b border-[var(--sf-line)] overflow-x-auto">
-          <div className="mx-auto flex max-w-[1240px] items-center gap-2.5 whitespace-nowrap px-4 py-3.5 sm:px-6">
-            {[{ id: '', name: 'Todos' }, ...categories.slice(0, 6)].map((c) => {
+        {/* hotwords — categorias */}
+        {categories && categories.length > 0 && onSelectCategory && (
+          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-3.5 gap-y-1 px-2 pb-2 text-[11.5px] text-white/90 sm:px-4">
+            {[{ id: '', name: 'Todos' }, ...categories.slice(0, 8)].map((c) => {
               const active = selectedCategoryId === c.id;
               return (
                 <button
                   key={c.id}
                   onClick={() => onSelectCategory(c.id)}
-                  className={`flex-shrink-0 rounded-[var(--sf-radius-pill)] px-[20px] py-2.5 font-display text-[15px] font-semibold transition-colors ${
-                    active
-                      ? 'bg-[var(--sf-accent)] text-white'
-                      : 'text-[var(--sf-ink)]/65 hover:bg-[color-mix(in_srgb,var(--sf-ink)_7%,transparent)]'
-                  }`}
+                  className={active ? 'font-semibold text-white underline underline-offset-2' : 'hover:underline'}
                 >
                   {c.name}
                 </button>
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }

@@ -281,8 +281,17 @@ export const api = {
       }>('/stores/mine/stats'),
     create: (payload: { name: string; slug: string; plan_id: string }) =>
       request<any>('/stores', { method: 'POST', body: JSON.stringify(payload) }),
-    update: (payload: { theme_primary?: string; theme_id?: string; description?: string | null; logo_url?: string | null; banner_urls?: string[] }) =>
-      request<any>('/stores/mine', { method: 'PUT', body: JSON.stringify(payload) }),
+    update: (payload: {
+      name?: string;
+      whatsapp?: string | null;
+      currency?: string;
+      theme_primary?: string;
+      theme_id?: string;
+      description?: string | null;
+      logo_url?: string | null;
+      banner_urls?: import('./types').BannerSlide[];
+      theme_config?: { footer?: { supportItems?: import('../storefrontTheme/types').SupportItem[] } };
+    }) => request<any>('/stores/mine', { method: 'PUT', body: JSON.stringify(payload) }),
   },
   themes: {
     list: () => request<any[]>('/themes'),
@@ -332,6 +341,14 @@ export const api = {
       request<any>(`/subcategories/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
     remove: (id: string) => request<void>(`/subcategories/${id}`, { method: 'DELETE' }),
   },
+  coupons: {
+    list: () => request<import('./types').Coupon[]>('/coupons'),
+    create: (payload: { code: string; discount_percent: number; active?: boolean; is_public?: boolean }) =>
+      request<import('./types').Coupon>('/coupons', { method: 'POST', body: JSON.stringify(payload) }),
+    update: (id: string, payload: { code?: string; discount_percent?: number; active?: boolean; is_public?: boolean }) =>
+      request<import('./types').Coupon>(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+    remove: (id: string) => request<void>(`/coupons/${id}`, { method: 'DELETE' }),
+  },
   products: {
     list: () => request<any[]>('/products'),
     create: (payload: Record<string, any>) =>
@@ -358,7 +375,7 @@ export const api = {
   },
   storefront: {
     get: (slug: string) =>
-      request<{ store: any; categories: any[]; products: any[] }>(`/storefront/${slug}`),
+      request<{ store: any; categories: any[]; products: any[]; coupons: import('./types').PublicCoupon[] }>(`/storefront/${slug}`),
     getProduct: (slug: string, id: string) =>
       request<{ store: any; product: any; category: any | null; related: any[] }>(
         `/storefront/${slug}/products/${id}`

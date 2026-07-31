@@ -107,7 +107,7 @@ export function VideoCard({
 
       {!playing && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-[#2f3b46] shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-[var(--sf-ink)] shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
             <Play size={22} fill="currentColor" stroke="none" />
           </div>
         </div>

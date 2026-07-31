@@ -1,4 +1,5 @@
 import { X, Heart, Plus } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useWishlist } from '../../lib/wishlist';
 import { resolveMediaUrl } from '../../lib/api';
 import { formatCurrency, placeholderImage } from '../../lib/format';
@@ -12,14 +13,28 @@ function thumb(p: Product) {
 
 export function WishlistDrawer({ currency, accent, onAdd }: { currency?: string; accent: string; onAdd: (p: Product) => void }) {
   const { wishlist, wishlistOpen, setWishlistOpen, toggleWishlist } = useWishlist();
-  if (!wishlistOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-slate-900/40" onClick={() => setWishlistOpen(false)} />
-      <div className="relative h-full w-full max-w-md bg-[var(--sf-surface)] shadow-2xl">
+    <AnimatePresence>
+      {wishlistOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <motion.div
+            className="absolute inset-0 bg-slate-900/40"
+            onClick={() => setWishlistOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          />
+          <motion.div
+            className="relative h-full w-full max-w-md bg-[var(--sf-surface)] shadow-2xl"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+          >
         <div className="flex items-center justify-between border-b border-[var(--sf-line)] px-5 py-4">
-          <h2 className="text-lg font-bold text-[var(--sf-ink)]">Favoritos</h2>
+          <h2 className="font-display text-xl font-semibold text-[var(--sf-ink)]">Favoritos</h2>
           <button onClick={() => setWishlistOpen(false)} className="rounded-lg p-1 text-[var(--sf-ink-secondary)] hover:bg-[color-mix(in_srgb,var(--sf-ink)_6%,transparent)]"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto p-5" style={{ height: 'calc(100% - 64px)' }}>
@@ -45,7 +60,9 @@ export function WishlistDrawer({ currency, accent, onAdd }: { currency?: string;
             </div>
           )}
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

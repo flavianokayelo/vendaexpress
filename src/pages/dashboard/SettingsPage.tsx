@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check, Globe, MessageCircle, CreditCard } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
@@ -13,23 +13,27 @@ export function SettingsPage() {
   const [currency, setCurrency] = useState(store?.currency ?? "AOA");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!store) return;
     setSaving(true);
-    await supabase
-      .from("stores")
-      .update({
+    setError(null);
+    try {
+      await api.stores.update({
         name,
         whatsapp: whatsapp || null,
         currency,
-      })
-      .eq("id", store.id);
-    await refreshStore();
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+      });
+      await refreshStore();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao guardar alterações");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -40,6 +44,9 @@ export function SettingsPage() {
           onSubmit={save}
           className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6"
         >
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
+          )}
           <Field label="Nome da loja">
             <Input
               value={name}

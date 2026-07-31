@@ -77,23 +77,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Entrada em cascata dos cards de produto do tema Standard Ecommerce */
-@keyframes sf-fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: none; }
-}
-.animate-sf-fade-up {
-  animation: sf-fade-up 0.5s cubic-bezier(0.19, 1, 0.22, 1) both;
-}
-/* Zoom lento (ken-burns) na imagem ativa do Hero */
-@keyframes sf-kenburns {
-  from { transform: scale(1); }
-  to { transform: scale(1.08); }
-}
-.animate-sf-kenburns {
-  animation: sf-kenburns 7s ease-out forwards;
-}
-
 /* Pulso do ícone do carrinho quando recebe um novo item */
 @keyframes sf-cartpulse {
   0% { transform: scale(1); }
@@ -105,13 +88,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-sf-fade-up,
-  .animate-sf-kenburns,
   .animate-sf-cartpulse {
     animation: none;
-  }
-  .animate-sf-fade-up {
-    opacity: 1;
-    transform: none;
   }
 }

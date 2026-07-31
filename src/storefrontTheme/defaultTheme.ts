@@ -35,6 +35,9 @@ export const defaultTheme: ThemeConfig = {
     // Preenchido dinamicamente pelo componente Footer a partir dos dados reais
     // da loja (categorias, whatsapp) — fica vazio aqui de propósito.
     columns: [],
+    // Texto real de apoio (entrega, trocas, garantia, FAQ) — escrito pelo
+    // lojista no dashboard e guardado em stores.theme_config.footer.supportItems.
+    supportItems: [],
   },
   hero: { mode: 'carousel', slides: [] },
   banners: {},

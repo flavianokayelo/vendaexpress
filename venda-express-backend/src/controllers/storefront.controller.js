@@ -7,6 +7,15 @@ async function getStoreIdBySlug(slug) {
   return rows[0]?.id ?? null;
 }
 
+// Aceita tanto o formato antigo (array de strings) como o novo (array de
+// objectos {url, title?, subtitle?, cta?}) — normaliza sempre para o novo.
+function normalizeBanners(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b) => (typeof b === 'string' ? { url: b } : b))
+    .filter((b) => b && typeof b.url === 'string' && b.url);
+}
+
 async function getStorefront(req, res) {
   try {
     const { slug } = req.params;
@@ -20,7 +29,7 @@ async function getStorefront(req, res) {
     let banner_urls = [];
     if (store.banner_urls) {
       try {
-        banner_urls = typeof store.banner_urls === 'string' ? JSON.parse(store.banner_urls) : store.banner_urls;
+        banner_urls = normalizeBanners(typeof store.banner_urls === 'string' ? JSON.parse(store.banner_urls) : store.banner_urls);
       } catch {
         banner_urls = [];
       }
@@ -43,10 +52,14 @@ async function getStorefront(req, res) {
       'SELECT * FROM categories WHERE store_id = ? ORDER BY name ASC',
       [store.id]
     );
+    const [coupons] = await pool.query(
+      'SELECT code, discount_percent FROM coupons WHERE store_id = ? AND active = 1 AND is_public = 1 ORDER BY discount_percent DESC',
+      [store.id]
+    );
 
     const productsWithMedia = await mediaService.attachMedia(store.id, products);
 
-    return res.json({ store: parsedStore, categories, products: productsWithMedia });
+    return res.json({ store: parsedStore, categories, products: productsWithMedia, coupons });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro no servidor' });

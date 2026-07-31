@@ -167,7 +167,9 @@ CREATE TABLE coupons (
   code             VARCHAR(100) NOT NULL,
   discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
   active           TINYINT(1)   NOT NULL DEFAULT 1,
+  is_public        TINYINT(1)   NOT NULL DEFAULT 0,
   INDEX idx_coupons_store_id (store_id),
+  INDEX idx_coupons_store_public (store_id, is_public, active),
   UNIQUE INDEX idx_coupons_store_code (store_id, code),
   CONSTRAINT fk_coupons_store FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

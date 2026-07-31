@@ -14,6 +14,7 @@ export function ProductGrid({
   onToggleWishlist,
   layout = 'grid',
   paginate = false,
+  compact = false,
 }: {
   products: Product[];
   currency?: string;
@@ -26,6 +27,8 @@ export function ProductGrid({
   layout?: 'grid' | 'rail';
   /** Activa scroll infinito por página; só faz sentido em layout="grid". */
   paginate?: boolean;
+  /** Esconde nome/categoria nos cards — usado na calha de Ofertas relâmpago. */
+  compact?: boolean;
 }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   useEffect(() => {
@@ -60,6 +63,7 @@ export function ProductGrid({
       currency={currency}
       categoryName={p.category_id ? categoryNames?.get(p.category_id) : undefined}
       index={i}
+      compact={compact}
       onAdd={onAdd}
       onView={onView}
       isWishlisted={isWishlisted?.(p.id)}
@@ -68,10 +72,11 @@ export function ProductGrid({
   );
 
   if (layout === 'rail') {
+    const railWidth = compact ? 'w-[120px] sm:w-[140px]' : 'w-[140px] sm:w-[168px]';
     return (
-      <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 scroll-smooth">
+      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 scroll-smooth">
         {visible.map((p, i) => (
-          <div key={p.id} className="w-[200px] flex-shrink-0 snap-start sm:w-[238px]">
+          <div key={p.id} className={`${railWidth} flex-shrink-0 snap-start`}>
             {renderCard(p, i)}
           </div>
         ))}
@@ -81,7 +86,7 @@ export function ProductGrid({
 
   return (
     <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(238px,1fr))] gap-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {visible.map((p, i) => renderCard(p, i))}
       </div>
       {paginate && visibleCount < products.length && (

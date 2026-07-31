@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Reveal } from './Reveal';
 
 export function Section({
   title,
@@ -14,35 +15,17 @@ export function Section({
   className?: string;
 }) {
   return (
-    <div className={`py-[26px] ${dark ? 'bg-[#2f3b46]' : ''} ${className}`}>
-      <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
+    <div className={`py-3 ${dark ? 'bg-[var(--sf-ink)]' : ''} ${className}`}>
+      <div className="mx-auto max-w-[1240px] px-2 sm:px-4">
         {title && (
-          <div className="mb-[22px] flex items-center gap-3.5">
+          <Reveal className="mb-2.5 flex items-center gap-2">
             {icon && (
-              <span
-                className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] ${
-                  dark
-                    ? 'bg-white/10 text-white'
-                    : 'bg-[var(--sf-primary)]/[0.1] text-[var(--sf-primary)]'
-                }`}
-              >
-                {icon}
-              </span>
+              <span className={dark ? 'text-white' : 'text-[var(--sf-primary)]'}>{icon}</span>
             )}
-            <h2
-              className={`font-display text-[28px] font-semibold leading-none tracking-[-0.015em] ${
-                dark ? 'text-white' : 'text-[var(--sf-ink)]'
-              }`}
-            >
-              {title}
-            </h2>
-          </div>
+            <h2 className={`text-[15px] font-bold ${dark ? 'text-white' : 'text-[var(--sf-ink)]'}`}>{title}</h2>
+          </Reveal>
         )}
-        {!title && icon && (
-          <div className="mb-[22px] flex items-center gap-2.5">
-            {icon}
-          </div>
-        )}
+        {!title && icon && <Reveal className="mb-2.5 flex items-center gap-2">{icon}</Reveal>}
         {children}
       </div>
     </div>

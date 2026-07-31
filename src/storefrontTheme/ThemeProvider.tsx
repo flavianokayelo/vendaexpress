@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { MotionConfig } from 'motion/react';
 import type { ThemeConfig } from './types';
 
 const ThemeContext = createContext<ThemeConfig | null>(null);
@@ -40,6 +41,7 @@ export function StorefrontThemeProvider({
       '--sf-line': theme.colors.line,
       '--sf-success': theme.colors.success,
       '--sf-danger': theme.colors.danger,
+      '--sf-warning': theme.colors.warning,
       '--sf-font-heading': theme.typography.fontDisplay,
       '--sf-font-body': theme.typography.fontBody,
       '--sf-radius-sm': px(theme.radius.sm),
@@ -52,9 +54,11 @@ export function StorefrontThemeProvider({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <div className={`font-storefront ${className}`} style={style}>
-        {children}
-      </div>
+      <MotionConfig reducedMotion="user">
+        <div className={`font-storefront ${className}`} style={style}>
+          {children}
+        </div>
+      </MotionConfig>
     </ThemeContext.Provider>
   );
 }

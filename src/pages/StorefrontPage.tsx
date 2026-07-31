@@ -2,13 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Store as StoreIcon,
   Tag,
-  Flame,
+  Zap,
   Sparkles,
   Video,
   Check,
+  MessageCircle,
+  LifeBuoy,
 } from "lucide-react";
 import { api, resolveMediaUrl } from "../lib/api";
-import type { Store, Product, Category } from "../lib/types";
+import type { Store, Product, Category, PublicCoupon } from "../lib/types";
 import { formatCurrency, placeholderImage } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input, Field, Textarea } from "../components/ui/Field";
@@ -23,10 +25,15 @@ import { mergeTheme } from "../storefrontTheme/mergeTheme";
 import { AnnouncementBar } from "../components/theme/AnnouncementBar";
 import { Header } from "../components/theme/Header";
 import { Hero, type HeroSlide } from "../components/theme/Hero";
+import { ShopProfileBar } from "../components/theme/ShopProfileBar";
+import { ShopTabs } from "../components/theme/ShopTabs";
 import { Section } from "../components/theme/Section";
+import { Reveal } from "../components/theme/Reveal";
 import { ProductGrid } from "../components/theme/ProductGrid";
 import { CategoryGrid } from "../components/theme/CategoryGrid";
-import { TrustStrip } from "../components/theme/TrustStrip";
+import { HeroSideCards } from "../components/theme/HeroSideCards";
+import { FeatureRail } from "../components/theme/FeatureRail";
+import { VoucherStrip } from "../components/theme/VoucherStrip";
 import { CartDrawer } from "../components/theme/CartDrawer";
 import { Footer } from "../components/theme/Footer";
 
@@ -67,6 +74,7 @@ function StorefrontPageInner({
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -93,6 +101,11 @@ function StorefrontPageInner({
   const [whatsappMissing, setWhatsappMissing] = useState(false);
 
   const catalogRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+  const promoRef = useRef<HTMLDivElement>(null);
+  const featuredRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const subtotal = useMemo(
     () => cart.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0),
@@ -203,6 +216,7 @@ function StorefrontPageInner({
         setStore(data.store);
         setProducts(data.products);
         setCategories(data.categories);
+        setPublicCoupons(data.coupons ?? []);
       } catch {
         setNotFound(true);
       } finally {
@@ -227,6 +241,17 @@ function StorefrontPageInner({
     [products],
   );
   const featuredProducts = useMemo(() => products.slice(0, 8), [products]);
+  const maxDiscount = useMemo(
+    () =>
+      promoProducts.length === 0
+        ? 0
+        : Math.max(
+            ...promoProducts.map((p) =>
+              Math.round((1 - Number(p.price) / Number(p.compare_at_price)) * 100),
+            ),
+          ),
+    [promoProducts],
+  );
   const videoProducts = useMemo(
     () => products.filter((p) => p.video),
     [products],
@@ -249,14 +274,15 @@ function StorefrontPageInner({
       store?.banner_urls && store.banner_urls.length > 0
         ? store.banner_urls
         : store?.banner_url
-          ? [store.banner_url]
+          ? [{ url: store.banner_url }]
           : [];
 
-    banners.forEach((url, idx) => {
+    banners.forEach((b, idx) => {
       list.push({
-        image: resolveMediaUrl(url) || url,
-        title: idx === 0 ? store!.name : undefined,
-        subtitle: idx === 0 ? store!.description || undefined : undefined,
+        image: resolveMediaUrl(b.url) || b.url,
+        title: b.title || (idx === 0 ? store!.name : undefined),
+        subtitle: b.subtitle || (idx === 0 ? store!.description || undefined : undefined),
+        cta: b.cta,
       });
     });
 
@@ -282,6 +308,16 @@ function StorefrontPageInner({
 
   const scrollToCatalog = () =>
     catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToCategories = () =>
+    categoriesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToTop = () =>
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToPromo = () =>
+    promoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToFeatured = () =>
+    featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToFooter = () =>
+    footerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   if (loading) return <PageLoader />;
 
@@ -333,7 +369,7 @@ function StorefrontPageInner({
   }
 
   return (
-    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-[#f4f4f6]">
+    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-[var(--sf-surface-muted)]">
       <AnnouncementBar theme={theme} />
 
       <Header
@@ -347,62 +383,123 @@ function StorefrontPageInner({
         categories={categories}
         selectedCategoryId={selectedCat}
         onSelectCategory={setSelectedCat}
+        onHelpClick={scrollToFooter}
       />
 
-      <Hero slides={slides} onCtaClick={scrollToCatalog} />
+      <div ref={topRef} />
+      <section className="mx-auto mt-2 w-full max-w-[1240px] px-2 sm:px-4">
+        <div className="grid h-[clamp(150px,24vw,300px)] gap-1.5 sm:grid-cols-[2fr_1fr]">
+          <Hero slides={slides} onCtaClick={scrollToCatalog} />
+          <div className="hidden sm:block">
+            <HeroSideCards maxDiscount={maxDiscount} whatsapp={store.whatsapp} onPromoClick={scrollToPromo} />
+          </div>
+        </div>
+      </section>
 
-      <TrustStrip />
+      <ShopProfileBar
+        store={store}
+        productCount={products.length}
+        categoryCount={categories.length}
+      />
+
+      <ShopTabs
+        tabs={[
+          { label: "Início", onClick: scrollToTop },
+          { label: "Produtos", onClick: scrollToCatalog },
+          ...(categories.length > 0
+            ? [{ label: "Categorias", onClick: scrollToCategories }]
+            : []),
+        ]}
+      />
+
+      <div className="mx-auto w-full max-w-[1240px] px-2 pt-2 sm:px-4">
+        <Reveal>
+          <FeatureRail
+            items={[
+              ...(categories.length > 0 ? [{ icon: Tag, label: "Categorias", onClick: scrollToCategories }] : []),
+              ...(promoProducts.length > 0 ? [{ icon: Zap, label: "Ofertas", onClick: scrollToPromo }] : []),
+              ...(featuredProducts.length > 0 ? [{ icon: Sparkles, label: "Novidades", onClick: scrollToFeatured }] : []),
+              ...(store.whatsapp
+                ? [{ icon: MessageCircle, label: "WhatsApp", href: `https://wa.me/${store.whatsapp.replace(/\D/g, "")}` }]
+                : []),
+              { icon: LifeBuoy, label: "Apoio", onClick: scrollToFooter },
+            ]}
+          />
+        </Reveal>
+        {publicCoupons.length > 0 && (
+          <Reveal delay={0.05} className="mt-2">
+            <VoucherStrip coupons={publicCoupons} />
+          </Reveal>
+        )}
+      </div>
 
       {categories.length > 0 && (
-        <Section
-          title="Comprar por categoria"
-          icon={<Tag size={20} className="text-[var(--sf-primary)]" />}
-        >
-          <CategoryGrid
-            categories={categories}
-            onSelect={(id) => {
-              setSelectedCat(id);
-              scrollToCatalog();
-            }}
-          />
-        </Section>
+        <div ref={categoriesRef}>
+          <Section
+            title="Comprar por categoria"
+            icon={<Tag size={20} className="text-[var(--sf-primary)]" />}
+          >
+            <Reveal delay={0.08}>
+              <CategoryGrid
+                categories={categories}
+                onSelect={(id) => {
+                  setSelectedCat(id);
+                  scrollToCatalog();
+                }}
+              />
+            </Reveal>
+          </Section>
+        </div>
       )}
 
-      <Section
-        icon={
-          <span className="inline-flex items-center gap-[7px] rounded-[var(--sf-radius-pill)] bg-[#fdecec] px-3 py-1 font-display text-[14px] font-semibold uppercase tracking-[0.02em] text-[#c93b33]">
-            <Flame size={15} strokeWidth={1.6} />
-            Em promoção
-          </span>
-        }
-      >
-        <ProductGrid
-          products={promoProducts}
-          currency={store.currency}
-          categoryNames={categoryNames}
-          layout="rail"
-          onAdd={addToCart}
-          onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-          isWishlisted={isWishlisted}
-          onToggleWishlist={toggleWishlist}
-        />
-      </Section>
+      {promoProducts.length > 0 && (
+        <div ref={promoRef}>
+          <Section
+            icon={
+              <span className="inline-flex items-center gap-[7px] text-[14px] font-extrabold uppercase tracking-[0.03em] text-[var(--sf-primary)]">
+                <Zap size={16} strokeWidth={2} fill="currentColor" />
+                Ofertas relâmpago
+                <span className="relative ml-0.5 flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--sf-primary)]/60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--sf-primary)]" />
+                </span>
+              </span>
+            }
+          >
+            <ProductGrid
+              products={promoProducts}
+              currency={store.currency}
+              categoryNames={categoryNames}
+              layout="rail"
+              compact
+              onAdd={addToCart}
+              onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+              isWishlisted={isWishlisted}
+              onToggleWishlist={toggleWishlist}
+            />
+          </Section>
+        </div>
+      )}
 
-      <Section
-        title="Novidades"
-        icon={<Sparkles size={20} className="text-[var(--sf-primary)]" />}
-      >
-        <ProductGrid
-          products={featuredProducts}
-          currency={store.currency}
-          categoryNames={categoryNames}
-          layout="rail"
-          onAdd={addToCart}
-          onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-          isWishlisted={isWishlisted}
-          onToggleWishlist={toggleWishlist}
-        />
-      </Section>
+      {featuredProducts.length > 0 && (
+        <div ref={featuredRef}>
+          <Section
+            title="Novidades"
+            icon={<Sparkles size={20} className="text-[var(--sf-primary)]" />}
+          >
+            <ProductGrid
+              products={featuredProducts}
+              currency={store.currency}
+              categoryNames={categoryNames}
+              layout="rail"
+              onAdd={addToCart}
+              onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
+              isWishlisted={isWishlisted}
+              onToggleWishlist={toggleWishlist}
+            />
+          </Section>
+        </div>
+      )}
 
       {videoProducts.length > 0 && (
         <Section
@@ -424,23 +521,16 @@ function StorefrontPageInner({
         </Section>
       )}
 
-      <div ref={catalogRef} className="mx-auto max-w-[1240px] px-4 pt-10 sm:px-6">
-        <div className="mb-5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3.5">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--sf-primary)]/[0.1] text-[var(--sf-primary)]">
-              <Tag size={20} />
-            </span>
-            <h2 className="font-display text-[28px] font-semibold tracking-[-0.015em] text-[var(--sf-ink)]">
-              Todos os produtos
-            </h2>
-          </div>
-          <span className="flex-shrink-0 font-display text-[15px] font-semibold text-[var(--sf-ink)]/55">
+      <div ref={catalogRef} className="mx-auto max-w-[1240px] px-2 pt-4 sm:px-4">
+        <Reveal className="mb-2.5 flex items-center justify-between gap-2">
+          <h2 className="text-[15px] font-bold text-[var(--sf-ink)]">Todos os produtos</h2>
+          <span className="flex-shrink-0 text-[12px] font-medium text-[var(--sf-ink-secondary)]">
             {selectedCat ? categoryNames.get(selectedCat) : "Todos"} · {filtered.length}
           </span>
-        </div>
+        </Reveal>
       </div>
 
-      <div className="mx-auto max-w-[1240px] px-4 pb-16 sm:px-6">
+      <div className="mx-auto max-w-[1240px] px-2 pb-10 sm:px-4">
         {filtered.length === 0 ? (
           <EmptyState
             icon={<StoreIcon size={28} />}
@@ -462,14 +552,16 @@ function StorefrontPageInner({
         )}
       </div>
 
-      <Footer
-        store={store}
-        categories={categories}
-        onSelectCategory={(id) => {
-          setSelectedCat(id);
-          catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-      />
+      <div ref={footerRef}>
+        <Footer
+          store={store}
+          categories={categories}
+          onSelectCategory={(id) => {
+            setSelectedCat(id);
+            catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+      </div>
 
       <WishlistDrawer
         currency={store.currency}
