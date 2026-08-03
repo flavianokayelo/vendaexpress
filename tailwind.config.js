@@ -53,6 +53,9 @@ export default {
         'theme-lg': 'var(--theme-shadow-lg)',
         'theme-xl': 'var(--theme-shadow-xl)',
         'theme-glass': 'var(--theme-shadow-glass)',
+        card: '0 2px 8px rgb(0 0 0 / .04)',
+        floating: '0 8px 24px rgb(0 0 0 / .08)',
+        popover: '0 12px 32px rgb(0 0 0 / .12)',
       },
       spacing: {
         'section-y': 'var(--theme-spacing-section-y)',

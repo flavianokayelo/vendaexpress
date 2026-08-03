@@ -1736,11 +1736,13 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                 navigate={navigate}
               >
                 {store?.logo_url ? (
-                  <img
-                    src={resolveMediaUrl(store.logo_url) ?? ""}
-                    alt=""
-                    className="h-6 w-6 rounded-full object-cover"
-                  />
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-0.5">
+                    <img
+                      src={resolveMediaUrl(store.logo_url) ?? ""}
+                      alt=""
+                      className="h-full w-full object-contain"
+                    />
+                  </span>
                 ) : (
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[12px] font-bold uppercase">
                     {user.email[0]}
@@ -1872,11 +1874,13 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                     navigate={navigate}
                   >
                     {store?.logo_url ? (
-                      <img
-                        src={resolveMediaUrl(store.logo_url) ?? ""}
-                        alt=""
-                        className="h-6 w-6 rounded-full object-cover"
-                      />
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-0.5">
+                        <img
+                          src={resolveMediaUrl(store.logo_url) ?? ""}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      </span>
                     ) : (
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[12px] font-bold uppercase">
                         {user.email[0]}

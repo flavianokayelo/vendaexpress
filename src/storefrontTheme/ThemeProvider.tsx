@@ -48,6 +48,15 @@ export function StorefrontThemeProvider({
       '--sf-radius-md': px(theme.radius.md),
       '--sf-radius-lg': px(theme.radius.lg),
       '--sf-radius-pill': px(theme.radius.pill),
+      '--sf-section-gap': px(theme.spacing.sectionGap),
+      '--sf-shadow-sm': theme.shadow.sm,
+      '--sf-shadow-md': theme.shadow.md,
+      '--sf-shadow-lg': theme.shadow.lg,
+      '--sf-shadow-xl': theme.shadow.xl,
+      // Curva de easing "premium" (ease-out expo) — usada em todas as
+      // transições/microinterações do storefront para uma sensação mais
+      // refinada que o "ease" linear por omissão do browser.
+      '--sf-ease': 'cubic-bezier(0.16, 1, 0.3, 1)',
     } as CSSProperties),
     [theme]
   );

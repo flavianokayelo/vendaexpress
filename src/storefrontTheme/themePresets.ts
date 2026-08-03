@@ -38,8 +38,26 @@ export const themePresets: Record<string, ThemeConfigOverride> = {
       fontBody: "ui-sans-serif, system-ui, -apple-system, sans-serif",
     },
     radius: { sm: 2, md: 3, lg: 4, pill: 9999 },
+    spacing: { unit: 8, sectionGap: 12 },
     buttons: { style: 'solid', radius: 'sm' },
-    card: { style: 'flat', imageAspect: '1:1', hoverEffect: 'none' },
+    card: { style: 'flat', imageAspect: '1:1', hoverEffect: 'lift' },
+    // Ordem igual à actual da página (categorias antes das ofertas); o default
+    // do tema base é a ordem standard declarada em defaultTheme.home.sections.
+    home: {
+      sections: [
+        { id: 'announcement', enabled: true },
+        { id: 'hero', enabled: true },
+        { id: 'promo-banners', enabled: true },
+        { id: 'profile-bar', enabled: true },
+        { id: 'tabs', enabled: true },
+        { id: 'feature-rail', enabled: true },
+        { id: 'vouchers', enabled: true },
+        { id: 'categories', enabled: true },
+        { id: 'promo', enabled: true },
+        { id: 'featured', enabled: true },
+        { id: 'catalog', enabled: true },
+      ],
+    },
   },
 
   // Navy + dourado, serif, cantos curtos (src/themes/luxury/tokens.ts)

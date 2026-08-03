@@ -15,10 +15,14 @@ import { Button } from "../../components/ui/Button";
 import { Input, Field } from "../../components/ui/Field";
 import { Modal } from "../../components/ui/Modal";
 import { EmptyState } from "../../components/ui/Feedback";
+import { SkeletonTableRows } from "../../components/ui/Skeleton";
+import { Surface } from "../../components/ui/Surface";
+import { useToast } from "../../components/ui/Toast";
 import type { Category, Subcategory } from "../../lib/types";
 
 export function CategoriesPage() {
   const { store } = useAuth();
+  const toast = useToast();
   const [cats, setCats] = useState<Category[]>([]);
   const [subcats, setSubcats] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +59,7 @@ export function CategoriesPage() {
       setCats(catsData);
       setSubcats(subsData);
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar categorias");
     } finally {
       setLoading(false);
     }
@@ -109,8 +113,10 @@ export function CategoriesPage() {
 
       if (editingCat) {
         await api.categories.update(editingCat.id, catName, iconUrl);
+        toast.success("Categoria atualizada");
       } else {
         await api.categories.create(catName, iconUrl);
+        toast.success("Categoria criada");
       }
       setCatModalOpen(false);
       await load();
@@ -131,9 +137,10 @@ export function CategoriesPage() {
       return;
     try {
       await api.categories.remove(c.id);
+      toast.success("Categoria eliminada");
       await load();
     } catch (err: any) {
-      alert(err.message || "Erro ao eliminar categoria");
+      toast.error(err.message || "Erro ao eliminar categoria");
     }
   };
 
@@ -160,8 +167,10 @@ export function CategoriesPage() {
     try {
       if (editingSub) {
         await api.subcategories.update(editingSub.id, subName);
+        toast.success("Sub-categoria atualizada");
       } else {
         await api.subcategories.create(subCategoryId, subName);
+        toast.success("Sub-categoria criada");
       }
       setSubModalOpen(false);
       await load();
@@ -176,9 +185,10 @@ export function CategoriesPage() {
     if (!confirm(`Eliminar a sub-categoria "${s.name}"?`)) return;
     try {
       await api.subcategories.remove(s.id);
+      toast.success("Sub-categoria eliminada");
       await load();
     } catch (err: any) {
-      alert(err.message || "Erro ao eliminar sub-categoria");
+      toast.error(err.message || "Erro ao eliminar sub-categoria");
     }
   };
 
@@ -194,7 +204,7 @@ export function CategoriesPage() {
         }
       />
       {loading ? (
-        <div className="text-slate-400">A carregar...</div>
+        <SkeletonTableRows rows={5} cols={4} />
       ) : cats.length === 0 ? (
         <EmptyState
           icon={<FolderTree size={28} />}
@@ -213,34 +223,37 @@ export function CategoriesPage() {
             const isOpen = expanded === c.id;
             const iconSrc = resolveMediaUrl(c.icon_url);
             return (
-              <div
-                key={c.id}
-                className="rounded-xl border border-slate-200 bg-white"
-              >
+              <Surface key={c.id}>
                 <div className="flex items-center justify-between p-4">
                   <button
                     onClick={() => setExpanded(isOpen ? null : c.id)}
                     className="flex flex-1 items-center gap-3 text-left"
                   >
                     {isOpen ? (
-                      <ChevronDown size={16} className="text-slate-400" />
+                      <ChevronDown size={16} className="text-ink-2" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400" />
+                      <ChevronRight size={16} className="text-ink-2" />
                     )}
                     {iconSrc ? (
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={iconSrc}
                         alt=""
-                        className="h-10 w-10 rounded-lg object-cover"
+                        className="h-10 w-10 object-cover"
+                        style={{ borderRadius: '2px' }}
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center bg-accent-soft text-accent"
+                        style={{ borderRadius: '2px' }}
+                      >
                         <FolderTree size={18} />
                       </div>
                     )}
                     <div>
-                      <div className="font-medium text-slate-900">{c.name}</div>
-                      <div className="text-xs text-slate-400">
+                      <div className="font-mono text-[13px] font-semibold text-ink">{c.name}</div>
+                      <div className="font-mono text-[11px] text-ink-2">
                         {subsOfCat.length} sub-categoria(s)
                       </div>
                     </div>
@@ -248,13 +261,15 @@ export function CategoriesPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => openEditCat(c)}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                      className="flex h-8 w-8 items-center justify-center text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
+                      style={{ borderRadius: '2px' }}
                     >
                       <Pencil size={16} />
                     </button>
                     <button
                       onClick={() => removeCat(c)}
-                      className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                      className="flex h-8 w-8 items-center justify-center text-ink-2 transition-colors hover:bg-danger/5 hover:text-danger"
+                      style={{ borderRadius: '2px' }}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -262,37 +277,39 @@ export function CategoriesPage() {
                 </div>
 
                 {isOpen && (
-                  <div className="border-t border-slate-100 bg-slate-50 p-4">
+                  <div className="border-t border-border bg-ink/[0.02] p-4">
                     {subsOfCat.length === 0 ? (
-                      <p className="mb-3 text-sm text-slate-400">
+                      <p className="mb-3 font-mono text-[13px] text-ink-2">
                         Sem sub-categorias.
                       </p>
                     ) : (
                       <div className="mb-3 space-y-2">
                         {subsOfCat.map((s) => (
-                          <div
+                          <Surface
                             key={s.id}
-                            className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm"
+                            className="flex items-center justify-between px-3 py-2"
                           >
                             <div className="flex items-center gap-2">
-                              <Tag size={14} className="text-slate-400" />
-                              <span className="text-slate-700">{s.name}</span>
+                              <Tag size={14} className="text-ink-2" />
+                              <span className="font-mono text-[13px] text-ink">{s.name}</span>
                             </div>
                             <div className="flex gap-1">
                               <button
                                 onClick={() => openEditSub(s)}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-100"
+                                className="flex h-7 w-7 items-center justify-center text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
+                                style={{ borderRadius: '2px' }}
                               >
                                 <Pencil size={14} />
                               </button>
                               <button
                                 onClick={() => removeSub(s)}
-                                className="rounded p-1 text-red-400 hover:bg-red-50"
+                                className="flex h-7 w-7 items-center justify-center text-ink-2 transition-colors hover:bg-danger/5 hover:text-danger"
+                                style={{ borderRadius: '2px' }}
                               >
                                 <Trash2 size={14} />
                               </button>
                             </div>
-                          </div>
+                          </Surface>
                         ))}
                       </div>
                     )}
@@ -305,7 +322,7 @@ export function CategoriesPage() {
                     </Button>
                   </div>
                 )}
-              </div>
+              </Surface>
             );
           })}
         </div>
@@ -340,18 +357,22 @@ export function CategoriesPage() {
                 <img
                   src={catIconPreview}
                   alt=""
-                  className="h-14 w-14 rounded-lg border border-slate-200 object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-14 w-14 border border-border object-cover"
+                  style={{ borderRadius: '2px' }}
                 />
               )}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
                 onChange={handleIconSelect}
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full font-mono text-[13px] text-ink-2 file:mr-3 file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:font-mono file:text-[13px] file:font-semibold file:text-accent hover:file:bg-accent/20"
+                style={{ borderRadius: '2px' }}
               />
             </div>
             {catUploading && (
-              <p className="mt-1 text-xs text-blue-600">A enviar imagem...</p>
+              <p className="mt-1 font-mono text-[11px] text-accent">A enviar imagem...</p>
             )}
           </Field>
           <div className="flex justify-end gap-2 pt-2">

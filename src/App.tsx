@@ -1,13 +1,33 @@
-import { AuthProvider, useAuth } from './lib/auth';
-import { ThemeProvider } from './theme';
+import { lazy, Suspense } from 'react';
+import { AuthProvider } from './lib/auth';
+import { ToastProvider } from './components/ui/Toast';
+import { PageLoader } from './components/ui/Feedback';
 import { useHashRoute, matchRoute } from './lib/router';
-import { LandingPage } from './pages/LandingPage';
-import { SignupPage } from './pages/SignupPage';
-import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/dashboard/DashboardPage';
-import { StorefrontPage } from './pages/StorefrontPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { AdminPage } from './pages/AdminPage';
+
+const LandingPage = lazy(() =>
+  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })),
+);
+const SignupPage = lazy(() =>
+  import('./pages/SignupPage').then((m) => ({ default: m.SignupPage })),
+);
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })),
+);
+const DashboardPage = lazy(() =>
+  import('./pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const StorefrontPage = lazy(() =>
+  import('./pages/StorefrontPage').then((m) => ({ default: m.StorefrontPage })),
+);
+const ProductDetailPage = lazy(() =>
+  import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })),
+);
+const CategoryPage = lazy(() =>
+  import('./pages/CategoryPage').then((m) => ({ default: m.CategoryPage })),
+);
+const AdminPage = lazy(() =>
+  import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })),
+);
 
 function Router() {
   const [route, navigate] = useHashRoute();
@@ -16,7 +36,17 @@ function Router() {
   // /s/:slug/products/:id — public product detail
   const productParams = matchRoute('/s/:slug/products/:id', path);
   if (productParams) {
-    return <ProductDetailPage slug={productParams.slug} productId={productParams.id} navigate={navigate} />;
+    return (
+      <ProductDetailPage slug={productParams.slug} productId={productParams.id} navigate={navigate} />
+    );
+  }
+
+  // /s/:slug/categories/:categoryId — public category listing
+  const categoryParams = matchRoute('/s/:slug/categories/:categoryId', path);
+  if (categoryParams) {
+    return (
+      <CategoryPage slug={categoryParams.slug} categoryId={categoryParams.categoryId} navigate={navigate} />
+    );
   }
 
   // /s/:slug — public storefront
@@ -43,12 +73,12 @@ function Router() {
 }
 
 function ThemedApp() {
-  const { store } = useAuth();
-  const themeId = store?.theme_id ?? 'standard';
   return (
-    <ThemeProvider initialThemeId={themeId}>
-      <Router />
-    </ThemeProvider>
+    <ToastProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Router />
+      </Suspense>
+    </ToastProvider>
   );
 }
 

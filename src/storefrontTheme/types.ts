@@ -35,6 +35,15 @@ export interface ThemeSpacing {
   sectionGap: number;
 }
 
+/** Sombras — strings de box-shadow completas, em camadas (não um único
+ * blur), para uma sensação de profundidade suave em vez de sombra "chapada". */
+export interface ThemeShadow {
+  sm: string;
+  md: string;
+  lg: string;
+  xl: string;
+}
+
 export type ButtonStyle = 'solid' | 'outline' | 'pill';
 export type RadiusToken = 'sm' | 'md' | 'lg' | 'pill';
 
@@ -59,7 +68,6 @@ export interface ThemeHeader {
   variant: HeaderVariant;
   showAnnouncementBar: boolean;
   announcementText?: string;
-  showMegaMenu: boolean;
 }
 
 export interface FooterColumn {
@@ -114,10 +122,40 @@ export interface ThemeBanners {
   discountStrip?: BannerItem;
 }
 
-export type HomeSectionKey = 'hero' | 'promo' | 'featured' | 'categories' | 'catalog';
+export type HomeSectionKey =
+  | 'announcement'
+  | 'hero'
+  | 'promo-banners'
+  | 'profile-bar'
+  | 'tabs'
+  | 'feature-rail'
+  | 'vouchers'
+  | 'categories'
+  | 'promo'
+  | 'featured'
+  | 'catalog';
+
+/** Configuração declarativa de uma secção da página inicial. Cada bloco do
+ *  layout é um item aqui: o `HomePage` renderiza os itens por ordem, e um tema
+ *  (ou uma loja via theme_config) pode reordenar, ocultar ou re-intitular cada
+ *  um sem tocar em código React. */
+export interface HomeSectionConfig {
+  /** id único da secção — mapeia para um renderer no HomePage */
+  id: HomeSectionKey;
+  /** false oculta a secção sem a remover da config */
+  enabled?: boolean;
+  /** título alternativo (usa o default do bloco se omitido) */
+  title?: string;
+  /** layout dos grids de produtos (promo/featured/catalog) */
+  layout?: 'rail' | 'grid';
+  /** limita o número de produtos em grids (promo/featured) */
+  limit?: number;
+}
 
 export interface ThemeHome {
-  sectionOrder: HomeSectionKey[];
+  /** ordem + configuração das secções da home. A ORDEM aqui é a ordem real de
+   *  render (Header e Footer são chrome fixo, não entram na lista). */
+  sections: HomeSectionConfig[];
 }
 
 export interface ThemeTypography {
@@ -131,6 +169,7 @@ export interface ThemeConfig {
   typography: ThemeTypography;
   radius: ThemeRadius;
   spacing: ThemeSpacing;
+  shadow: ThemeShadow;
   buttons: ThemeButtons;
   card: ThemeCard;
   header: ThemeHeader;

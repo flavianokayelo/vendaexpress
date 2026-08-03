@@ -8,6 +8,9 @@ import { Badge } from "../../components/ui/Badge";
 import { Select } from "../../components/ui/Field";
 import { Modal } from "../../components/ui/Modal";
 import { EmptyState } from "../../components/ui/Feedback";
+import { SkeletonTableRows } from "../../components/ui/Skeleton";
+import { Surface } from "../../components/ui/Surface";
+import { useToast } from "../../components/ui/Toast";
 import type { Order, OrderItem, OrderStatus } from "../../lib/types";
 
 const STATUS_COLOR: Record<
@@ -30,6 +33,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function OrdersPage() {
   const { store } = useAuth();
+  const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState<{
@@ -42,7 +46,7 @@ export function OrdersPage() {
       const data = await api.orders.list();
       setOrders(data);
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar pedidos");
     } finally {
       setLoading(false);
     }
@@ -55,9 +59,10 @@ export function OrdersPage() {
   const updateStatus = async (order: Order, status: OrderStatus) => {
     try {
       await api.orders.updateStatus(order.id, status);
+      toast.success("Estado do pedido atualizado");
       load();
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar pedido");
     }
   };
 
@@ -66,7 +71,7 @@ export function OrdersPage() {
       const items = await api.orders.getItems(order.id);
       setViewing({ order, items: items ?? [] });
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar detalhes do pedido");
     }
   };
 
@@ -74,7 +79,7 @@ export function OrdersPage() {
     <div>
       <PageHeader title="Pedidos" subtitle={`${orders.length} pedidos`} />
       {loading ? (
-        <div className="text-slate-400">A carregar...</div>
+        <SkeletonTableRows rows={6} cols={6} />
       ) : orders.length === 0 ? (
         <EmptyState
           icon={<ShoppingCart size={28} />}
@@ -82,17 +87,18 @@ export function OrdersPage() {
           description="Os pedidos dos teus clientes aparecerão aqui."
         />
       ) : (
-            <div className="overflow-hidden border border-border bg-paper" style={{ borderRadius: '2px' }}>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-accent-soft/30">
-                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Cliente</th>
-                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Total</th>
-                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Estado</th>
-                    <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Data</th>
-                    <th className="px-4 py-3 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Ações</th>
-                  </tr>
-                </thead>
+        <Surface className="overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-accent-soft/30">
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Cliente</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Telefone</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Total</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Estado</th>
+                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Data</th>
+                <th className="px-4 py-3 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Ações</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border">
               {orders.map((o) => (
                 <tr key={o.id} className="transition-colors hover:bg-ink/[0.02]">
@@ -136,7 +142,7 @@ export function OrdersPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Surface>
       )}
 
       <Modal
@@ -146,72 +152,72 @@ export function OrdersPage() {
       >
         {viewing && (
           <div className="space-y-4">
-            <div className="rounded-lg bg-slate-50 p-4">
+            <div className="bg-ink/[0.02] p-4" style={{ borderRadius: '2px' }}>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Estado</span>
+                <span className="font-mono text-[12px] text-ink-2">Estado</span>
                 <Badge color={STATUS_COLOR[viewing.order.status]}>
                   {STATUS_LABEL[viewing.order.status]}
                 </Badge>
               </div>
-              <div className="mt-3 space-y-1 text-sm">
+              <div className="mt-3 space-y-1 font-mono text-[13px]">
                 <div>
-                  <span className="text-slate-500">Cliente:</span>{" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="text-ink-2">Cliente:</span>{" "}
+                  <span className="font-semibold text-ink">
                     {viewing.order.customer_name}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Telefone:</span>{" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="text-ink-2">Telefone:</span>{" "}
+                  <span className="font-semibold text-ink">
                     {viewing.order.customer_phone ?? "—"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Endereço:</span>{" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="text-ink-2">Endereço:</span>{" "}
+                  <span className="font-semibold text-ink">
                     {viewing.order.customer_address ?? "—"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Data:</span>{" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="text-ink-2">Data:</span>{" "}
+                  <span className="font-semibold text-ink">
                     {formatDateTime(viewing.order.created_at)}
                   </span>
                 </div>
               </div>
             </div>
             <div>
-              <h4 className="mb-2 text-sm font-semibold text-slate-900">
+              <h4 className="mb-2 font-heading text-sm font-bold text-ink">
                 Itens
               </h4>
               <div className="space-y-2">
                 {viewing.items.map((it) => (
-                  <div
+                  <Surface
                     key={it.id}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm"
+                    className="flex items-center justify-between p-3 font-mono text-[13px]"
                   >
                     <div>
-                      <div className="font-medium text-slate-900">
+                      <div className="font-semibold text-ink">
                         {it.name}
                       </div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-[12px] text-ink-2">
                         {it.quantity} ×{" "}
                         {formatCurrency(Number(it.price), store?.currency)}
                       </div>
                     </div>
-                    <span className="font-semibold text-slate-900">
+                    <span className="font-semibold text-ink">
                       {formatCurrency(
                         Number(it.price) * it.quantity,
                         store?.currency,
                       )}
                     </span>
-                  </div>
+                  </Surface>
                 ))}
               </div>
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-bold">
+            <div className="flex justify-between border-t border-border pt-3 font-heading text-base font-bold text-ink">
               <span>Total</span>
-              <span className="text-blue-800">
+              <span className="text-accent">
                 {formatCurrency(Number(viewing.order.total), store?.currency)}
               </span>
             </div>

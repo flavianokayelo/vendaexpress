@@ -28,6 +28,9 @@ import { Input, Field, Select, Textarea } from "../../components/ui/Field";
 import { Modal } from "../../components/ui/Modal";
 import { Badge } from "../../components/ui/Badge";
 import { EmptyState } from "../../components/ui/Feedback";
+import { SkeletonProductGrid } from "../../components/ui/Skeleton";
+import { Surface } from "../../components/ui/Surface";
+import { useToast } from "../../components/ui/Toast";
 import { ColorPicker } from "../../components/ui/ColorPicker";
 import type { Product, Category, Subcategory, ProductCondition } from "../../lib/types";
 
@@ -131,11 +134,12 @@ function SizePicker({
               setCustomMode(false);
               onChange(s);
             }}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`border px-3 py-1.5 font-mono text-[13px] font-semibold transition-colors ${
               value === s && !customMode
-                ? "border-blue-700 bg-blue-50 text-blue-700"
-                : "border-slate-200 text-slate-600 hover:border-slate-300"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-border-2 text-ink-2 hover:border-ink"
             }`}
+            style={{ borderRadius: '2px' }}
           >
             {s}
           </button>
@@ -143,11 +147,12 @@ function SizePicker({
         <button
           type="button"
           onClick={() => setCustomMode(true)}
-          className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`border px-3 py-1.5 font-mono text-[13px] font-semibold transition-colors ${
             customMode
-              ? "border-blue-700 bg-blue-50 text-blue-700"
-              : "border-slate-200 text-slate-600 hover:border-slate-300"
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-border-2 text-ink-2 hover:border-ink"
           }`}
+          style={{ borderRadius: '2px' }}
         >
           Outro
         </button>
@@ -198,13 +203,13 @@ function ProductCard({
   };
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <Surface className="group overflow-hidden">
       <div
-        className="relative h-40 overflow-hidden bg-slate-100"
+        className="relative h-40 overflow-hidden bg-ink/[0.04]"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
-        <img src={thumb} alt={p.name} className="h-full w-full object-cover" />
+        <img src={thumb} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         {videoUrl && (
           <video
             ref={videoRef}
@@ -219,7 +224,7 @@ function ProductCard({
           />
         )}
         {!p.active && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
+          <div className="absolute inset-0 flex items-center justify-center bg-ink/60">
             <Badge color="ink">Inativo</Badge>
           </div>
         )}
@@ -229,9 +234,10 @@ function ProductCard({
           )}
           {videoUrl && (
             <span
-              className={`flex items-center gap-1 rounded-full bg-slate-900/70 px-2 py-0.5 text-[10px] font-medium text-white transition-opacity duration-200 ${
+              className={`flex items-center gap-1 bg-ink/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-white transition-opacity duration-200 ${
                 hovering ? "opacity-0" : "opacity-100"
               }`}
+              style={{ borderRadius: '2px' }}
             >
               <Film size={11} /> Vídeo
             </span>
@@ -240,22 +246,22 @@ function ProductCard({
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-slate-900">{p.name}</h3>
+          <h3 className="font-heading font-bold text-ink">{p.name}</h3>
           <div className="text-right">
-            <div className="font-bold text-blue-800">
+            <div className="font-mono font-bold text-accent">
               {formatCurrency(Number(p.price), currency)}
             </div>
             {p.compare_at_price && p.compare_at_price > p.price && (
-              <div className="text-xs text-slate-400 line-through">
+              <div className="font-mono text-[11px] text-ink-2 line-through">
                 {formatCurrency(Number(p.compare_at_price), currency)}
               </div>
             )}
           </div>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-2">
           <span>Stock: {p.stock}</span>
           {p.color && (
-            <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-slate-600">
+            <span className="flex items-center gap-1 bg-ink/[0.04] px-2 py-1 text-ink-2" style={{ borderRadius: '2px' }}>
               <span
                 className="h-3 w-3 rounded-full ring-1 ring-inset ring-black/10"
                 style={{
@@ -279,18 +285,19 @@ function ProductCard({
             size="sm"
             variant="ghost"
             onClick={() => onRemove(p)}
-            className="text-red-600 hover:bg-red-50"
+            className="text-danger hover:bg-danger/5"
           >
             <Trash2 size={14} />
           </Button>
         </div>
       </div>
-    </div>
+    </Surface>
   );
 }
 
 export function ProductsPage() {
   const { store } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -329,7 +336,7 @@ export function ProductsPage() {
       setCategories(c);
       setSubcategories(s);
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar produtos");
     } finally {
       setLoading(false);
     }
@@ -569,8 +576,10 @@ export function ProductsPage() {
 
       if (editing) {
         await api.products.update(editing.id, payload);
+        toast.success("Produto atualizado");
       } else {
         await api.products.create(payload);
+        toast.success("Produto criado");
       }
       setModalOpen(false);
       await load();
@@ -586,9 +595,10 @@ export function ProductsPage() {
     if (!confirm(`Eliminar "${p.name}"?`)) return;
     try {
       await api.products.remove(p.id);
+      toast.success("Produto eliminado");
       await load();
     } catch (err: any) {
-      alert(err.message || "Erro ao eliminar produto");
+      toast.error(err.message || "Erro ao eliminar produto");
     }
   };
 
@@ -611,7 +621,7 @@ export function ProductsPage() {
       <div className="mb-4 relative max-w-xs">
         <Search
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2"
         />
         <Input
           className="pl-9"
@@ -622,7 +632,7 @@ export function ProductsPage() {
       </div>
 
       {loading ? (
-        <div className="text-slate-400">A carregar...</div>
+        <SkeletonProductGrid count={6} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Package size={28} />}
@@ -671,19 +681,25 @@ export function ProductsPage() {
                   <img
                     src={img.isNew ? img.url : (resolveMediaUrl(img.url) ?? "")}
                     alt=""
-                    className="h-20 w-20 rounded-lg border border-slate-200 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-20 w-20 border border-border object-cover"
+                    style={{ borderRadius: '2px' }}
                   />
                   <button
                     type="button"
                     onClick={() => removeImage(idx)}
-                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow"
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-white shadow-card"
                   >
                     <X size={12} />
                   </button>
                 </div>
               ))}
               {images.length < MAX_PHOTOS && (
-                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-400 hover:border-blue-400 hover:text-blue-600">
+                <label
+                  className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center border border-dashed border-border-2 font-mono text-[11px] text-ink-2 hover:border-accent hover:text-accent"
+                  style={{ borderRadius: '2px' }}
+                >
                   <Plus size={18} />
                   Adicionar
                   <input
@@ -697,7 +713,7 @@ export function ProductsPage() {
               )}
             </div>
             {uploading && (
-              <p className="mt-1 text-xs text-blue-600">A enviar imagens...</p>
+              <p className="mt-1 font-mono text-[11px] text-accent">A enviar imagens...</p>
             )}
           </Field>
 
@@ -707,7 +723,7 @@ export function ProductsPage() {
           >
             {video ? (
               <div className="flex items-start gap-3">
-                <div className="relative aspect-video w-48 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                <div className="relative aspect-video w-48 overflow-hidden border border-border bg-ink/[0.04]" style={{ borderRadius: '2px' }}>
                   <video
                     src={
                       video.isNew
@@ -734,7 +750,10 @@ export function ProductsPage() {
                 </Button>
               </div>
             ) : (
-              <label className="flex h-24 w-48 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-xs text-slate-400 hover:border-blue-400 hover:text-blue-600">
+              <label
+                className="flex h-24 w-48 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-border-2 font-mono text-[11px] text-ink-2 hover:border-accent hover:text-accent"
+                style={{ borderRadius: '2px' }}
+              >
                 <Video size={20} />
                 {videoProcessing ? "A processar..." : "Adicionar vídeo"}
                 <input
@@ -747,17 +766,17 @@ export function ProductsPage() {
               </label>
             )}
             {videoError && (
-              <p className="mt-1 text-xs text-red-600">{videoError}</p>
+              <p className="mt-1 font-mono text-[11px] text-danger">{videoError}</p>
             )}
           </Field>
 
-          <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-blue-900">
+          <div className="space-y-3 border border-accent/20 bg-accent-soft/60 p-3" style={{ borderRadius: '2px' }}>
+            <div className="flex items-center gap-2 font-mono text-[13px] font-semibold text-accent">
               <Sparkles size={16} /> Preencher com IA
             </div>
 
             <div>
-              <div className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-600">
+              <div className="mb-1 flex items-center gap-1 font-mono text-[11px] font-semibold text-ink-2">
                 <ImagePlus size={13} /> A partir da foto
               </div>
               <Button
@@ -770,10 +789,10 @@ export function ProductsPage() {
                 {aiImageBusy ? "A analisar..." : "Analisar primeira foto nova"}
               </Button>
               {aiImageError && (
-                <p className="mt-1 text-xs text-red-600">{aiImageError}</p>
+                <p className="mt-1 font-mono text-[11px] text-danger">{aiImageError}</p>
               )}
               {aiImageFromCache !== null && !aiImageError && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-green-600">
+                <p className="mt-1 flex items-center gap-1 font-mono text-[11px] text-success">
                   <Check size={12} />
                   {aiImageFromCache
                     ? "Resultado veio da cache (0 créditos gastos)"
@@ -783,7 +802,7 @@ export function ProductsPage() {
             </div>
 
             <div>
-              <div className="mb-1 text-xs font-medium text-slate-600">
+              <div className="mb-1 font-mono text-[11px] font-semibold text-ink-2">
                 Ou por palavras-chave
               </div>
               <div className="flex gap-2">
@@ -803,7 +822,7 @@ export function ProductsPage() {
                 </Button>
               </div>
               {aiTextError && (
-                <p className="mt-1 text-xs text-red-600">{aiTextError}</p>
+                <p className="mt-1 font-mono text-[11px] text-danger">{aiTextError}</p>
               )}
             </div>
           </div>
@@ -935,7 +954,7 @@ export function ProductsPage() {
             />
           </Field>
 
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 font-mono text-[13px] text-ink-2">
             <input
               type="checkbox"
               checked={form.active}

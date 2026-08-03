@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ProductCard } from './ProductCard';
+import { RailNav } from './RailNav';
+import { useHorizontalRail } from '../../lib/useHorizontalRail';
 import type { Product } from '../../lib/types';
 
 const PAGE_SIZE = 12;
@@ -52,6 +54,8 @@ export function ProductGrid({
     return () => observer.disconnect();
   }, [paginate, products.length]);
 
+  const { railRef, canScrollLeft, canScrollRight, scrollRail } = useHorizontalRail(products);
+
   const visible = paginate ? products.slice(0, visibleCount) : products;
 
   if (visible.length === 0) return null;
@@ -74,12 +78,19 @@ export function ProductGrid({
   if (layout === 'rail') {
     const railWidth = compact ? 'w-[120px] sm:w-[140px]' : 'w-[140px] sm:w-[168px]';
     return (
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 scroll-smooth">
-        {visible.map((p, i) => (
-          <div key={p.id} className={`${railWidth} flex-shrink-0 snap-start`}>
-            {renderCard(p, i)}
-          </div>
-        ))}
+      <div className="group/rail relative">
+        <div
+          ref={railRef}
+          className="no-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 scroll-smooth"
+        >
+          {visible.map((p, i) => (
+            <div key={p.id} className={`${railWidth} flex-shrink-0 snap-start`}>
+              {renderCard(p, i)}
+            </div>
+          ))}
+        </div>
+
+        <RailNav canScrollLeft={canScrollLeft} canScrollRight={canScrollRight} onScroll={scrollRail} />
       </div>
     );
   }

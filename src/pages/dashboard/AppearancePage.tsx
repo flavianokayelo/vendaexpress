@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Palette, Check, Upload, X, ImagePlus, Store, Hash, Plus } from "lucide-react";
+import { Palette, Check, Upload, X, ImagePlus, Store, Hash, Plus, Megaphone } from "lucide-react";
 import { api, resolveMediaUrl, uploadStoreLogo, uploadStoreBanner } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
 import { Input, Field, Textarea } from "../../components/ui/Field";
+import { useToast } from "../../components/ui/Toast";
+import { extractDominantColor } from "../../lib/colorExtract";
 import type { BannerSlide } from "../../lib/types";
 import type { SupportItem } from "../../storefrontTheme/types";
 
@@ -23,8 +25,17 @@ function readSupportItems(themeConfig: Record<string, unknown> | null | undefine
   return Array.isArray(footer?.supportItems) ? footer!.supportItems! : [];
 }
 
+function readAnnouncement(themeConfig: Record<string, unknown> | null | undefined): { enabled: boolean; text: string } {
+  const header = (themeConfig as { header?: { showAnnouncementBar?: boolean; announcementText?: string } } | null | undefined)?.header;
+  return {
+    enabled: header?.showAnnouncementBar ?? false,
+    text: header?.announcementText ?? "",
+  };
+}
+
 export function AppearancePage() {
   const { store, refreshStore } = useAuth();
+  const toast = useToast();
   const [color, setColor] = useState(store?.theme_primary ?? "#1d4ed8");
   const [description, setDescription] = useState(store?.description ?? "");
   const [logoUrl, setLogoUrl] = useState<string | null>(store?.logo_url ?? null);
@@ -32,6 +43,8 @@ export function AppearancePage() {
     store?.banner_urls ?? (store?.banner_url ? [{ url: store.banner_url }] : []),
   );
   const [supportItems, setSupportItems] = useState<SupportItem[]>(readSupportItems(store?.theme_config));
+  const [announcementEnabled, setAnnouncementEnabled] = useState(readAnnouncement(store?.theme_config).enabled);
+  const [announcementText, setAnnouncementText] = useState(readAnnouncement(store?.theme_config).text);
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -52,6 +65,9 @@ export function AppearancePage() {
         store.banner_urls ?? (store.banner_url ? [{ url: store.banner_url }] : []),
       );
       setSupportItems(readSupportItems(store.theme_config));
+      const announcement = readAnnouncement(store.theme_config);
+      setAnnouncementEnabled(announcement.enabled);
+      setAnnouncementText(announcement.text);
     }
   }, [store]);
 
@@ -66,6 +82,15 @@ export function AppearancePage() {
     try {
       const { url } = await uploadStoreLogo(file);
       setLogoUrl(url);
+      try {
+        const suggested = await extractDominantColor(file);
+        if (suggested) {
+          setColor(suggested);
+          toast.info("Cor principal sugerida a partir da tua logo");
+        }
+      } catch {
+        // extração de cor é um extra — falhar aqui não deve impedir o upload da logo
+      }
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "Erro ao enviar o logótipo",
@@ -143,6 +168,10 @@ export function AppearancePage() {
         theme_config: {
           footer: {
             supportItems: supportItems.filter((it) => it.title.trim() && it.content.trim()),
+          },
+          header: {
+            showAnnouncementBar: announcementEnabled && !!announcementText.trim(),
+            announcementText: announcementText.trim() || undefined,
           },
         },
       });
@@ -229,6 +258,44 @@ export function AppearancePage() {
           </Field>
         </section>
 
+        {/* Barra de anúncio */}
+        <section className="border border-border bg-paper p-6" style={{ borderRadius: '2px' }}>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center bg-accent/10 text-accent" style={{ borderRadius: '2px' }}>
+                <Megaphone size={14} />
+              </span>
+              <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">Barra de anúncio</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={announcementEnabled}
+              onClick={() => setAnnouncementEnabled((v) => !v)}
+              className={`relative h-5 w-9 flex-shrink-0 transition-colors ${announcementEnabled ? "bg-accent" : "bg-ink/15"}`}
+              style={{ borderRadius: '2px' }}
+            >
+              <span
+                className={`absolute top-0.5 h-4 w-4 bg-white transition-transform ${announcementEnabled ? "translate-x-4" : "translate-x-0.5"}`}
+                style={{ borderRadius: '1px' }}
+              />
+            </button>
+          </div>
+
+          <p className="mb-3 font-mono text-[11px] text-ink-2/70">
+            Uma faixa fina no topo da loja, acima do cabeçalho — ideal pra frete grátis, prazo de entrega ou uma promoção ativa.
+          </p>
+
+          <Field label="Texto da barra" hint="Aparece só se estiver ativada e tiver texto.">
+            <Input
+              value={announcementText}
+              onChange={(e) => setAnnouncementText(e.target.value)}
+              placeholder="Ex: Frete grátis para encomendas acima de 10.000 Kz"
+              maxLength={120}
+            />
+          </Field>
+        </section>
+
         {uploadError && (
           <div className="border border-red/20 bg-red-50 px-4 py-3 font-mono text-[13px] text-red" style={{ borderRadius: '2px' }}>
             {uploadError}
@@ -258,7 +325,7 @@ export function AppearancePage() {
               style={{ borderRadius: '2px' }}
             >
               {logoUrl ? (
-                <img src={resolveMediaUrl(logoUrl) ?? ""} alt="Logótipo" className="h-full w-full object-cover" />
+                <img src={resolveMediaUrl(logoUrl) ?? ""} alt="Logótipo" className="h-full w-full object-contain" />
               ) : (
                 <Palette size={24} className="text-ink-2/30" />
               )}
@@ -313,7 +380,7 @@ export function AppearancePage() {
                 style={{ borderRadius: '2px' }}
               >
                 <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-ink/[0.02] sm:w-40" style={{ borderRadius: '2px' }}>
-                  <img src={resolveMediaUrl(b.url) ?? ""} alt="Banner" className="h-full w-full object-cover" />
+                  <img src={resolveMediaUrl(b.url) ?? ""} alt="Banner" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeBanner(b.url)}
@@ -423,13 +490,13 @@ export function AppearancePage() {
 
           <div className="mx-auto max-w-[280px] overflow-hidden border border-border" style={{ borderRadius: '2px' }}>
             {banners[0] ? (
-              <img src={resolveMediaUrl(banners[0].url) ?? ""} alt="Banner" className="h-28 w-full object-cover" />
+              <img src={resolveMediaUrl(banners[0].url) ?? ""} alt="Banner" loading="lazy" decoding="async" className="h-28 w-full object-cover" />
             ) : (
               <div className="h-28 w-full" style={{ backgroundColor: color }} />
             )}
             <div className="flex items-center gap-3 bg-white px-4 py-3">
               {logoUrl ? (
-                <img src={resolveMediaUrl(logoUrl) ?? ""} alt={store?.name} className="h-10 w-10 border border-border object-cover" style={{ borderRadius: '2px' }} />
+                <img src={resolveMediaUrl(logoUrl) ?? ""} alt={store?.name} className="h-10 w-10 border border-border bg-white object-contain p-0.5" style={{ borderRadius: '2px' }} />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center border border-border text-sm font-bold text-white" style={{ borderRadius: '2px', backgroundColor: color }}>
                   {(store?.name ?? "L")[0]}

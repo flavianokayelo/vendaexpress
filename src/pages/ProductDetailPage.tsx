@@ -8,7 +8,7 @@ import { api, resolveMediaUrl } from '../lib/api';
 import type { Store, Product, Category } from '../lib/types';
 import { formatCurrency, placeholderImage } from '../lib/format';
 import { Button } from '../components/ui/Button';
-import { PageLoader } from '../components/ui/Feedback';
+import { ProductDetailSkeleton } from '../components/ui/Skeleton';
 import { CartProvider, useCart } from '../lib/cart';
 import { WishlistProvider, useWishlist } from '../lib/wishlist';
 import { WishlistDrawer } from '../components/storefront/WishlistDrawer';
@@ -88,7 +88,7 @@ function ProductDetailPageInner({
     };
   }, [slug, productId]);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <ProductDetailSkeleton />;
 
   if (notFound || !store || !product) {
     return (
@@ -134,7 +134,7 @@ function ProductDetailPageInner({
   return (
     <StorefrontThemeProvider theme={theme} className="min-h-screen bg-[var(--sf-surface-muted)]">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[var(--sf-primary)] shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
+      <header className="sticky top-0 z-30 bg-[var(--sf-primary)] shadow-[var(--sf-shadow-md)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <button onClick={() => navigate(`/s/${slug}`)} className="flex items-center gap-2 rounded-[var(--sf-radius-pill)] px-2 py-1.5 text-white transition-colors hover:bg-white/15">
             <ArrowLeft size={18} />
@@ -142,7 +142,9 @@ function ProductDetailPageInner({
           </button>
           <div className="flex items-center gap-3">
             {store.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ''} alt={store.name} className="h-8 w-8 rounded-[10px] object-cover ring-2 ring-white/25" />
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-white p-1 ring-2 ring-white/25">
+                <img src={resolveMediaUrl(store.logo_url) ?? ''} alt={store.name} className="h-full w-full object-contain" />
+              </span>
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-white font-bold text-[var(--sf-primary)]">
                 {store.name[0]}
@@ -171,7 +173,7 @@ function ProductDetailPageInner({
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">
         <div className="grid gap-8 md:grid-cols-2">
           {/* Gallery */}
           <div>
@@ -202,7 +204,7 @@ function ProductDetailPageInner({
                   />
                   {!videoPlaying && (
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-[var(--sf-ink)] shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-[var(--sf-ink)] shadow-[var(--sf-shadow-lg)]">
                         <Play size={26} fill="currentColor" stroke="none" />
                       </div>
                     </div>
@@ -226,7 +228,7 @@ function ProductDetailPageInner({
               )}
               {isPromo && (
                 <span
-                  className="absolute -left-[2px] top-4 flex items-center bg-[var(--sf-danger)] py-1.5 pl-4 pr-5 font-display text-[14px] font-bold leading-none tracking-[0.01em] text-white shadow-[0_2px_6px_rgba(0,0,0,0.22)]"
+                  className="absolute -left-[2px] top-4 flex items-center bg-[var(--sf-danger)] py-1.5 pl-4 pr-5 font-display text-[14px] font-bold leading-none tracking-[0.01em] text-white shadow-[var(--sf-shadow-md)]"
                   style={{ clipPath: 'polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%)' }}
                 >
                   −{Math.round((1 - Number(product.price) / Number(product.compare_at_price)) * 100)}%
@@ -237,7 +239,7 @@ function ProductDetailPageInner({
                 whileTap={{ scale: 0.8 }}
                 animate={{ scale: productIsWishlisted ? [1, 1.25, 1] : 1 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[var(--sf-radius-pill)] border border-[var(--sf-line)] bg-white text-[var(--sf-ink)] shadow-[0_1px_3px_rgba(29,31,32,0.1)] ${
+                className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[var(--sf-radius-pill)] border border-[var(--sf-line)] bg-white text-[var(--sf-ink)] shadow-[var(--sf-shadow-sm)] ${
                   productIsWishlisted ? 'text-[var(--sf-danger)]' : ''
                 }`}
                 title={productIsWishlisted ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
@@ -249,14 +251,14 @@ function ProductDetailPageInner({
                   <motion.button
                     onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i - 1 + media.length) % media.length); }}
                     whileTap={{ scale: 0.88 }}
-                    className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[var(--sf-radius-pill)] bg-white/90 text-[var(--sf-ink)] shadow-[0_2px_8px_rgba(29,31,32,0.14)] hover:bg-white"
+                    className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[var(--sf-radius-pill)] bg-white/90 text-[var(--sf-ink)] shadow-[var(--sf-shadow-md)] transition-transform duration-200 hover:scale-105 hover:bg-white"
                   >
                     <ChevronLeft size={18} />
                   </motion.button>
                   <motion.button
                     onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i + 1) % media.length); }}
                     whileTap={{ scale: 0.88 }}
-                    className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[var(--sf-radius-pill)] bg-white/90 text-[var(--sf-ink)] shadow-[0_2px_8px_rgba(29,31,32,0.14)] hover:bg-white"
+                    className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[var(--sf-radius-pill)] bg-white/90 text-[var(--sf-ink)] shadow-[var(--sf-shadow-md)] transition-transform duration-200 hover:scale-105 hover:bg-white"
                   >
                     <ChevronRight size={18} />
                   </motion.button>
@@ -272,7 +274,7 @@ function ProductDetailPageInner({
                     className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[var(--sf-radius-md)] border-2 transition-opacity ${i === activeImg ? '' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     style={i === activeImg ? { borderColor: accent } : {}}
                   >
-                    <img src={m.type === 'video' ? (m.poster ?? placeholderImage(product.name)) : m.url} alt="" className="h-full w-full object-cover" />
+                    <img src={m.type === 'video' ? (m.poster ?? placeholderImage(product.name)) : m.url} alt="" loading="lazy" className="h-full w-full object-cover" />
                     {m.type === 'video' && (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/25">
                         <Play size={16} className="text-white" fill="currentColor" stroke="none" />
@@ -352,12 +354,12 @@ function ProductDetailPageInner({
                 disabled={product.stock <= 0}
                 onClick={handleAddToCart}
                 whileTap={product.stock <= 0 ? undefined : { scale: 0.97 }}
-                className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--sf-radius-sm)] px-6 text-[14px] font-semibold transition-colors ${
+                className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--sf-radius-sm)] px-6 text-[14px] font-semibold transition-[background-color,box-shadow] duration-200 ${
                   justAdded
                     ? 'bg-[var(--sf-success)] text-white'
                     : product.stock <= 0
                       ? 'cursor-not-allowed bg-slate-200 text-slate-400'
-                      : 'bg-[var(--sf-primary)] text-white shadow-[0_2px_10px_rgba(29,31,32,0.12)] hover:bg-[var(--sf-primary-hover)] hover:shadow-[0_6px_18px_rgba(29,31,32,0.16)]'
+                      : 'bg-[var(--sf-primary)] text-white shadow-[var(--sf-shadow-sm)] hover:bg-[var(--sf-primary-hover)] hover:shadow-[var(--sf-shadow-md)]'
                 }`}
               >
                 {product.stock <= 0 ? (
@@ -410,7 +412,53 @@ function ProductDetailPageInner({
         )}
       </div>
 
-      <WishlistDrawer currency={store.currency} accent={accent} onAdd={addToCart} />
+      {/* Barra fixa de compra — só mobile, o botão principal já não fica
+          sempre visível ao rolar a página numa tela pequena. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-[var(--sf-line)] bg-[var(--sf-surface)] px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] sm:hidden">
+        <div className="min-w-0 flex-shrink-0">
+          <div
+            className={`font-display text-[17px] font-semibold leading-none [font-feature-settings:'tnum'_1] ${
+              isPromo ? 'text-[var(--sf-danger)]' : 'text-[var(--sf-ink)]'
+            }`}
+          >
+            {formatCurrency(Number(product.price), store.currency)}
+          </div>
+          {isPromo && (
+            <div className="text-[11px] text-[var(--sf-ink-secondary)] line-through [font-feature-settings:'tnum'_1]">
+              {formatCurrency(Number(product.compare_at_price), store.currency)}
+            </div>
+          )}
+        </div>
+        <motion.button
+          type="button"
+          disabled={product.stock <= 0}
+          onClick={handleAddToCart}
+          whileTap={product.stock <= 0 ? undefined : { scale: 0.97 }}
+          className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--sf-radius-sm)] px-4 text-[14px] font-semibold transition-colors ${
+            justAdded
+              ? 'bg-[var(--sf-success)] text-white'
+              : product.stock <= 0
+                ? 'cursor-not-allowed bg-slate-200 text-slate-400'
+                : 'bg-[var(--sf-primary)] text-white hover:bg-[var(--sf-primary-hover)]'
+          }`}
+        >
+          {product.stock <= 0 ? (
+            'Indisponível'
+          ) : justAdded ? (
+            <>
+              <Check size={16} strokeWidth={2} />
+              Adicionado
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={16} strokeWidth={1.6} />
+              Adicionar ao carrinho
+            </>
+          )}
+        </motion.button>
+      </div>
+
+      <WishlistDrawer currency={store.currency} onAdd={addToCart} />
     </StorefrontThemeProvider>
   );
 }

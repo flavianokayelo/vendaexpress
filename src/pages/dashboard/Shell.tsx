@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { resolveMediaUrl } from "../../lib/api";
+import { Surface } from "../../components/ui/Surface";
 
 export type DashPage =
   | "overview"
@@ -121,7 +122,7 @@ export function DashboardShell({
         <div className="flex items-center gap-[10px] border-b border-border px-5 py-[14px]">
           <div className="flex h-9 w-15 items-center justify-center overflow-hidden text-paper">
             {store?.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-cover" />
+              <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-contain" />
             ) : (
               <Store size={19} />
             )}
@@ -161,7 +162,7 @@ export function DashboardShell({
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center bg-ink text-paper overflow-hidden" style={{ borderRadius: '2px' }}>
             {store?.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-cover" />
+              <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-contain" />
             ) : (
               <Store size={16} />
             )}
@@ -295,14 +296,13 @@ export function StatCard({
     teal:    "ring-teal/20",
     rose:    "ring-rose/20",
   };
-  const Comp = onClick ? "button" : "div";
   return (
-    <Comp
+    <Surface
+      as={onClick ? "button" : "div"}
       onClick={onClick}
-      className={`relative overflow-hidden border border-border bg-paper p-5 transition-all duration-200 ${
-        onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md text-left" : ""
+      className={`relative overflow-hidden p-5 ${
+        onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-floating text-left" : ""
       }`}
-      style={{ borderRadius: '2px' }}
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">{label}</span>
@@ -314,6 +314,6 @@ export function StatCard({
         </div>
       </div>
       <div className="mt-2 font-heading text-[28px] font-bold tracking-[-.02em] text-ink">{value}</div>
-    </Comp>
+    </Surface>
   );
 }

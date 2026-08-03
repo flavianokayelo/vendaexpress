@@ -1,48 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Store as StoreIcon,
-  Tag,
-  Zap,
-  Sparkles,
-  Video,
-  Check,
-  MessageCircle,
-  LifeBuoy,
-} from "lucide-react";
-import { api, resolveMediaUrl } from "../lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { Store as StoreIcon } from "lucide-react";
+import { api } from "../lib/api";
 import type { Store, Product, Category, PublicCoupon } from "../lib/types";
-import { formatCurrency, placeholderImage } from "../lib/format";
 import { Button } from "../components/ui/Button";
-import { Input, Field, Textarea } from "../components/ui/Field";
-import { EmptyState, PageLoader } from "../components/ui/Feedback";
-import { Modal } from "../components/ui/Modal";
-import { VideoCard } from "../components/product/VideoCard";
+import { StorefrontHomeSkeleton } from "../components/ui/Skeleton";
 import { CartProvider, useCart } from "../lib/cart";
 import { WishlistProvider, useWishlist } from "../lib/wishlist";
-import { WishlistDrawer } from "../components/storefront/WishlistDrawer";
 import { StorefrontThemeProvider } from "../storefrontTheme/ThemeProvider";
 import { mergeTheme } from "../storefrontTheme/mergeTheme";
-import { AnnouncementBar } from "../components/theme/AnnouncementBar";
-import { Header } from "../components/theme/Header";
-import { Hero, type HeroSlide } from "../components/theme/Hero";
-import { ShopProfileBar } from "../components/theme/ShopProfileBar";
-import { ShopTabs } from "../components/theme/ShopTabs";
-import { Section } from "../components/theme/Section";
-import { Reveal } from "../components/theme/Reveal";
-import { ProductGrid } from "../components/theme/ProductGrid";
-import { CategoryGrid } from "../components/theme/CategoryGrid";
-import { HeroSideCards } from "../components/theme/HeroSideCards";
-import { FeatureRail } from "../components/theme/FeatureRail";
-import { VoucherStrip } from "../components/theme/VoucherStrip";
-import { CartDrawer } from "../components/theme/CartDrawer";
-import { Footer } from "../components/theme/Footer";
+import type { StorefrontApi } from "../storefront/contract";
+import { registerTheme, resolveTheme } from "../storefront/engine/ThemeRegistry";
+import { standardTheme } from "../storefront/themes/standard";
 
-function productThumb(p: Product) {
-  return (
-    resolveMediaUrl(p.images?.[0]?.url ?? p.image_url) ||
-    placeholderImage(p.name)
-  );
-}
+registerTheme(standardTheme);
 
 export function StorefrontPage({
   slug,
@@ -67,9 +37,8 @@ function StorefrontPageInner({
   slug: string;
   navigate: (to: string) => void;
 }) {
-  const { cart, setCartOpen, addToCart, clearCart } = useCart();
-  const { isWishlisted, toggleWishlist, wishlist, setWishlistOpen } =
-    useWishlist();
+  const cart = useCart();
+  const wishlist = useWishlist();
 
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -77,137 +46,6 @@ function StorefrontPageInner({
   const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-
-  const [selectedCat, setSelectedCat] = useState<string>("");
-  const [search, setSearch] = useState("");
-
-  const [couponCode, setCouponCode] = useState("");
-  const [couponBusy, setCouponBusy] = useState(false);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    code: string;
-    discount_percent: number;
-  } | null>(null);
-
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [orderForm, setOrderForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-  });
-  const [placing, setPlacing] = useState(false);
-  const [placeError, setPlaceError] = useState<string | null>(null);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [whatsappMissing, setWhatsappMissing] = useState(false);
-
-  const catalogRef = useRef<HTMLDivElement>(null);
-  const categoriesRef = useRef<HTMLDivElement>(null);
-  const topRef = useRef<HTMLDivElement>(null);
-  const promoRef = useRef<HTMLDivElement>(null);
-  const featuredRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
-
-  const subtotal = useMemo(
-    () => cart.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0),
-    [cart],
-  );
-  const discount = appliedCoupon
-    ? subtotal * (appliedCoupon.discount_percent / 100)
-    : 0;
-  const total = subtotal - discount;
-
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setCouponBusy(true);
-    setCouponError(null);
-    try {
-      const result = await api.storefront.validateCoupon(
-        slug,
-        couponCode.trim(),
-      );
-      setAppliedCoupon(result);
-    } catch (err) {
-      setAppliedCoupon(null);
-      setCouponError(err instanceof Error ? err.message : "Cupom inválido");
-    } finally {
-      setCouponBusy(false);
-    }
-  };
-
-  const openCheckout = () => {
-    if (!store?.whatsapp) {
-      setWhatsappMissing(true);
-      return;
-    }
-    setWhatsappMissing(false);
-    setCartOpen(false);
-    setCheckoutOpen(true);
-  };
-
-  const buildWhatsappMessage = () => {
-    const lines: string[] = [];
-    lines.push(`*Novo pedido - ${store?.name}*`);
-    lines.push("");
-    lines.push(`Cliente: ${orderForm.name}`);
-    lines.push(`Telefone: ${orderForm.phone}`);
-    lines.push(`Endereço: ${orderForm.address}`);
-    lines.push("");
-    lines.push("Itens:");
-    cart.forEach((i) => {
-      lines.push(
-        `- ${i.quantity}x ${i.product.name} — ${formatCurrency(Number(i.product.price) * i.quantity, store?.currency)}`,
-      );
-    });
-    lines.push("");
-    lines.push(`Subtotal: ${formatCurrency(subtotal, store?.currency)}`);
-    if (discount > 0 && appliedCoupon) {
-      lines.push(
-        `Desconto (cupom ${appliedCoupon.code}): -${formatCurrency(discount, store?.currency)}`,
-      );
-    }
-    lines.push(`Total: ${formatCurrency(total, store?.currency)}`);
-    return lines.join("\n");
-  };
-
-  const placeOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPlacing(true);
-    setPlaceError(null);
-    const whatsappMessage = buildWhatsappMessage();
-    try {
-      await api.storefront.placeOrder(slug, {
-        name: orderForm.name,
-        phone: orderForm.phone,
-        address: orderForm.address,
-        items: cart.map((i) => ({
-          product_id: i.product.id,
-          quantity: i.quantity,
-        })),
-        coupon_code: appliedCoupon?.code,
-      });
-
-      const digits = store?.whatsapp ? store.whatsapp.replace(/\D/g, "") : "";
-      if (digits) {
-        window.open(
-          `https://wa.me/${digits}?text=${encodeURIComponent(whatsappMessage)}`,
-          "_blank",
-        );
-      }
-
-      clearCart();
-      setCheckoutOpen(false);
-      setOrderSuccess(true);
-      setOrderForm({ name: "", phone: "", address: "" });
-      setCouponCode("");
-      setAppliedCoupon(null);
-    } catch (err) {
-      setPlaceError(
-        err instanceof Error ? err.message : "Não foi possível enviar o pedido",
-      );
-    } finally {
-      setPlacing(false);
-    }
-  };
 
   useEffect(() => {
     (async () => {
@@ -225,103 +63,37 @@ function StorefrontPageInner({
     })();
   }, [slug]);
 
-  const categoryNames = useMemo(
-    () => new Map(categories.map((c) => [c.id, c.name])),
-    [categories],
-  );
+  const theme = useMemo(() => {
+    const id = store?.theme_id ?? "standard";
+    return resolveTheme(id);
+  }, [store]);
 
-  const promoProducts = useMemo(
-    () =>
-      products
-        .filter(
-          (p) =>
-            p.compare_at_price && Number(p.compare_at_price) > Number(p.price),
-        )
-        .slice(0, 8),
-    [products],
-  );
-  const featuredProducts = useMemo(() => products.slice(0, 8), [products]);
-  const maxDiscount = useMemo(
-    () =>
-      promoProducts.length === 0
-        ? 0
-        : Math.max(
-            ...promoProducts.map((p) =>
-              Math.round((1 - Number(p.price) / Number(p.compare_at_price)) * 100),
-            ),
-          ),
-    [promoProducts],
-  );
-  const videoProducts = useMemo(
-    () => products.filter((p) => p.video),
-    [products],
-  );
+  const apiValue: StorefrontApi | null = useMemo(() => {
+    if (!store || !theme) return null;
+    return {
+      slug,
+      navigate,
+      store,
+      products,
+      categories,
+      publicCoupons,
+      currency: store.currency,
+      cart: cart.cart,
+      addToCart: cart.addToCart,
+      clearCart: cart.clearCart,
+      setCartOpen: cart.setCartOpen,
+      wishlist: wishlist.wishlist,
+      isWishlisted: wishlist.isWishlisted,
+      toggleWishlist: wishlist.toggleWishlist,
+      setWishlistOpen: wishlist.setWishlistOpen,
+      validateCoupon: (code) => api.storefront.validateCoupon(slug, code),
+      placeOrder: (order) => api.storefront.placeOrder(slug, order),
+    };
+  }, [store, theme, slug, navigate, products, categories, publicCoupons, cart, wishlist]);
 
-  const filtered = useMemo(
-    () =>
-      products.filter((p) => {
-        const catOk = !selectedCat || p.category_id === selectedCat;
-        const searchOk =
-          !search || p.name.toLowerCase().includes(search.toLowerCase());
-        return catOk && searchOk;
-      }),
-    [products, selectedCat, search],
-  );
+  if (loading) return <StorefrontHomeSkeleton />;
 
-  const slides: HeroSlide[] = useMemo(() => {
-    const list: HeroSlide[] = [];
-    const banners =
-      store?.banner_urls && store.banner_urls.length > 0
-        ? store.banner_urls
-        : store?.banner_url
-          ? [{ url: store.banner_url }]
-          : [];
-
-    banners.forEach((b, idx) => {
-      list.push({
-        image: resolveMediaUrl(b.url) || b.url,
-        title: b.title || (idx === 0 ? store!.name : undefined),
-        subtitle: b.subtitle || (idx === 0 ? store!.description || undefined : undefined),
-        cta: b.cta,
-      });
-    });
-
-    promoProducts.slice(0, 3).forEach((p) => {
-      list.push({
-        image: productThumb(p),
-        kicker: "Em promoção",
-        title: p.name,
-        subtitle: "Promoção especial por tempo limitado",
-        cta: "Ver oferta",
-      });
-    });
-
-    if (list.length === 0 && store) {
-      list.push({
-        image: placeholderImage(store.name),
-        title: store.name,
-        subtitle: store.description || undefined,
-      });
-    }
-    return list;
-  }, [store, promoProducts]);
-
-  const scrollToCatalog = () =>
-    catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const scrollToCategories = () =>
-    categoriesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const scrollToTop = () =>
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const scrollToPromo = () =>
-    promoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const scrollToFeatured = () =>
-    featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const scrollToFooter = () =>
-    footerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  if (loading) return <PageLoader />;
-
-  if (notFound || !store) {
+  if (notFound || !store || !theme || !apiValue) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200 text-slate-400">
@@ -344,310 +116,12 @@ function StorefrontPageInner({
     );
   }
 
-  const theme = mergeTheme(store);
-  const accent = theme.colors.primary;
-
-  if (orderSuccess) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-          <Check size={32} />
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900">Pedido enviado!</h1>
-        <p className="mt-2 max-w-sm text-sm text-slate-500">
-          O teu pedido foi recebido. O lojista entrará em contacto em breve.
-        </p>
-        <Button
-          className="mt-6"
-          style={{ backgroundColor: accent, borderColor: accent }}
-          onClick={() => setOrderSuccess(false)}
-        >
-          Continuar a comprar
-        </Button>
-      </div>
-    );
-  }
+  const mergedTheme = mergeTheme(store);
+  const Home = theme.pages.Home;
 
   return (
-    <StorefrontThemeProvider theme={theme} className="min-h-screen bg-[var(--sf-surface-muted)]">
-      <AnnouncementBar theme={theme} />
-
-      <Header
-        store={store}
-        search={search}
-        onSearchChange={setSearch}
-        cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onCartClick={() => setCartOpen(true)}
-        wishlistCount={wishlist.length}
-        onWishlistClick={() => setWishlistOpen(true)}
-        categories={categories}
-        selectedCategoryId={selectedCat}
-        onSelectCategory={setSelectedCat}
-        onHelpClick={scrollToFooter}
-      />
-
-      <div ref={topRef} />
-      <section className="mx-auto mt-2 w-full max-w-[1240px] px-2 sm:px-4">
-        <div className="grid h-[clamp(150px,24vw,300px)] gap-1.5 sm:grid-cols-[2fr_1fr]">
-          <Hero slides={slides} onCtaClick={scrollToCatalog} />
-          <div className="hidden sm:block">
-            <HeroSideCards maxDiscount={maxDiscount} whatsapp={store.whatsapp} onPromoClick={scrollToPromo} />
-          </div>
-        </div>
-      </section>
-
-      <ShopProfileBar
-        store={store}
-        productCount={products.length}
-        categoryCount={categories.length}
-      />
-
-      <ShopTabs
-        tabs={[
-          { label: "Início", onClick: scrollToTop },
-          { label: "Produtos", onClick: scrollToCatalog },
-          ...(categories.length > 0
-            ? [{ label: "Categorias", onClick: scrollToCategories }]
-            : []),
-        ]}
-      />
-
-      <div className="mx-auto w-full max-w-[1240px] px-2 pt-2 sm:px-4">
-        <Reveal>
-          <FeatureRail
-            items={[
-              ...(categories.length > 0 ? [{ icon: Tag, label: "Categorias", onClick: scrollToCategories }] : []),
-              ...(promoProducts.length > 0 ? [{ icon: Zap, label: "Ofertas", onClick: scrollToPromo }] : []),
-              ...(featuredProducts.length > 0 ? [{ icon: Sparkles, label: "Novidades", onClick: scrollToFeatured }] : []),
-              ...(store.whatsapp
-                ? [{ icon: MessageCircle, label: "WhatsApp", href: `https://wa.me/${store.whatsapp.replace(/\D/g, "")}` }]
-                : []),
-              { icon: LifeBuoy, label: "Apoio", onClick: scrollToFooter },
-            ]}
-          />
-        </Reveal>
-        {publicCoupons.length > 0 && (
-          <Reveal delay={0.05} className="mt-2">
-            <VoucherStrip coupons={publicCoupons} />
-          </Reveal>
-        )}
-      </div>
-
-      {categories.length > 0 && (
-        <div ref={categoriesRef}>
-          <Section
-            title="Comprar por categoria"
-            icon={<Tag size={20} className="text-[var(--sf-primary)]" />}
-          >
-            <Reveal delay={0.08}>
-              <CategoryGrid
-                categories={categories}
-                onSelect={(id) => {
-                  setSelectedCat(id);
-                  scrollToCatalog();
-                }}
-              />
-            </Reveal>
-          </Section>
-        </div>
-      )}
-
-      {promoProducts.length > 0 && (
-        <div ref={promoRef}>
-          <Section
-            icon={
-              <span className="inline-flex items-center gap-[7px] text-[14px] font-extrabold uppercase tracking-[0.03em] text-[var(--sf-primary)]">
-                <Zap size={16} strokeWidth={2} fill="currentColor" />
-                Ofertas relâmpago
-                <span className="relative ml-0.5 flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--sf-primary)]/60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--sf-primary)]" />
-                </span>
-              </span>
-            }
-          >
-            <ProductGrid
-              products={promoProducts}
-              currency={store.currency}
-              categoryNames={categoryNames}
-              layout="rail"
-              compact
-              onAdd={addToCart}
-              onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-              isWishlisted={isWishlisted}
-              onToggleWishlist={toggleWishlist}
-            />
-          </Section>
-        </div>
-      )}
-
-      {featuredProducts.length > 0 && (
-        <div ref={featuredRef}>
-          <Section
-            title="Novidades"
-            icon={<Sparkles size={20} className="text-[var(--sf-primary)]" />}
-          >
-            <ProductGrid
-              products={featuredProducts}
-              currency={store.currency}
-              categoryNames={categoryNames}
-              layout="rail"
-              onAdd={addToCart}
-              onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-              isWishlisted={isWishlisted}
-              onToggleWishlist={toggleWishlist}
-            />
-          </Section>
-        </div>
-      )}
-
-      {videoProducts.length > 0 && (
-        <Section
-          title="Vídeos"
-          icon={<Video size={20} className="text-white" />}
-          dark
-        >
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
-            {videoProducts.map((p) => (
-              <VideoCard
-                key={p.id}
-                p={p}
-                currency={store.currency}
-                accent={accent}
-                onAdd={addToCart}
-              />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      <div ref={catalogRef} className="mx-auto max-w-[1240px] px-2 pt-4 sm:px-4">
-        <Reveal className="mb-2.5 flex items-center justify-between gap-2">
-          <h2 className="text-[15px] font-bold text-[var(--sf-ink)]">Todos os produtos</h2>
-          <span className="flex-shrink-0 text-[12px] font-medium text-[var(--sf-ink-secondary)]">
-            {selectedCat ? categoryNames.get(selectedCat) : "Todos"} · {filtered.length}
-          </span>
-        </Reveal>
-      </div>
-
-      <div className="mx-auto max-w-[1240px] px-2 pb-10 sm:px-4">
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={<StoreIcon size={28} />}
-            title="Sem produtos"
-            description="Esta loja ainda não tem produtos disponíveis."
-          />
-        ) : (
-          <ProductGrid
-            products={filtered}
-            currency={store.currency}
-            categoryNames={categoryNames}
-            layout="grid"
-            paginate
-            onAdd={addToCart}
-            onView={(p) => navigate(`/s/${slug}/products/${p.id}`)}
-            isWishlisted={isWishlisted}
-            onToggleWishlist={toggleWishlist}
-          />
-        )}
-      </div>
-
-      <div ref={footerRef}>
-        <Footer
-          store={store}
-          categories={categories}
-          onSelectCategory={(id) => {
-            setSelectedCat(id);
-            catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-        />
-      </div>
-
-      <WishlistDrawer
-        currency={store.currency}
-        accent={accent}
-        onAdd={addToCart}
-      />
-
-      <CartDrawer
-        currency={store.currency}
-        subtotal={subtotal}
-        discount={discount}
-        total={total}
-        couponCode={couponCode}
-        onCouponCodeChange={setCouponCode}
-        couponBusy={couponBusy}
-        couponError={couponError}
-        appliedCoupon={appliedCoupon}
-        onApplyCoupon={applyCoupon}
-        whatsappMissing={whatsappMissing}
-        onCheckout={openCheckout}
-      />
-
-      <Modal
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-        title="Finalizar pedido"
-      >
-        <form onSubmit={placeOrder} className="space-y-4">
-          {placeError && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-              {placeError}
-            </div>
-          )}
-          <Field label="Nome completo">
-            <Input
-              value={orderForm.name}
-              onChange={(e) =>
-                setOrderForm({ ...orderForm, name: e.target.value })
-              }
-              required
-            />
-          </Field>
-          <Field label="Telefone">
-            <Input
-              value={orderForm.phone}
-              onChange={(e) =>
-                setOrderForm({ ...orderForm, phone: e.target.value })
-              }
-              required
-              placeholder="+244 9XX XXX XXX"
-            />
-          </Field>
-          <Field label="Endereço de entrega">
-            <Textarea
-              rows={2}
-              value={orderForm.address}
-              onChange={(e) =>
-                setOrderForm({ ...orderForm, address: e.target.value })
-              }
-              required
-            />
-          </Field>
-          <div className="rounded-lg bg-slate-50 p-3 text-sm">
-            <div className="flex justify-between font-bold">
-              <span>Total a pagar</span>
-              <span>{formatCurrency(total, store.currency)}</span>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCheckoutOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={placing}
-              style={{ backgroundColor: accent, borderColor: accent }}
-            >
-              {placing ? "A enviar..." : "Confirmar pedido"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+    <StorefrontThemeProvider theme={mergedTheme} className="min-h-screen bg-[var(--sf-surface-muted)]">
+      <Home {...apiValue} />
     </StorefrontThemeProvider>
   );
 }

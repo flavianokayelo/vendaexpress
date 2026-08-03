@@ -1,0 +1,16 @@
+{
+  "id": "standard",
+  "name": "standard",
+  "label": "Standard",
+  "description": "Tema padrão universal para lojas de e-commerce",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "preview": "/previews/standard.png",
+  "capabilities": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

@@ -5,6 +5,9 @@ import { useAuth } from "../../lib/auth";
 import { formatDate } from "../../lib/format";
 import { PageHeader } from "./Shell";
 import { EmptyState } from "../../components/ui/Feedback";
+import { SkeletonTableRows } from "../../components/ui/Skeleton";
+import { Surface } from "../../components/ui/Surface";
+import { useToast } from "../../components/ui/Toast";
 import type { Customer } from "../../lib/types";
 
 // Normaliza o telefone para o formato internacional que o WhatsApp espera (sem +, sem espaços).
@@ -22,6 +25,7 @@ function whatsappLink(phone: string | null | undefined): string | null {
 
 export function CustomersPage() {
   const { store } = useAuth();
+  const toast = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +34,7 @@ export function CustomersPage() {
       const data = await api.customers.list();
       setCustomers(data);
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar clientes");
     } finally {
       setLoading(false);
     }
@@ -44,7 +48,7 @@ export function CustomersPage() {
     <div>
       <PageHeader title="Clientes" subtitle={`${customers.length} clientes`} />
       {loading ? (
-        <div className="text-slate-400">A carregar...</div>
+        <SkeletonTableRows rows={6} cols={5} />
       ) : customers.length === 0 ? (
         <EmptyState
           icon={<Users size={28} />}
@@ -52,7 +56,7 @@ export function CustomersPage() {
           description="Os clientes que fizerem pedidos aparecerão aqui."
         />
       ) : (
-        <div className="overflow-hidden border border-border bg-paper" style={{ borderRadius: '2px' }}>
+        <Surface className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
                   <tr className="border-b border-border bg-accent-soft/30">
@@ -95,7 +99,7 @@ export function CustomersPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Surface>
       )}
     </div>
   );

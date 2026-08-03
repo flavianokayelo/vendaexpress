@@ -28,7 +28,7 @@ export function VoucherStrip({ coupons }: { coupons: PublicCoupon[] }) {
             key={c.code}
             type="button"
             onClick={() => copy(c.code)}
-            className="flex flex-shrink-0 items-center gap-2.5 rounded-[var(--sf-radius-sm)] border border-dashed border-[var(--sf-primary)] bg-[color-mix(in_srgb,var(--sf-primary)_6%,white)] py-2 pl-2.5 pr-3"
+            className="flex flex-shrink-0 items-center gap-2.5 rounded-[var(--sf-radius-sm)] border border-dashed border-[var(--sf-primary)] bg-[color-mix(in_srgb,var(--sf-primary)_6%,white)] py-2 pl-2.5 pr-3 transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--sf-primary)_12%,white)]"
           >
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--sf-primary)] text-white">
               <Ticket size={15} strokeWidth={1.8} />

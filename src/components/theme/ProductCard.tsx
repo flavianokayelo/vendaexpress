@@ -4,11 +4,31 @@ import { useEffect, useRef, useState } from 'react';
 import { resolveMediaUrl } from '../../lib/api';
 import { formatCurrency, placeholderImage } from '../../lib/format';
 import type { Product } from '../../lib/types';
+import { useStorefrontTheme } from '../../storefrontTheme/ThemeProvider';
+import type { CardHoverEffect, CardImageAspect, CardStyle } from '../../storefrontTheme/types';
 
 const CONDITION_LABEL: Record<string, string> = {
   novo: 'Novo',
   usado: 'Usado',
   recondicionado: 'Recondicionado',
+};
+
+const CARD_STYLE_CLASS: Record<CardStyle, string> = {
+  flat: 'border border-[var(--sf-line)] bg-[var(--sf-surface)]',
+  bordered: 'border-2 border-[var(--sf-ink)] bg-[var(--sf-surface)]',
+  'padded-tint': 'border border-[var(--sf-line)] bg-[var(--sf-surface-muted)]',
+};
+
+const CARD_HOVER_CLASS: Record<CardHoverEffect, string> = {
+  lift: 'hover:-translate-y-[3px] hover:shadow-[var(--sf-shadow-lg)]',
+  zoom: 'hover:shadow-[var(--sf-shadow-lg)]',
+  none: '',
+};
+
+const CARD_ASPECT_CLASS: Record<CardImageAspect, string> = {
+  '1:1': 'aspect-square',
+  '4:5': 'aspect-[4/5]',
+  '3:2': 'aspect-[3/2]',
 };
 
 function productThumb(p: Product) {
@@ -40,10 +60,13 @@ export function ProductCard({
 }) {
   const isPromo = p.compare_at_price && Number(p.compare_at_price) > Number(p.price);
   const discountPct = isPromo ? Math.round((1 - Number(p.price) / Number(p.compare_at_price)) * 100) : 0;
+  const savings = isPromo ? Number(p.compare_at_price) - Number(p.price) : 0;
   const outOfStock = p.stock <= 0;
   const lowStock = !outOfStock && p.stock > 0 && p.stock <= 5;
   const hasCondition = p.item_condition && p.item_condition !== 'novo';
   const staggerDelay = index !== undefined ? Math.min(index % 6, 5) * 0.04 : 0;
+  const { card } = useStorefrontTheme();
+  const contentPadding = card.style === 'padded-tint' ? 'p-3' : 'p-2.5';
 
   const [justAdded, setJustAdded] = useState(false);
   const addTimer = useRef<number | undefined>(undefined);
@@ -60,43 +83,41 @@ export function ProductCard({
 
   return (
     <motion.div
-      className={`group flex w-full flex-col overflow-hidden rounded-[var(--sf-radius-sm)] border border-[var(--sf-line)] bg-[var(--sf-surface)] transition-[transform,box-shadow] duration-150 hover:-translate-y-[2px] hover:border-[var(--sf-primary)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.1)] ${onView ? 'cursor-pointer' : ''}`}
+      className={`group relative flex w-full flex-col overflow-hidden rounded-[10px] shadow-[var(--sf-shadow-sm)] transition-[transform,box-shadow,border-color] duration-200 hover:border-[var(--sf-primary)] ${CARD_STYLE_CLASS[card.style]} ${CARD_HOVER_CLASS[card.hoverEffect]} ${onView ? 'cursor-pointer' : ''}`}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.35, delay: staggerDelay }}
       onClick={() => onView?.(p)}
     >
-      <div className="relative aspect-square overflow-hidden bg-[var(--sf-surface-muted)]">
+      <div className={`relative ${CARD_ASPECT_CLASS[card.imageAspect]} overflow-hidden bg-[var(--sf-surface-muted)]`}>
         <img
           src={productThumb(p)}
           alt={p.name}
-          className={`h-full w-full object-cover ${outOfStock ? 'opacity-40' : ''}`}
+          loading="lazy"
+          className={`h-full w-full object-cover transition-transform duration-300 ${card.hoverEffect === 'zoom' ? 'group-hover:scale-[1.06]' : ''} ${outOfStock ? 'opacity-40' : ''}`}
         />
         {hasCondition && (
-          <span className="absolute left-0 top-1.5 rounded-r-[3px] bg-[var(--sf-primary)] px-1.5 py-[3px] text-[10px] font-bold leading-none text-white">
+          <span className="absolute left-0 top-1.5 rounded-r-[4px] bg-[var(--sf-ink)] px-1.5 py-[3px] text-[10px] font-bold leading-none text-white">
             {CONDITION_LABEL[p.item_condition]}
           </span>
         )}
         {isPromo && (
-          <span
-            className="absolute right-0 top-0 rounded-bl-[6px] px-[5px] py-[2px] text-[11px] font-extrabold leading-none"
-            style={{ background: 'color-mix(in srgb, var(--sf-primary) 12%, white)', color: 'var(--sf-primary)' }}
-          >
+          <span className="absolute right-1.5 top-1.5 rounded-[5px] bg-[var(--sf-danger)] px-1.5 py-[3px] text-[11px] font-extrabold leading-none text-white shadow-[var(--sf-shadow-sm)]">
             -{discountPct}%
           </span>
         )}
         {outOfStock && (
           <span className="absolute inset-0 flex items-center justify-center bg-black/10">
-            <span className="rounded-[2px] bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white">Esgotado</span>
+            <span className="rounded-[var(--sf-radius-sm)] bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white">Esgotado</span>
           </span>
         )}
         {onToggleWishlist && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleWishlist(p); }}
-            className={`absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/85 text-[var(--sf-ink-secondary)] ${
-              isWishlisted ? 'text-[var(--sf-danger)]' : ''
+            className={`absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[var(--sf-ink-secondary)] opacity-100 shadow-[var(--sf-shadow-sm)] transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 ${
+              isWishlisted ? 'text-[var(--sf-danger)] sm:opacity-100' : ''
             }`}
             title={isWishlisted ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           >
@@ -109,8 +130,8 @@ export function ProductCard({
             disabled={justAdded}
             onClick={handleAdd}
             whileTap={{ scale: 0.85 }}
-            className={`absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] ${
-              justAdded ? 'bg-[var(--sf-success)]' : 'bg-[var(--sf-primary)]'
+            className={`absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full text-white opacity-100 shadow-[var(--sf-shadow-sm)] transition-[opacity,box-shadow] duration-200 hover:shadow-[var(--sf-shadow-md)] sm:opacity-0 sm:group-hover:opacity-100 ${
+              justAdded ? 'bg-[var(--sf-success)] sm:opacity-100' : 'bg-[var(--sf-primary)]'
             }`}
             title="Adicionar ao carrinho"
           >
@@ -118,7 +139,7 @@ export function ProductCard({
           </motion.button>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-[3px] p-2">
+      <div className={`flex flex-1 flex-col gap-1 ${contentPadding}`}>
         {!compact && categoryName && (
           <span className="truncate text-[10px] uppercase tracking-[0.03em] text-[var(--sf-ink-secondary)]">
             {categoryName}
@@ -129,17 +150,24 @@ export function ProductCard({
             {p.name}
           </h3>
         )}
-        <div className={`flex items-baseline gap-1.5 ${compact ? '' : 'mt-auto pt-0.5'}`}>
-          <span
-            className={`text-[16px] font-semibold leading-none [font-feature-settings:'tnum'_1] ${
-              isPromo ? 'text-[var(--sf-primary)]' : 'text-[var(--sf-ink)]'
-            }`}
-          >
-            {formatCurrency(Number(p.price), currency)}
-          </span>
-          {isPromo && (
-            <span className="truncate text-[11px] text-[var(--sf-ink-secondary)] line-through [font-feature-settings:'tnum'_1]">
-              {formatCurrency(Number(p.compare_at_price), currency)}
+        <div className={compact ? '' : 'mt-auto pt-0.5'}>
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className={`text-[16.5px] font-bold leading-none tabular-nums ${
+                isPromo ? 'text-[var(--sf-danger)]' : 'text-[var(--sf-ink)]'
+              }`}
+            >
+              {formatCurrency(Number(p.price), currency)}
+            </span>
+            {isPromo && (
+              <span className="truncate text-[11px] tabular-nums text-[var(--sf-ink-secondary)] line-through">
+                {formatCurrency(Number(p.compare_at_price), currency)}
+              </span>
+            )}
+          </div>
+          {isPromo && !compact && (
+            <span className="text-[10.5px] font-semibold tabular-nums text-[var(--sf-success)]">
+              Poupa {formatCurrency(savings, currency)}
             </span>
           )}
         </div>

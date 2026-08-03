@@ -19,6 +19,7 @@ import { StatCard, PageHeader, type DashPage } from "./Shell";
 import { Select } from "../../components/ui/Field";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/Feedback";
+import { Skeleton, SkeletonStatsGrid, SkeletonTableRows } from "../../components/ui/Skeleton";
 import type { Order, OrderStatus } from "../../lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -119,7 +120,18 @@ export function OverviewPage({
     }
   };
 
-  if (loading) return <div className="text-ink-2">A carregar...</div>;
+  if (loading)
+    return (
+      <div className="space-y-8">
+        <div className="mb-1">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="mt-2 h-3 w-64" />
+        </div>
+        <SkeletonStatsGrid count={4} />
+        <Skeleton className="h-6 w-40" />
+        <SkeletonTableRows rows={5} cols={5} />
+      </div>
+    );
 
   const sparkData = revenueByMonth.length > 0 ? revenueByMonth : Array(12).fill(0);
   const revenue12 = sparkData.reduce((a, b) => a + b, 0);

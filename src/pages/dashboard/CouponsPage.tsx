@@ -8,10 +8,14 @@ import { Input, Field } from "../../components/ui/Field";
 import { Modal } from "../../components/ui/Modal";
 import { Badge } from "../../components/ui/Badge";
 import { EmptyState } from "../../components/ui/Feedback";
+import { SkeletonCard } from "../../components/ui/Skeleton";
+import { Surface } from "../../components/ui/Surface";
+import { useToast } from "../../components/ui/Toast";
 import type { Coupon } from "../../lib/types";
 
 export function CouponsPage() {
   const { store } = useAuth();
+  const toast = useToast();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -27,7 +31,7 @@ export function CouponsPage() {
       const data = await api.coupons.list();
       setCoupons(data);
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar cupões");
     } finally {
       setLoading(false);
     }
@@ -48,6 +52,7 @@ export function CouponsPage() {
         discount_percent: Number(percent) || 0,
         is_public: isPublic,
       });
+      toast.success("Cupão criado");
       setModalOpen(false);
       setCode("");
       setPercent("");
@@ -61,19 +66,32 @@ export function CouponsPage() {
   };
 
   const toggle = async (c: Coupon) => {
-    await api.coupons.update(c.id, { active: !c.active });
-    load();
+    try {
+      await api.coupons.update(c.id, { active: !c.active });
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar cupão");
+    }
   };
 
   const togglePublic = async (c: Coupon) => {
-    await api.coupons.update(c.id, { is_public: !c.is_public });
-    load();
+    try {
+      await api.coupons.update(c.id, { is_public: !c.is_public });
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar cupão");
+    }
   };
 
   const remove = async (c: Coupon) => {
     if (!confirm(`Eliminar cupom "${c.code}"?`)) return;
-    await api.coupons.remove(c.id);
-    load();
+    try {
+      await api.coupons.remove(c.id);
+      toast.success("Cupão eliminado");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao eliminar cupão");
+    }
   };
 
   return (
@@ -88,7 +106,11 @@ export function CouponsPage() {
         }
       />
       {loading ? (
-        <div className="text-slate-400">A carregar...</div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       ) : coupons.length === 0 ? (
         <EmptyState
           icon={<Ticket size={28} />}
@@ -103,10 +125,9 @@ export function CouponsPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {coupons.map((c) => (
-            <div
+            <Surface
               key={c.id}
-              className="flex items-center justify-between border border-border bg-paper p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm"
-              style={{ borderRadius: '2px' }}
+              className="flex items-center justify-between p-4 hover:-translate-y-0.5 hover:shadow-floating"
             >
               <div>
                 <div className="flex items-center gap-2">
@@ -146,7 +167,7 @@ export function CouponsPage() {
                   <Trash2 size={15} />
                 </button>
               </div>
-            </div>
+            </Surface>
           ))}
         </div>
       )}

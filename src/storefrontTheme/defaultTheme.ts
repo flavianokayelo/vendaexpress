@@ -25,9 +25,17 @@ export const defaultTheme: ThemeConfig = {
   },
   radius: { sm: 8, md: 12, lg: 18, pill: 9999 },
   spacing: { unit: 8, sectionGap: 48 },
+  // Sombras em camadas (blur pequeno e nítido + blur largo e suave) — a
+  // técnica que dá sensação de profundidade "premium" em vez de sombra chapada.
+  shadow: {
+    sm: '0 1px 2px rgba(15,15,15,0.05), 0 1px 1px rgba(15,15,15,0.04)',
+    md: '0 1px 2px rgba(15,15,15,0.04), 0 6px 16px -4px rgba(15,15,15,0.10)',
+    lg: '0 2px 6px rgba(15,15,15,0.05), 0 16px 32px -8px rgba(15,15,15,0.14)',
+    xl: '0 4px 12px rgba(15,15,15,0.06), 0 24px 48px -12px rgba(15,15,15,0.20)',
+  },
   buttons: { style: 'solid', radius: 'md' },
   card: { style: 'padded-tint', imageAspect: '1:1', hoverEffect: 'lift' },
-  header: { variant: 'standard', showAnnouncementBar: false, showMegaMenu: false },
+  header: { variant: 'standard', showAnnouncementBar: false },
   footer: {
     variant: 'full',
     showPaymentBadges: true,
@@ -41,5 +49,19 @@ export const defaultTheme: ThemeConfig = {
   },
   hero: { mode: 'carousel', slides: [] },
   banners: {},
-  home: { sectionOrder: ['hero', 'promo', 'featured', 'categories', 'catalog'] },
+  home: {
+    sections: [
+      { id: 'announcement', enabled: true },
+      { id: 'hero', enabled: true },
+      { id: 'promo-banners', enabled: true },
+      { id: 'profile-bar', enabled: true },
+      { id: 'tabs', enabled: true },
+      { id: 'feature-rail', enabled: true },
+      { id: 'vouchers', enabled: true },
+      { id: 'categories', enabled: true },
+      { id: 'promo', enabled: true },
+      { id: 'featured', enabled: true },
+      { id: 'catalog', enabled: true },
+    ],
+  },
 };
