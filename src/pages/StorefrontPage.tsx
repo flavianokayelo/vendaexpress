@@ -114,6 +114,11 @@ function StorefrontPageInner({
     };
   }, [store, theme, slug, navigate, products, categories, publicCoupons, cart, wishlist]);
 
+  const resolvedConfig = useMemo(
+    () => resolveConfig(store?.theme_id, store),
+    [store],
+  );
+
   if (loading) return <StorefrontHomeSkeleton />;
 
   if (notFound || !store || !theme || !apiValue) {
@@ -139,10 +144,6 @@ function StorefrontPageInner({
     );
   }
 
-  const resolvedConfig = useMemo(
-    () => resolveConfig(store?.theme_id, store),
-    [store],
-  );
   const Home = theme.pages.Home;
 
   return (
