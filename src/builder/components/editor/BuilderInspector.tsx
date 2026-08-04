@@ -164,7 +164,7 @@ function FieldInput({ field, value, onChange }: {
             placeholder="URL da imagem"
             className={baseInput} style={baseStyle}
           />
-          {val && (
+          {Boolean(val) && (
             <div className="relative h-24 w-full overflow-hidden border-2 border-border bg-ink/[0.02]" style={{ borderRadius: '2px' }}>
               <img src={val as string} alt="" className="h-full w-full object-cover" />
               <button

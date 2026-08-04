@@ -1,0 +1,22 @@
+{
+  "id": "fresh-market",
+  "name": "fresh-market",
+  "label": "Fresh Market",
+  "description": "Mercado fresco, orgânico e acolhedor",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/fresh-market.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["mercado", "fresco", "organico"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "minimal",
+  "name": "minimal",
+  "label": "Minimal",
+  "description": "Design limpo e focado no produto",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/minimal.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["minimal", "limpo", "simples"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

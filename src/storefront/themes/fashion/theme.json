@@ -1,0 +1,22 @@
+{
+  "id": "fashion",
+  "name": "fashion",
+  "label": "Fashion",
+  "description": "Estilo e tendência para moda",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/fashion.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["moda", "estilo", "tendencia"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

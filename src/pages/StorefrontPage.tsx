@@ -7,12 +7,35 @@ import { StorefrontHomeSkeleton } from "../components/ui/Skeleton";
 import { CartProvider, useCart } from "../lib/cart";
 import { WishlistProvider, useWishlist } from "../lib/wishlist";
 import { StorefrontThemeProvider } from "../storefrontTheme/ThemeProvider";
-import { mergeTheme } from "../storefrontTheme/mergeTheme";
+import { resolveConfig } from "../storefrontTheme/resolveConfig";
 import type { StorefrontApi } from "../storefront/contract";
-import { registerTheme, resolveTheme } from "../storefront/engine/ThemeRegistry";
+import {
+  FALLBACK_THEME_ID,
+  registerTheme,
+  resolveTheme,
+} from "../storefront/engine/ThemeRegistry";
 import { standardTheme } from "../storefront/themes/standard";
-
-registerTheme(standardTheme);
+import { luxuryTheme } from "../storefront/themes/luxury";
+import { minimalTheme } from "../storefront/themes/minimal";
+import { fashionTheme } from "../storefront/themes/fashion";
+import { electronicsTheme } from "../storefront/themes/electronics";
+import { modernTheme } from "../storefront/themes/modern";
+import { fashionLuxeTheme } from "../storefront/themes/fashion-luxe";
+import { freshMarketTheme } from "../storefront/themes/fresh-market";
+import { autoProTheme } from "../storefront/themes/auto-pro";
+import { foodExpressTheme } from "../storefront/themes/food-express";
+[
+  standardTheme,
+  luxuryTheme,
+  minimalTheme,
+  fashionTheme,
+  electronicsTheme,
+  modernTheme,
+  fashionLuxeTheme,
+  freshMarketTheme,
+  autoProTheme,
+  foodExpressTheme,
+].forEach(registerTheme);
 
 export function StorefrontPage({
   slug,
@@ -64,7 +87,7 @@ function StorefrontPageInner({
   }, [slug]);
 
   const theme = useMemo(() => {
-    const id = store?.theme_id ?? "standard";
+    const id = store?.theme_id ?? FALLBACK_THEME_ID;
     return resolveTheme(id);
   }, [store]);
 
@@ -116,11 +139,14 @@ function StorefrontPageInner({
     );
   }
 
-  const mergedTheme = mergeTheme(store);
+  const resolvedConfig = useMemo(
+    () => resolveConfig(store?.theme_id, store),
+    [store],
+  );
   const Home = theme.pages.Home;
 
   return (
-    <StorefrontThemeProvider theme={mergedTheme} className="min-h-screen bg-[var(--sf-surface-muted)]">
+    <StorefrontThemeProvider theme={resolvedConfig} className="min-h-screen bg-[var(--sf-surface-muted)]">
       <Home {...apiValue} />
     </StorefrontThemeProvider>
   );

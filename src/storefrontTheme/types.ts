@@ -177,6 +177,62 @@ export interface ThemeConfig {
   hero: ThemeHero;
   banners: ThemeBanners;
   home: ThemeHome;
+  /** variante do ProductCard escolhida pelo tema (layout locked pelo tema) */
+  productCardVariant?: string;
+  /** variante do ProductGrid escolhida pelo tema (layout locked pelo tema) */
+  productGridVariant?: string;
+  /** capabilities resolvidas (do tema + overrides da loja) — info de runtime */
+  capabilities?: ThemeCapabilities;
+}
+
+// ---------------------------------------------------------------------------
+// Config DNA de um tema — tripartida: tokens (cores/estilo), layout (locked
+// pelo tema), capabilities (info de runtime). Vive no config.ts de cada tema.
+// ---------------------------------------------------------------------------
+
+/** Tokens visuais do tema — a parte que O LOJISTA pode alterar via theme_config. */
+export interface ThemeTokens {
+  colors: ThemeColors;
+  typography: ThemeTypography;
+  radius: ThemeRadius;
+  spacing: ThemeSpacing;
+  shadow: ThemeShadow;
+  buttons: ThemeButtons;
+  card: ThemeCard;
+}
+
+/** Layout do tema — LOCKED: o lojista NÃO o altera. Fixa variantes e estrutura. */
+export interface ThemeLayout {
+  header: ThemeHeader;
+  footer: ThemeFooter;
+  hero: ThemeHero;
+  banners: ThemeBanners;
+  home: ThemeHome;
+  productCardVariant: string;
+  productGridVariant: string;
+}
+
+/** Capabilities (info de runtime) — lidas do config.ts, sem ler theme.json. */
+export interface ThemeCapabilities {
+  multiLanguage?: boolean;
+  multiCurrency?: boolean;
+  wishlist?: boolean;
+  quickView?: boolean;
+  liveSearch?: boolean;
+  [key: string]: boolean | undefined;
+}
+
+/**
+ * O "DNA" completo de um tema (config.ts). Cada tema no registry expõe um destes.
+ * - tokens: DeepPartial — fundido sobre o defaultTheme (só o que difere da base).
+ * - layout: DeepPartial — fundido sobre o layout default; locked para a loja.
+ * - capabilities: info de runtime usada pelo catálogo/validator (não pelo render).
+ */
+export interface ThemeConfigData {
+  id: string;
+  tokens: DeepPartial<ThemeTokens>;
+  layout: DeepPartial<ThemeLayout>;
+  capabilities: ThemeCapabilities;
 }
 
 export type DeepPartial<T> = T extends (infer U)[]

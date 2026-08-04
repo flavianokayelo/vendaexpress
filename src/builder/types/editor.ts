@@ -3,7 +3,7 @@ import type { BlockDefinition } from './block';
 
 export type DeviceMode = 'desktop' | 'tablet' | 'mobile';
 
-export type EditorMode = 'edit' | 'preview' | 'responsive';
+export type EditorMode = 'edit' | 'preview';
 
 export interface EditorState {
   page: Page | null;

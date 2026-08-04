@@ -5,8 +5,14 @@
   "description": "Tema padrão universal para lojas de e-commerce",
   "version": "1.0.0",
   "engineVersion": "1.0",
+  "contractVersion": 1,
   "preview": "/previews/standard.png",
-  "capabilities": {
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["essencial", "universal", "ecommerce"],
+  "supports": {
     "multiLanguage": false,
     "multiCurrency": false,
     "wishlist": true,

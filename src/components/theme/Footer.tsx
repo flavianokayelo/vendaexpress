@@ -6,11 +6,11 @@ import type { Store, Category } from '../../lib/types';
 
 export function Footer({
   store,
-  categories,
+  categories = [],
   onSelectCategory,
 }: {
   store: Store;
-  categories: Category[];
+  categories?: Category[];
   onSelectCategory?: (id: string) => void;
 }) {
   const theme = useStorefrontTheme();
@@ -20,14 +20,28 @@ export function Footer({
   const waDigits = store.whatsapp ? store.whatsapp.replace(/\D/g, '') : '';
 
   return (
-    <footer className="mt-4 bg-[var(--sf-ink)] text-white/75">
-      <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, var(--sf-primary), color-mix(in srgb, var(--sf-primary) 40%, transparent), transparent)' }} />
+    <footer className="relative mt-4 overflow-hidden bg-[var(--sf-ink)] text-white/75">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(600px 220px at 18% 0%, color-mix(in srgb, var(--sf-primary) 22%, transparent), transparent 70%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(520px 200px at 85% 100%, color-mix(in srgb, var(--sf-accent) 10%, transparent), transparent 70%)',
+        }}
+      />
+      <div className="relative h-[3px] w-full" style={{ background: 'linear-gradient(90deg, var(--sf-accent), var(--sf-primary) 55%, color-mix(in srgb, var(--sf-primary) 40%, transparent))' }} />
       <div className="mx-auto max-w-[1240px] px-4 pb-0 pt-11 sm:px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="mb-4 flex items-center gap-2.5">
               {store.logo_url ? (
-                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white p-1.5 shadow-[var(--sf-shadow-sm)]">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--sf-radius-md)] bg-white p-1.5 shadow-[var(--sf-shadow-sm)]">
                   <img
                     src={resolveMediaUrl(store.logo_url) ?? ''}
                     alt={store.name}
@@ -35,18 +49,18 @@ export function Footer({
                   />
                 </span>
               ) : (
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-white text-[var(--sf-primary)]">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--sf-radius-md)] bg-white text-[var(--sf-primary)]">
                   <Zap size={18} strokeWidth={1.8} fill="currentColor" />
                 </span>
               )}
-              <span className="font-display text-[21px] font-semibold tracking-[-0.01em] text-white">{store.name}</span>
+              <span className="font-display text-[21px] font-extrabold tracking-[-0.01em] text-white">{store.name}</span>
             </div>
             {store.description && <p className="max-w-[34ch] text-[13.5px] leading-[1.6] text-white/55">{store.description}</p>}
           </div>
 
           {categories.length > 0 && (
             <div>
-              <div className="mb-4 font-display text-[12px] font-bold uppercase tracking-[0.1em] text-[color-mix(in_srgb,var(--sf-accent)_60%,white)]">
+              <div className="mb-4 flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.12em] text-[var(--sf-accent)]">
                 Categorias
               </div>
               <ul className="flex flex-col gap-2.5 text-[13.5px]">
@@ -67,7 +81,7 @@ export function Footer({
 
           {supportItems.length > 0 && (
             <div>
-              <div className="mb-4 font-display text-[12px] font-bold uppercase tracking-[0.1em] text-[color-mix(in_srgb,var(--sf-accent)_60%,white)]">
+              <div className="mb-4 flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.12em] text-[var(--sf-accent)]">
                 Apoio
               </div>
               <ul className="flex flex-col gap-1 text-[13.5px]">
@@ -81,7 +95,7 @@ export function Footer({
                         className="flex w-full items-center justify-between gap-2 text-left text-white/75 transition-colors duration-150 hover:text-white"
                       >
                         {item.title}
-                        <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-white' : 'text-white/40'}`} />
+                        <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[var(--sf-accent)]' : 'text-white/40'}`} />
                       </button>
                       {open && <p className="mt-1.5 text-[12.5px] leading-[1.55] text-white/50">{item.content}</p>}
                     </li>
@@ -92,7 +106,7 @@ export function Footer({
           )}
 
           <div>
-            <div className="mb-4 font-display text-[12px] font-bold uppercase tracking-[0.1em] text-[color-mix(in_srgb,var(--sf-accent)_60%,white)]">
+            <div className="mb-4 flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.12em] text-[var(--sf-accent)]">
               Contacto
             </div>
             <div className="flex flex-col gap-2.5 text-[13.5px]">
@@ -103,7 +117,7 @@ export function Footer({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-white/65 transition-colors duration-150 hover:text-white"
                 >
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors duration-150 group-hover:bg-[var(--sf-primary)]">
                     <MessageCircle size={13} />
                   </span>
                   {store.whatsapp}

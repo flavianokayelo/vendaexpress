@@ -11,10 +11,16 @@
 import type { ComponentType } from "react";
 import type { Category, Product, PublicCoupon, Store } from "../lib/types";
 import type { CartItem } from "../lib/cart";
+import type { ThemeConfigData } from "../storefrontTheme/types";
 
 // Versão do motor que os temas devem indicar no manifesto. Temas com
 // engineVersion != ENGINE_VERSION são bloqueados pelo validator (versionamento de tema).
 export const ENGINE_VERSION = "1.0";
+
+// Versão do SHAPE do contrato (ThemeContract). Bump quando mudar a forma do
+// objeto de tema (ex: novos campos obrigatórios no manifest ou no contract).
+// Temas com contractVersion != CONTRACT_VERSION são bloqueados pelo validator.
+export const CONTRACT_VERSION = 1;
 
 export interface ThemeManifest {
   /** id técnico único, ex: "standard" */
@@ -27,7 +33,16 @@ export interface ThemeManifest {
   version: string;
   /** versão do motor com a qual o tema foi construído — ver ENGINE_VERSION */
   engineVersion: string;
+  /** shape do contrato com o qual o tema foi construído — ver CONTRACT_VERSION */
+  contractVersion?: number;
   preview?: string;
+  author?: string | { name?: string; url?: string };
+  tags?: string[];
+  supports?: {
+    darkMode?: boolean;
+    premium?: boolean;
+    [key: string]: boolean | undefined;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +174,19 @@ export type ThemeHomePage = ComponentType<StorefrontApi>;
 
 export interface ThemePages {
   Home: ThemeHomePage;
+  // Páginas abertas (opcionais): se um tema não as implementar, o engine usa
+  // o fallback partilhado (standard) página a página — nunca quebra a loja.
+  Product?: ThemeHomePage;
+  Category?: ThemeHomePage;
+  Search?: ThemeHomePage;
+  Cart?: ThemeHomePage;
+  Collection?: ThemeHomePage;
+  Brand?: ThemeHomePage;
+  Blog?: ThemeHomePage;
+  Article?: ThemeHomePage;
+  Wishlist?: ThemeHomePage;
+  Checkout?: ThemeHomePage;
+  Account?: ThemeHomePage;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +195,8 @@ export interface ThemePages {
 export interface ThemeContract {
   id: string;
   manifest: ThemeManifest;
+  /** DNA tripartido do tema (tokens | layout | capabilities) — ver config.ts */
+  config: ThemeConfigData;
   components: ThemeComponents;
   pages: ThemePages;
 }
@@ -176,3 +206,18 @@ export const REQUIRED_PARTS = {
   components: ["Header", "Footer", "ProductCard", "ProductGrid", "Cart"] as (keyof ThemeComponents)[],
   pages: ["Home"] as (keyof ThemePages)[],
 };
+
+/** Páginas abertas (opcionais) — usadas pelo validator (INFO) e pelo registry (fallback). */
+export const OPTIONAL_PAGES = [
+  "Product",
+  "Category",
+  "Search",
+  "Cart",
+  "Collection",
+  "Brand",
+  "Blog",
+  "Article",
+  "Wishlist",
+  "Checkout",
+  "Account",
+] as (keyof ThemePages)[];

@@ -1,14 +1,18 @@
 // =============================================================================
-// ThemeRegistry — resolução de temas com fallback previsível.
+// ThemeRegistry — resolução de temas com fallback previsível (engine v2).
 //
-// - registerTheme() adiciona um tema (importado estaticamente) ao mapa.
-// - resolveTheme(id) devolve o tema pedido se for válido; senão cai para o
-//   tema fallback (standard) sem lançar.
+// - registerTheme() adiciona um tema (importado estaticamente) ao mapa, MAS o
+//   validator veta temas quebrados (ERROR): não entram no mapa e o storefront
+//   usa o fallback (standard). Ids duplicados também são ignorados.
+// - resolveTheme(id) devolve o tema pedido se estiver registado; senão cai
+//   para o tema fallback (standard) sem lançar.
 // - getThemeComponents(id) devolve os componentes do tema, com fallback
-//   componente-a-componente para o tema standard (um tema que quebre só num
-//   componente continua a renderizar o resto).
-import type { ThemeComponents, ThemeContract } from "../contract";
-import { ThemeValidationError, validateTheme } from "./ThemeValidator";
+//   componente-a-componente para o tema standard.
+// - getThemeConfig(id) devolve o DNA (config.ts) do tema, para o resolveConfig.
+import type { ThemeComponents, ThemeContract, ThemePages } from "../contract";
+import { OPTIONAL_PAGES } from "../contract";
+import type { ThemeConfigData } from "../../storefrontTheme/types";
+import { hasBlockingIssues, validateTheme } from "./ThemeValidator";
 
 export const FALLBACK_THEME_ID = "standard";
 
@@ -21,9 +25,31 @@ function isPresent(t: ThemeContract | null | undefined): t is ThemeContract {
 
 export function registerTheme(theme: ThemeContract): void {
   if (!theme || !theme.id) return;
+  if (registry.has(theme.id)) {
+    console.warn(`Tema "${theme.id}" já registado — registo duplicado ignorado (mantém-se o primeiro).`);
+    return;
+  }
+  const issues = validateTheme(theme, theme.id);
+  if (hasBlockingIssues(issues)) {
+    console.warn(
+      `Tema "${theme.id}" bloqueado pelo validator (usa-se o fallback): ${issues
+        .filter((i) => i.level === "error")
+        .map((i) => i.code)
+        .join("; ")}`,
+    );
+    return;
+  }
   registry.set(theme.id, theme);
   if (theme.id === FALLBACK_THEME_ID) {
     fallback = theme;
+  }
+  const notes = issues.filter((i) => i.level !== "error");
+  if (notes.length > 0) {
+    console.info(
+      `Tema "${theme.id}" registado (${notes.length} avisos/info): ${notes
+        .map((i) => i.code)
+        .join("; ")}`,
+    );
   }
 }
 
@@ -35,19 +61,8 @@ function getStandard(): ThemeContract | null {
 /** Tema pedido, se registado e válido; caso contrário o fallback (standard). */
 export function resolveTheme(id: string): ThemeContract | null {
   const requested = registry.get(id);
-  if (requested) {
-    const issues = validateTheme(requested, id);
-    if (issues.length === 0) return requested;
-    console.warn(new ThemeValidationError(id, issues).message);
-  }
-  const std = getStandard();
-  if (!std) return null;
-  const stdIssues = validateTheme(std, FALLBACK_THEME_ID);
-  if (stdIssues.length > 0) {
-    console.error(`Tema fallback "${FALLBACK_THEME_ID}" está quebrado:`, stdIssues);
-    return null;
-  }
-  return std;
+  if (requested) return requested;
+  return getStandard();
 }
 
 /** Id do tema que vai ser usado de facto (o pedido, se válido; senão standard). */
@@ -63,8 +78,7 @@ export function getThemeComponents(id: string): ThemeComponents {
   const requested = registry.get(id);
   const std = getStandard();
 
-  const base = requested && validateTheme(requested, id).length === 0 ? requested : null;
-  const source = base ?? std;
+  const source = requested ?? std;
   if (!source) {
     throw new Error(
       `Nenhum tema registado (incluindo o fallback "${FALLBACK_THEME_ID}") — não é possível renderizar o storefront.`,
@@ -86,6 +100,46 @@ export function getThemeComponents(id: string): ThemeComponents {
       typeof grid === "function" ? grid : (std?.components.ProductGrid ?? grid),
     Cart: typeof cart === "function" ? cart : (std?.components.Cart ?? cart),
   };
+}
+
+/**
+ * Páginas do tema pedido, com fallback página-a-página para o standard.
+ * Home é sempre preenchida (obrigatória); as opcionais usam o fallback partilhado.
+ */
+export function getThemePages(id: string): ThemePages {
+  const source = resolveTheme(id);
+  const std = getStandard();
+  const home = source?.pages.Home ?? std?.pages.Home;
+  if (!home) {
+    throw new Error(
+      `Nenhuma Home disponível para o tema "${id}" (nem fallback "${FALLBACK_THEME_ID}") — não é possível renderizar o storefront.`,
+    );
+  }
+  const pages: ThemePages = { Home: home };
+  for (const name of OPTIONAL_PAGES) {
+    const fromSource = source?.pages[name];
+    const fromStd = std?.pages[name];
+    if (typeof fromSource === "function") pages[name] = fromSource;
+    else if (typeof fromStd === "function") pages[name] = fromStd;
+  }
+  return pages;
+}
+
+/**
+ * DNA (config.ts) do tema pedido; se o tema não estiver registado (ou for o
+ * fallback), devolve o DNA do standard. Nunca lança a menos que nem o fallback
+ * exista — nesse caso não há como resolver tokens e o erro é voluntariamente ruidoso.
+ */
+export function getThemeConfig(id: string): ThemeConfigData {
+  const requested = registry.get(id);
+  const std = getStandard();
+  const source = requested ?? std;
+  if (!source?.config) {
+    throw new Error(
+      `Tema "${id}" (ou fallback "${FALLBACK_THEME_ID}") não tem config válida — resolveConfig não consegue continuar.`,
+    );
+  }
+  return source.config;
 }
 
 /** Devolve o componente do tema A; se estiver em falta, o do tema B (standard). */

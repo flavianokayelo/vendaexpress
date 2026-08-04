@@ -19,6 +19,7 @@ function getFollowed(): string[] {
  * conversar, partilhar e estatísticas reais (produtos/categorias/antiguidade).
  * "Seguir" é só local (localStorage) por agora; sem contagem de seguidores
  * porque não existe esse conceito no backend ainda — não inventamos números. */
+
 export function ShopProfileBar({
   store,
   productCount,
@@ -84,7 +85,7 @@ export function ShopProfileBar({
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="truncate text-[17px] font-bold tracking-[-0.01em] text-[var(--sf-ink)]">{store.name}</h1>
+              <h1 className="truncate font-display text-[17px] font-extrabold tracking-[-0.01em] text-[var(--sf-ink)]">{store.name}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11.5px] text-[var(--sf-ink-secondary)]">
                 <span className="inline-flex items-center gap-1">
                   <Package size={12} strokeWidth={1.8} /> {productCount} produtos

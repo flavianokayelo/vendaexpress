@@ -1,0 +1,22 @@
+{
+  "id": "auto-pro",
+  "name": "auto-pro",
+  "label": "Auto Pro",
+  "description": "Robusto para autopeças e acessórios",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/auto-pro.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["autopecas", "automotivo", "robusto"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

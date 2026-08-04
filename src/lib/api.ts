@@ -70,6 +70,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+// O backend devolve listas paginadas como { <key>: [...], total, page, limit }.
+// Aceita também array puro (forma antiga) para compatibilidade.
+function unwrapList<T>(data: unknown, key: string): T[] {
+  if (Array.isArray(data)) return data as T[];
+  const rows = (data as Record<string, unknown> | null)?.[key];
+  return Array.isArray(rows) ? (rows as T[]) : [];
+}
+
 // Upload de ficheiros usa FormData, por isso não passa pelo request() genérico (que força JSON)
 export async function uploadCategoryIcon(file: File): Promise<{ url: string }> {
   const token = getToken();
@@ -484,7 +492,8 @@ export const api = {
       request<void>(`/coupons/${id}`, { method: "DELETE" }),
   },
   products: {
-    list: () => request<any[]>("/products"),
+    list: () =>
+      request<unknown>("/products").then((d) => unwrapList<any>(d, "products")),
     create: (payload: Record<string, any>) =>
       request<any>("/products", {
         method: "POST",
@@ -508,7 +517,8 @@ export const api = {
       ),
   },
   orders: {
-    list: () => request<any[]>("/orders"),
+    list: () =>
+      request<unknown>("/orders").then((d) => unwrapList<any>(d, "orders")),
     getItems: (orderId: string) => request<any[]>(`/orders/${orderId}/items`),
     updateStatus: (orderId: string, status: string) =>
       request<any>(`/orders/${orderId}/status`, {
@@ -517,7 +527,8 @@ export const api = {
       }),
   },
   customers: {
-    list: () => request<any[]>("/customers"),
+    list: () =>
+      request<unknown>("/customers").then((d) => unwrapList<any>(d, "customers")),
   },
   storefront: {
     get: (slug: string) =>

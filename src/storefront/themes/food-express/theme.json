@@ -1,0 +1,22 @@
+{
+  "id": "food-express",
+  "name": "food-express",
+  "label": "Food Express",
+  "description": "Rápido e apetitoso para alimentação",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/food-express.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["alimentacao", "rapido", "delivery"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

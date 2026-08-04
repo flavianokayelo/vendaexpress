@@ -9,6 +9,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
+import { frontendThemeCatalog } from "../../storefront/themes/catalog";
 
 type ApiThemeInfo = {
   id: string;
@@ -18,15 +19,8 @@ type ApiThemeInfo = {
   tags: string[];
   version: string;
   author: string;
+  accent: string;
   in_use: number;
-};
-
-const PREVIEW_GRADIENTS: Record<string, string> = {
-  standard: "from-indigo-600 to-blue-500",
-  luxury: "from-yellow-900 via-amber-700 to-amber-500",
-  minimal: "from-slate-900 to-slate-600",
-  fashion: "from-pink-700 via-rose-600 to-rose-400",
-  electronics: "from-cyan-900 via-blue-800 to-indigo-900",
 };
 
 export function ThemesPage() {
@@ -42,7 +36,11 @@ export function ThemesPage() {
     (async () => {
       try {
         const apiThemes = (await api.themes.list()) as ApiThemeInfo[];
-        setBackendThemes(apiThemes);
+        const byId = new Map(frontendThemeCatalog.map((theme) => [theme.id, theme]));
+        for (const theme of apiThemes) {
+          byId.set(theme.id, { ...byId.get(theme.id), ...theme });
+        }
+        setBackendThemes(Array.from(byId.values()));
       } catch {
         setError("Erro ao carregar temas");
       } finally {
@@ -55,7 +53,7 @@ export function ThemesPage() {
     if (store?.theme_id) setSelectedId(store.theme_id);
   }, [store?.theme_id]);
 
-  const currentId = store?.theme_id ?? "standard";
+  const currentId = store?.theme_id ?? "modern";
 
   const select = async (id: string) => {
     if (id === currentId) return;
@@ -63,10 +61,16 @@ export function ThemesPage() {
     setError(null);
     try {
       await api.stores.update({ theme_id: id });
-      await refreshStore();
-      setSelectedId(id);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      const fresh = await refreshStore();
+      if (fresh?.theme_id !== id) {
+        setError(
+          "O servidor ainda não reconhece este tema (pode ser preciso atualizar o backend). A loja continua com o tema anterior.",
+        );
+      } else {
+        setSelectedId(id);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao alterar tema";
       setError(msg);
@@ -93,8 +97,8 @@ export function ThemesPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {backendThemes.map((theme) => {
-            const gradient =
-              PREVIEW_GRADIENTS[theme.id] ?? "from-slate-400 to-slate-300";
+            const accent = theme.accent ?? "#111827";
+            const gradient = `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`;
             const isActive = theme.id === currentId;
             const isSelected = theme.id === selectedId;
 
@@ -110,7 +114,8 @@ export function ThemesPage() {
               >
                 {/* Preview */}
                 <div
-                  className={`relative flex h-28 items-end justify-start bg-gradient-to-br ${gradient} overflow-hidden`}
+                  className="relative flex h-28 items-end justify-start overflow-hidden"
+                  style={{ background: gradient }}
                 >
                   <span className="relative z-10 p-4 text-3xl drop-shadow-lg">
                     <PaletteIcon size={28} className="text-white/80" />

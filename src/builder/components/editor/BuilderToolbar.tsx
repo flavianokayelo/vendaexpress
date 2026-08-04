@@ -39,7 +39,7 @@ interface BuilderToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onPageTitleChange: (title: string) => void;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const devices: { id: DeviceMode; icon: typeof Monitor; label: string }[] = [

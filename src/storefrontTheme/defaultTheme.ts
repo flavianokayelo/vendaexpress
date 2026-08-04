@@ -1,30 +1,30 @@
 import type { ThemeConfig } from './types';
 
-// Tokens do "Standard Ecommerce", extraídos do design real do projecto de
-// referência standart-ecommerce (app/globals.css), não do design.md (que tem
-// discrepâncias confirmadas com o código). --radius-sm/md nunca são definidos
-// na referência (bug); aqui definimos uma escala completa e coerente.
+// Tokens base do storefront — identidade "Aurora": indigo profundo + dourado
+// cálido, display em Bricolage Grotesque, cantos generosos e bom respiro.
+// Serve de base para todos os temas; os presets multi-tema (themePresets) e o
+// theme_config da loja podem sobrescrever campos individuais via mergeTheme.
 export const defaultTheme: ThemeConfig = {
-  themeVersion: 'standard-ecommerce-v1',
+  themeVersion: 'aurora-v1',
   colors: {
-    primary: '#1C22E8',
-    primaryHover: '#1519C9',
-    accent: '#D4AF37',
-    ink: '#111827',
-    inkSecondary: '#4B5563',
+    primary: '#4F46E5',
+    primaryHover: '#4338CA',
+    accent: '#F2B73B',
+    ink: '#191A23',
+    inkSecondary: '#5A5E6B',
     surface: '#FFFFFF',
-    surfaceMuted: '#FAFAFA',
-    line: '#E8ECF0',
-    success: '#1F9D55',
-    danger: '#DC2626',
-    warning: '#D97706',
+    surfaceMuted: '#F6F7FB',
+    line: '#E9EBF2',
+    success: '#16A34A',
+    danger: '#E11D48',
+    warning: '#F59E0B',
   },
   typography: {
-    fontDisplay: "'Inter', ui-sans-serif, system-ui, sans-serif",
+    fontDisplay: "'Bricolage Grotesque', 'Inter', ui-sans-serif, system-ui, sans-serif",
     fontBody: "'Inter', ui-sans-serif, system-ui, sans-serif",
   },
-  radius: { sm: 8, md: 12, lg: 18, pill: 9999 },
-  spacing: { unit: 8, sectionGap: 48 },
+  radius: { sm: 6, md: 12, lg: 18, pill: 9999 },
+  spacing: { unit: 8, sectionGap: 64 },
   // Sombras em camadas (blur pequeno e nítido + blur largo e suave) — a
   // técnica que dá sensação de profundidade "premium" em vez de sombra chapada.
   shadow: {

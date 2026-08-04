@@ -263,7 +263,7 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="bg-[var(--sf-primary)]/[0.94] shadow-[var(--sf-shadow-md)] backdrop-blur-xl backdrop-saturate-150">
+      <div className="shadow-[var(--sf-shadow-md)] backdrop-blur-xl backdrop-saturate-150" style={{ background: 'linear-gradient(180deg, color-mix(in srgb, var(--sf-primary) 96%, white), color-mix(in srgb, var(--sf-primary-hover) 30%, var(--sf-primary)))' }}>
         {/* barra utilitária */}
         <div className="mx-auto hidden max-w-[1240px] items-center justify-between px-4 text-[12px] text-white/85 sm:flex" style={{ height: 30 }}>
           <nav className="flex items-center gap-4">
@@ -308,7 +308,7 @@ export function Header({
                   <StoreIcon size={18} strokeWidth={2} />
                 </div>
               )}
-              <span className="hidden truncate text-[19px] font-extrabold tracking-[-0.02em] text-white sm:block sm:text-[24px]">
+              <span className="hidden truncate font-display text-[19px] font-extrabold tracking-[-0.02em] text-white sm:block sm:text-[24px]">
                 {store.name}
               </span>
             </div>

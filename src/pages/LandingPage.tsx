@@ -669,10 +669,20 @@ const gradients = [
   "linear-gradient(135deg, #f97316, #ec4899)",
 ];
 
+interface Testimonial {
+  num: string;
+  lab: string;
+  quote: string;
+  avatar: string;
+  name: string;
+  role: string;
+  color: string;
+}
+
 function TestimonialCarousel({
   testimonials,
 }: {
-  testimonials: typeof testimonials;
+  testimonials: Testimonial[];
 }) {
   const [active, setActive] = useState(0);
   const reduce = useReducedMotion();

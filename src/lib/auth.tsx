@@ -18,7 +18,7 @@ type AuthContextValue = {
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  refreshStore: () => Promise<void>;
+  refreshStore: () => Promise<Store | null>;
   /** Adopta uma sessão já emitida pelo backend (usado após o pagamento EMIS) */
   adoptSession: (user: AuthUser, token: string) => Promise<void>;
 };
@@ -43,13 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCachedSession({ user: freshUser, store: freshStore });
   };
 
-  const refreshStore = async () => {
+  const refreshStore = async (): Promise<Store | null> => {
     try {
       const s = await api.stores.getMine();
       setStore(s);
       if (user) setCachedSession({ user, store: s });
+      return s;
     } catch {
       setStore(null);
+      return null;
     }
   };
 

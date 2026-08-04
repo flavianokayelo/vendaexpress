@@ -1,0 +1,22 @@
+{
+  "id": "luxury",
+  "name": "luxury",
+  "label": "Luxury",
+  "description": "Elegância e sofisticação para marcas premium",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/luxury.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["luxo", "premium", "refinado"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}

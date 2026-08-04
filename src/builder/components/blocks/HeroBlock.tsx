@@ -115,7 +115,7 @@ export const heroBlock: BlockDefinition = {
           style={{ minHeight: `${minHeight ?? 500}px`, ...style }}
         >
           <img src={imageUrl} alt={imageAlt || ''} className="absolute inset-0 h-full w-full object-cover" />
-          {overlay > 0 && (
+          {Number(overlay) > 0 && (
             <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${(+overlay) / 100})` }} />
           )}
           <div className="relative z-10 max-w-2xl px-6 py-16 text-center" style={{ color: textColor }}>

@@ -36,7 +36,7 @@ export function Section({
                 </span>
               )}
               <h2
-                className={`text-[17px] font-bold tracking-[-0.012em] ${dark ? 'text-white' : 'text-[var(--sf-ink)]'}`}
+                className={`font-display text-[17px] font-extrabold tracking-[-0.012em] ${dark ? 'text-white' : 'text-[var(--sf-ink)]'}`}
               >
                 {title}
               </h2>

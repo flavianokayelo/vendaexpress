@@ -36,7 +36,7 @@ export function Hero({
   const hasCaption = !!(s.title || s.kicker);
 
   return (
-    <div className="group relative h-full overflow-hidden rounded-[14px] bg-[var(--sf-surface-muted)] shadow-[var(--sf-shadow-md)]">
+    <div className="group relative h-full overflow-hidden rounded-[var(--sf-radius-lg)] bg-[var(--sf-surface-muted)] shadow-[var(--sf-shadow-md)]">
         <div
           className={`relative h-full min-h-[150px] ${s.cta ? 'cursor-pointer' : ''}`}
           onClick={() => s.cta && onCtaClick?.()}
@@ -51,16 +51,16 @@ export function Hero({
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               <img src={s.image} alt={s.title || ''} className="h-full w-full object-cover" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               {hasCaption && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-1.5 px-4 py-3.5 sm:px-6 sm:py-5">
                   {s.kicker && (
-                    <span className="rounded-[var(--sf-radius-pill)] bg-white/15 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-[11.5px]">
+                    <span className="rounded-[var(--sf-radius-pill)] bg-white/20 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-[11.5px]">
                       {s.kicker}
                     </span>
                   )}
                   {s.title && (
-                    <div className="max-w-[85%] truncate text-[16px] font-bold leading-tight tracking-[-0.01em] text-white sm:text-[24px]">
+                    <div className="max-w-[85%] truncate font-display text-[16px] font-bold leading-tight tracking-[-0.01em] text-white sm:text-[24px]">
                       {s.title}
                     </div>
                   )}

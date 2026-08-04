@@ -1,0 +1,22 @@
+{
+  "id": "fashion-luxe",
+  "name": "fashion-luxe",
+  "label": "Fashion Luxe",
+  "description": "Moda premium com curadoria editorial",
+  "version": "1.0.0",
+  "engineVersion": "1.0",
+  "contractVersion": 1,
+  "preview": "/previews/fashion-luxe.png",
+  "author": {
+    "name": "Venda Express",
+    "url": "https://vendaexpress.com"
+  },
+  "tags": ["moda", "premium", "editorial"],
+  "supports": {
+    "multiLanguage": false,
+    "multiCurrency": false,
+    "wishlist": true,
+    "quickView": true,
+    "liveSearch": true
+  }
+}
