@@ -83,7 +83,7 @@ export function ProductCard({
 
   return (
     <motion.div
-      className={`group relative flex w-full flex-col overflow-hidden rounded-[10px] shadow-[var(--sf-shadow-sm)] transition-[transform,box-shadow,border-color] duration-200 hover:border-[var(--sf-primary)] ${CARD_STYLE_CLASS[card.style]} ${CARD_HOVER_CLASS[card.hoverEffect]} ${onView ? 'cursor-pointer' : ''}`}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-[10px] shadow-[var(--sf-shadow-sm)] transition-[transform,box-shadow,border-color] duration-200 hover:border-[var(--sf-primary)] ${CARD_STYLE_CLASS[card.style]} ${CARD_HOVER_CLASS[card.hoverEffect]} ${onView ? 'cursor-pointer' : ''}`}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-40px' }}

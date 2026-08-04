@@ -25,6 +25,19 @@ export const config: ThemeConfigData = {
     card: { style: "bordered", imageAspect: "3:2", hoverEffect: "lift" },
   },
   layout: {
+    home: {
+      sections: [
+        { id: "announcement", enabled: true },
+        { id: "hero", enabled: true },
+        { id: "profile-bar", enabled: true },
+        { id: "feature-rail", enabled: true },
+        { id: "categories", enabled: true },
+        { id: "promo", enabled: true, layout: "rail", limit: 10 },
+        { id: "featured", enabled: true, layout: "grid", limit: 6 },
+        { id: "vouchers", enabled: true },
+        { id: "catalog", enabled: true },
+      ],
+    },
     productCardVariant: "default",
     productGridVariant: "default",
   },

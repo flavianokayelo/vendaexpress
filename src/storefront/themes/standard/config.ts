@@ -7,6 +7,20 @@ export const config: ThemeConfigData = {
   id: "standard",
   tokens: {},
   layout: {
+    hero: { mode: "carousel" },
+    home: {
+      sections: [
+        { id: "announcement", enabled: true },
+        { id: "hero", enabled: true },
+        { id: "promo-banners", enabled: true },
+        { id: "profile-bar", enabled: true },
+        { id: "tabs", enabled: true },
+        { id: "categories", enabled: true },
+        { id: "promo", enabled: true, layout: "grid", limit: 8 },
+        { id: "featured", enabled: true, layout: "grid", limit: 8 },
+        { id: "catalog", enabled: true },
+      ],
+    },
     productCardVariant: "default",
     productGridVariant: "default",
   },

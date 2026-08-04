@@ -21,6 +21,16 @@ export const config: ThemeConfigData = {
     card: { style: "bordered" },
   },
   layout: {
+    hero: { mode: "carousel" },
+    home: {
+      sections: [
+        { id: "hero", enabled: true },
+        { id: "promo-banners", enabled: true },
+        { id: "categories", enabled: true },
+        { id: "featured", enabled: true, layout: "grid", limit: 6 },
+        { id: "catalog", enabled: true },
+      ],
+    },
     productCardVariant: "default",
     productGridVariant: "default",
   },

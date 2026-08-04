@@ -21,6 +21,15 @@ export const config: ThemeConfigData = {
     card: { style: "flat" },
   },
   layout: {
+    hero: { mode: "static" },
+    home: {
+      sections: [
+        { id: "hero", enabled: true },
+        { id: "categories", enabled: true },
+        { id: "featured", enabled: true, layout: "grid", limit: 8 },
+        { id: "catalog", enabled: true },
+      ],
+    },
     productCardVariant: "default",
     productGridVariant: "default",
   },

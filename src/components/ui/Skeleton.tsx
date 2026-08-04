@@ -104,44 +104,23 @@ export function SkeletonStorefrontCard({ className = "" }: { className?: string 
   );
 }
 
-/** Esqueleto da home da loja pública — espelha Header/Hero/categorias/grade
- * de produtos, mostrado antes do tema da loja (cores) estar disponível. */
+/** Loader ultra clean da home da loja pública — círculo fino com rotação
+ * lenta sobre o fundo da marca (surface muted), antes de o tema carregar. */
 export function StorefrontHomeSkeleton() {
   return (
-    <div className="min-h-screen bg-white" aria-hidden="true">
-      <div className="bg-ink/[0.06] px-4 py-2.5" style={{ minHeight: 74 }}>
-        <div className="mx-auto flex max-w-[1240px] items-center gap-4">
-          <Skeleton className="h-9 w-9 flex-shrink-0 rounded-[9px] bg-ink/10" />
-          <Skeleton className="hidden h-6 w-32 sm:block bg-ink/10" />
-          <Skeleton className="h-9 flex-1 rounded-[3px] bg-ink/10 sm:h-10" />
-          <Skeleton className="h-6 w-6 flex-shrink-0 rounded-full bg-ink/10" />
-          <Skeleton className="h-6 w-6 flex-shrink-0 rounded-full bg-ink/10" />
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-[1240px] px-2 pt-2 sm:px-4">
-        <Skeleton className="h-[clamp(150px,24vw,300px)] w-full rounded-[6px]" />
-      </div>
-
-      <div className="mx-auto max-w-[1240px] px-2 pt-4 sm:px-4">
-        <div className="flex gap-3 overflow-hidden">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex flex-shrink-0 flex-col items-center gap-1.5">
-              <SkeletonCircle className="h-12 w-12 sm:h-14 sm:w-14" />
-              <Skeleton className="h-2 w-10" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-[1240px] px-2 pt-6 sm:px-4">
-        <Skeleton className="mb-2.5 h-4 w-32" />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <SkeletonStorefrontCard key={i} />
-          ))}
-        </div>
-      </div>
+    <div
+      role="status"
+      className="flex min-h-screen flex-col items-center justify-center"
+      style={{ backgroundColor: "var(--sf-surface-muted, #F6F7FB)" }}
+    >
+      <span
+        aria-hidden="true"
+        className="h-9 w-9 animate-spin rounded-full border-2 border-ink/[0.06] border-t-ink/[0.3]"
+        style={{ animationDuration: "1.8s" }}
+      />
+      <span className="mt-5 text-[13px] font-medium tracking-[0.01em] text-ink/[0.4]">
+        Carregando...
+      </span>
     </div>
   );
 }
