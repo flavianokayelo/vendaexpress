@@ -67,6 +67,26 @@ export interface AppliedCoupon {
   discount_percent: number;
 }
 
+/**
+ * Contexto de rota que o engine injeta numa página de tema.
+ * Indica que página aberta está a ser apresentada e com que estado.
+ * É OPACIONAL — nas rotas de home fica vazio/ausente.
+ */
+export interface StorefrontRoute {
+  /** qual página está ativa */
+  kind: "home" | "product" | "category" | "search";
+  /** id do produto quando kind === "product" */
+  productId?: string;
+  /** id da categoria quando kind === "category" */
+  categoryId?: string;
+  /** termo de pesquisa quando kind === "search" */
+  query?: string;
+  /** slug da categoria quando kind === "category" */
+  categorySlug?: string;
+  /** slug do produto quando kind === "product" */
+  productSlug?: string;
+}
+
 /** Tudo o que uma página de tema pode consumir. Nada aqui é controlado pelo tema. */
 export interface StorefrontApi {
   slug: string;
@@ -90,6 +110,9 @@ export interface StorefrontApi {
 
   validateCoupon: (code: string) => Promise<AppliedCoupon>;
   placeOrder: (order: PlaceOrderInput) => Promise<CheckoutResult>;
+
+  /** Contexto de rota (preenchido nas páginas abertas — product/category/search). */
+  route?: StorefrontRoute;
 }
 
 // ---------------------------------------------------------------------------

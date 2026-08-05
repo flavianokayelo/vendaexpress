@@ -58,7 +58,6 @@ export function CartProvider({ slug, children }: { slug: string; children: React
       }
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useEffect(() => {

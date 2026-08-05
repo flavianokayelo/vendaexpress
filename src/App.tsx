@@ -25,6 +25,9 @@ const ProductDetailPage = lazy(() =>
 const CategoryPage = lazy(() =>
   import('./pages/CategoryPage').then((m) => ({ default: m.CategoryPage })),
 );
+const SearchPage = lazy(() =>
+  import('./pages/SearchPage').then((m) => ({ default: m.SearchPage })),
+);
 const AdminPage = lazy(() =>
   import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })),
 );
@@ -46,6 +49,14 @@ function Router() {
   if (categoryParams) {
     return (
       <CategoryPage slug={categoryParams.slug} categoryId={categoryParams.categoryId} navigate={navigate} />
+    );
+  }
+
+  // /s/:slug/search?q= — public search
+  const searchParams = matchRoute('/s/:slug/search', path);
+  if (searchParams) {
+    return (
+      <SearchPage slug={searchParams.slug} query={route.query.get('q') || ''} navigate={navigate} />
     );
   }
 

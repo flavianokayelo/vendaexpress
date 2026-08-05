@@ -21,7 +21,6 @@ import {
 } from "motion/react";
 import {
   ArrowRight,
-  MessageCircle,
   BarChart3,
   Zap,
   ShoppingCart,
@@ -33,7 +32,6 @@ import {
   CreditCard,
   Clock,
   Undo2,
-  User,
 } from "lucide-react";
 import { resolveMediaUrl } from "../lib/api";
 
@@ -810,49 +808,67 @@ function TestimonialCarousel({
 
 const plans = [
   {
-    tag: "início",
-    name: "Início",
-    desc: "Para validar a tua ideia e fazer a primeira venda.",
-    price: "Kz 4.900",
+    tag: "básico",
+    name: "Básico",
+    desc: "Para começar a vender online sem complicações.",
+    price: "Kz 3.999",
     per: "/mês",
     pop: false,
     color: "#0d9488",
     perks: [
-      "Loja + domínio grátis",
+      "Loja online + subdomínio grátis",
+      "Até 10 produtos",
       "Multicaixa e cartão",
-      "Até 100 produtos",
+      "Mensagens no WhatsApp",
       "Suporte por e-mail",
     ],
   },
   {
-    tag: "mais popular",
-    name: "Crescimento",
-    desc: "Para escalar as tuas vendas com tudo que precisas.",
-    price: "Kz 14.900",
+    tag: "start",
+    name: "Starter",
+    desc: "Para quem já quer crescer com mais produtos.",
+    price: "Kz 7.999",
     per: "/mês",
-    pop: true,
+    pop: false,
     color: "#1a4bf0",
     perks: [
-      "Tudo do Início",
-      "Vendas pelo WhatsApp",
-      "Logística integrada",
-      "Produtos ilimitados",
-      "Analytics avançado",
+      "Tudo do Básico",
+      "Até 50 produtos",
+      "Sem marca de água",
+      "Cupons de desconto",
+      "Suporte prioritário",
     ],
   },
   {
-    tag: "enterprise",
-    name: "Enterprise",
-    desc: "Para marcas com alto volume e integrações sob medida.",
-    price: "Sob consulta",
-    per: "",
+    tag: "mais popular",
+    name: "Business",
+    desc: "Para escalar de verdade com tudo o que precisas.",
+    price: "Kz 14.990",
+    per: "/mês",
+    pop: true,
+    color: "#8b5cf6",
+    perks: [
+      "Tudo do Starter",
+      "Produtos ilimitados",
+      "Domínio personalizado",
+      "Relatórios e analytics",
+      "Vendas pelo WhatsApp + IA",
+    ],
+  },
+  {
+    tag: "diamante",
+    name: "Diamante",
+    desc: "Para marcas que querem o máximo de controlo.",
+    price: "Kz 24.990",
+    per: "/mês",
     pop: false,
     color: "#f59e0b",
     perks: [
-      "Tudo do Crescimento",
+      "Tudo do Business",
+      "Múltiplos administradores",
+      "Tema premium",
+      "Integração avançada (API)",
       "Gerente de conta dedicado",
-      "API exclusiva",
-      "SLA e taxas negociadas",
     ],
   },
 ];
@@ -871,7 +887,7 @@ function CountUpSection() {
       ([entry]) => {
         if (entry.isIntersecting && !countedRef.current) {
           countedRef.current = true;
-          const targets = [12, 3, 60, 99];
+          const targets = [12, 40, 60, 99];
           const dur = 1500;
           const start = performance.now();
           const tick = (now: number) => {
@@ -897,8 +913,8 @@ function CountUpSection() {
   const items = [
     { val: `${counts[0]}k+`, label: "lojas ativas", color: "#1a4bf0" },
     {
-      val: `Kz ${counts[1]} bi`,
-      label: "vendidos na plataforma",
+      val: `+${counts[1]}k`,
+      label: "encomendas entregues",
       color: "#8b5cf6",
     },
     { val: `${counts[2]}s`, label: "para criar uma loja", color: "#f59e0b" },
@@ -1606,8 +1622,10 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
   const [annual, setAnnual] = useState(false);
   const [faqOpen, setFaqOpen] = useState(-1);
   const annualMap: Record<string, { price: string; saved: string }> = {
-    "Início": { price: "Kz 3.900", saved: "20%" },
-    "Crescimento": { price: "Kz 11.900", saved: "20%" },
+    "Básico": { price: "Kz 3.199", saved: "20%" },
+    "Starter": { price: "Kz 6.399", saved: "20%" },
+    "Business": { price: "Kz 11.990", saved: "20%" },
+    "Diamante": { price: "Kz 19.990", saved: "20%" },
   };
 
   return (
@@ -3310,7 +3328,7 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
           </div>
 
           {/* Cards */}
-          <div className="grid md:grid-cols-3 gap-6 items-start">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
             {plans.map((plan, i) => {
               const isPopular = plan.pop;
               const annualInfo = annualMap[plan.name];
@@ -3318,10 +3336,10 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
               const displayPer = annual && annualInfo ? "/mês (fact. anual)" : plan.per;
 
               return (
-                <Reveal key={plan.name} delay={i * 0.08}>
+                <Reveal key={plan.name} delay={i * 0.08} className="h-full">
                   <TiltCard
                     glare
-                    className={`h-full relative rounded-2xl border p-8 md:p-9 ${
+                    className={`h-full flex flex-col relative rounded-2xl border p-6 md:p-8 ${
                       isPopular
                         ? "bg-gradient-to-b from-[#0f1929] to-[#0a0e1a] border-primary/30 shadow-xl shadow-primary/10 scale-100 md:scale-[1.05]"
                         : "bg-surface border-border"
@@ -3337,10 +3355,10 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                             borderRadius: "999px",
                             boxShadow: "0 4px 20px rgba(26,75,240,0.35)",
                           }}
-                        >
-                        </span>
-                      </div>
-                    )}
+                          >
+                          </span>
+                        </div>
+                      )}
 
                     {/* Tag */}
                     <span
@@ -3381,22 +3399,15 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                         ~{annualInfo.price}/mês no plano anual
                       </span>
                     )}
-                    {plan.name === "Enterprise" && (
-                      <span className="block text-[12px] font-medium mt-1 text-ink-3">
-                        Sob medida para o teu negócio
-                      </span>
-                    )}
 
                     {/* CTA */}
                     <MagneticWrap strength={0.2}>
                       <Link
-                        href={plan.name === "Enterprise" ? "mailto:suporte@vendaexpress.com" : "/signup"}
+                        href="/signup"
                         data-magnetic
                         className={`w-full inline-flex items-center justify-center gap-2.5 font-heading font-semibold text-[14px] mt-6 mb-6 px-5 py-3 transition-all btn-press ${
                           isPopular
                             ? "text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/35"
-                            : plan.name === "Enterprise"
-                            ? "bg-transparent text-ink border-2 border-border hover:border-ink hover:bg-ink hover:text-paper"
                             : "bg-transparent text-ink border-2 border-ink hover:bg-ink hover:text-paper"
                         }`}
                         style={{
@@ -3407,12 +3418,12 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                         }}
                         navigate={navigate}
                       >
-                        {isPopular ? "Começar agora →" : plan.name === "Enterprise" ? "Falar connosco" : "Testar grátis"}
+                        {isPopular ? "Começar agora →" : "Testar grátis"}
                       </Link>
                     </MagneticWrap>
 
                     {/* Divider */}
-                    <div className={`h-px mb-6 ${isPopular ? "bg-white/10" : "bg-border"}`} />
+                    <div className={`h-px mb-6 mt-auto ${isPopular ? "bg-white/10" : "bg-border"}`} />
 
                     {/* Perks */}
                     <ul className="space-y-3.5">
@@ -3617,7 +3628,7 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
               },
               {
                 q: "Quanto custa?",
-                a: "Tens 14 dias grátis em qualquer plano para testar sem compromisso. Depois disso, podes escolher entre os planos Basic, Pro ou Unlimited conforme o volume de vendas. Sem taxas escondidas e sem surpresas.",
+                a: "Tens 14 dias grátis em qualquer plano para testar sem compromisso. Depois disso, podes escolher entre os planos Básico, Starter, Business ou Diamante conforme o volume de vendas. Sem taxas escondidas e sem surpresas.",
               },
               {
                 q: "Posso usar o meu próprio domínio?",

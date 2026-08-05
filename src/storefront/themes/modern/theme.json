@@ -2,8 +2,8 @@
   "id": "modern",
   "name": "modern",
   "label": "Modern",
-  "description": "Design contemporâneo e versátil",
-  "version": "1.0.0",
+  "description": "Marketplace denso e vibrante, inspirado nos grandes bazares online",
+  "version": "2.0.0",
   "engineVersion": "1.0",
   "contractVersion": 1,
   "preview": "/previews/modern.png",
@@ -11,7 +11,7 @@
     "name": "Venda Express",
     "url": "https://vendaexpress.com"
   },
-  "tags": ["moderno", "versatil", "contemporaneo"],
+  "tags": ["marketplace", "denso", "promocional"],
   "supports": {
     "multiLanguage": false,
     "multiCurrency": false,

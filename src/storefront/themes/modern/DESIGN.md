@@ -2,46 +2,42 @@
 
 ## Objetivo
 
-Tema principal que todo cliente recebe ao criar uma loja. Deve sentir-se rapido, moderno e pronto para uso profissional.
+Marketplace denso e promocional — cada centímetro de ecrã vende. Inspirado
+nos grandes bazares online (Temu/AliExpress/Shopee): grelha compacta,
+badges de promoção bem visíveis, cabeçalho de confiança.
 
 ## Ideal para
 
-- Moda
-- Eletronicos
-- Cosmeticos
-- Loja geral
-- Negocios que ainda nao escolheram um nicho visual
+- Lojas com muitos produtos e catálogo variado
+- Ofertas e promoções frequentes
+- Compradores que comparam preço antes de tudo
 
 ## Direcao visual
 
-- Estilo Apple/Vercel: muito espaco em branco, clareza e acabamento limpo.
-- Hero grande com mensagem direta.
-- Produtos em grade com boa respiracao.
-- Poucas cores, com contraste forte nos CTAs.
-- Layout rapido, leve e sem excesso visual.
-
-## Home
-
-Ordem recomendada:
-
-1. Announcement bar
-2. Hero grande
-3. Banners promocionais
-4. Perfil da loja
-5. Tabs de navegacao
-6. Categorias
-7. Produtos promocionais
-8. Produtos em destaque
-9. Catalogo completo
+- Grelha densa (5-6 colunas em desktop), cartões pequenos e informativos.
+- Cabeçalho em duas camadas: barra utilitária escura + faixa "oliva" com
+  pesquisa em destaque — pele fixa da identidade do tema (não muda com a
+  cor da loja).
+- Barra de confiança verde logo abaixo do cabeçalho (privacidade, pagamento,
+  entrega) — reforça segurança antes do utilizador navegar.
+- O accent (preços, CTAs, badges de promoção) usa a cor da loja
+  (`--sf-primary`); o resto do "chrome" (oliva/verde/escuro) é fixo.
+- Poucos cantos arredondados — sensação de catálogo denso, não boutique.
 
 ## Componentes
 
-- `Header`: moderno, limpo e orientado a busca.
-- `ProductCard`: flat, com hover leve.
-- `ProductGrid`: grid principal, com rails apenas quando ajudam descoberta.
-- `Cart`: drawer rapido e claro.
-- `Footer`: organizado, sem peso visual excessivo.
+- `Header`: barra utilitária + cabeçalho oliva com pesquisa + pills de
+  categoria + barra de confiança.
+- `ProductCard`: denso, com badge de promoção, condição e aviso de stock
+  baixo — só mostra o que existe realmente nos dados do produto (sem
+  números de vendas ou avaliações fabricados).
+- `ProductGrid`: grelha compacta (grid) ou calha horizontal (rail) para
+  secções de destaque.
+- `Cart`: drawer partilhado (`CartAdapter`), já 100% orientado a tokens.
+- `Footer`: escuro, denso, com categorias e apoio ao cliente.
 
 ## Notas
 
-Este deve ser o tema padrao do produto. Qualquer ajuste deve preservar velocidade visual, clareza e flexibilidade para varios nichos.
+Todas as páginas abertas (produto, categoria, pesquisa) herdam o mesmo
+cabeçalho e grelha densos, para a loja sentir-se consistente do início ao
+fim — não só na home.

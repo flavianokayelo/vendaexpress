@@ -1,20 +1,20 @@
 // =============================================================================
-// ProductDetailPage — wrapper fino da rota /s/:slug/products/:id.
+// SearchPage — wrapper fino da rota /s/:slug/search?q=.
 // A fetchar e a derivar dados está a cargo do StorefrontRoutePage; aqui apenas
-// descrevemos a rota e delegamos o render ao tema (getThemePage → "Product").
+// descrevemos a rota e delegamos o render ao tema (getThemePage → "Search").
 // =============================================================================
 import type { StorefrontRoute } from "../storefront/contract";
 import { StorefrontRoutePage } from "./StorefrontRoutePage";
 
-export function ProductDetailPage({
+export function SearchPage({
   slug,
-  productId,
+  query,
   navigate,
 }: {
   slug: string;
-  productId: string;
+  query: string;
   navigate: (to: string) => void;
 }) {
-  const route: StorefrontRoute = { kind: "product", productId };
+  const route: StorefrontRoute = { kind: "search", query };
   return <StorefrontRoutePage slug={slug} navigate={navigate} route={route} />;
 }

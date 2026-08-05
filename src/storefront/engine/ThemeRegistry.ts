@@ -126,6 +126,29 @@ export function getThemePages(id: string): ThemePages {
 }
 
 /**
+ * Página de tema pedida (ex: "Product"): usa a do tema pedido se existir;
+ * senão a do fallback standard. Home (obrigatória) cai sempre para a do
+ * standard se o tema não tiver. Nunca devolve undefined para chaves válidas
+ * com fallback presente.
+ */
+export function getThemePage(
+  id: string,
+  key: keyof ThemePages,
+): NonNullable<ThemePages[keyof ThemePages]> | null {
+  const source = resolveTheme(id);
+  const std = getStandard();
+  const fromSource = source?.pages[key];
+  const fromStd = std?.pages[key];
+  const resolved =
+    (typeof fromSource === "function"
+      ? fromSource
+      : typeof fromStd === "function"
+        ? fromStd
+        : undefined) ?? null;
+  return resolved as NonNullable<ThemePages[keyof ThemePages]> | null;
+}
+
+/**
  * DNA (config.ts) do tema pedido; se o tema não estiver registado (ou for o
  * fallback), devolve o DNA do standard. Nunca lança a menos que nem o fallback
  * exista — nesse caso não há como resolver tokens e o erro é voluntariamente ruidoso.

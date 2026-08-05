@@ -1,9 +1,12 @@
-import { Header } from "../../../components/theme/Header";
-import { Footer } from "../../../components/theme/Footer";
-import { ProductCard } from "../../../components/theme/ProductCard";
-import { ProductGrid } from "../../../components/theme/ProductGrid";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
+import { ProductCard } from "./components/ProductCard";
+import { ProductGrid } from "./components/ProductGrid";
 import { CartAdapter } from "../shared/CartAdapter";
-import { HomePage } from "../standard/HomePage";
+import { HomePage } from "./HomePage";
+import { ProductPage } from "./pages/ProductPage";
+import { CategoryPage } from "./pages/CategoryPage";
+import { SearchPage } from "./pages/SearchPage";
 import type { ThemeContract } from "../../contract";
 import manifest from "./theme.json";
 import { config } from "./config";
@@ -21,6 +24,9 @@ export const modernTheme: ThemeContract = {
   },
   pages: {
     Home: HomePage,
+    Product: ProductPage,
+    Category: CategoryPage,
+    Search: SearchPage,
   },
 };
 

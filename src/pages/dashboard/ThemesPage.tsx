@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import {
-  Check,
-  AlertCircle,
-  RefreshCw,
-  PaletteIcon,
-} from "lucide-react";
+import { Check, PaletteIcon } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
 import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
+import { Skeleton } from "../../components/ui/Skeleton";
+import { useToast } from "../../components/ui/Toast";
 import { frontendThemeCatalog } from "../../storefront/themes/catalog";
 
 type ApiThemeInfo = {
@@ -25,11 +23,11 @@ type ApiThemeInfo = {
 
 export function ThemesPage() {
   const { store, refreshStore } = useAuth();
+  const toast = useToast();
   const [backendThemes, setBackendThemes] = useState<ApiThemeInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,12 +40,12 @@ export function ThemesPage() {
         }
         setBackendThemes(Array.from(byId.values()));
       } catch {
-        setError("Erro ao carregar temas");
+        toast.error("Erro ao carregar temas");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (store?.theme_id) setSelectedId(store.theme_id);
@@ -58,22 +56,22 @@ export function ThemesPage() {
   const select = async (id: string) => {
     if (id === currentId) return;
     setSaving(true);
-    setError(null);
     try {
       await api.stores.update({ theme_id: id });
       const fresh = await refreshStore();
       if (fresh?.theme_id !== id) {
-        setError(
+        toast.error(
           "O servidor ainda não reconhece este tema (pode ser preciso atualizar o backend). A loja continua com o tema anterior.",
         );
       } else {
         setSelectedId(id);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+        toast.success("Tema aplicado");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao alterar tema";
-      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -83,16 +81,26 @@ export function ThemesPage() {
     <div>
       <PageHeader title="Temas" subtitle="Escolhe o visual da tua loja" />
 
-      {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          <AlertCircle size={16} /> {error}
-        </div>
-      )}
-
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
-          <RefreshCw size={20} className="mr-2 animate-spin" />A carregar
-          temas...
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-[2px] border border-border bg-paper shadow-card"
+            >
+              <Skeleton className="h-28 w-full rounded-none" />
+              <div className="p-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="mt-2 h-3 w-full" />
+                <Skeleton className="mt-1 h-3 w-2/3" />
+                <div className="mt-3 flex gap-1.5">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-10" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -105,10 +113,10 @@ export function ThemesPage() {
             return (
               <div
                 key={theme.id}
-                className={`group relative cursor-pointer overflow-hidden rounded-2xl border-2 bg-white transition-all duration-200 ${
+                className={`group relative cursor-pointer overflow-hidden rounded-[2px] border bg-paper transition-all duration-200 ${
                   isActive
-                    ? "border-indigo-600 shadow-lg shadow-indigo-100"
-                    : "border-slate-200 hover:border-slate-300 hover:shadow-md"
+                    ? "border-accent shadow-floating"
+                    : "border-border hover:border-ink/20 hover:shadow-card"
                 }`}
                 onClick={() => select(theme.id)}
               >
@@ -120,20 +128,20 @@ export function ThemesPage() {
                   <span className="relative z-10 p-4 text-3xl drop-shadow-lg">
                     <PaletteIcon size={28} className="text-white/80" />
                   </span>
+                  {isActive && (
+                    <span className="absolute right-2 top-2 z-10">
+                      <Badge color="green">
+                        <Check size={11} /> Ativo
+                      </Badge>
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="flex items-center gap-1.5 font-bold text-slate-900">
-                      {theme.label}
-                    </h3>
-                    {isActive && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700">
-                        <Check size={12} /> Ativo
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                  <h3 className="font-heading text-[16px] font-bold text-ink">
+                    {theme.label}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 font-mono text-[12px] text-ink-2">
                     {theme.description}
                   </p>
 
@@ -142,7 +150,7 @@ export function ThemesPage() {
                     {theme.tags?.slice(0, 4).map((tag: string) => (
                       <span
                         key={tag}
-                        className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+                        className="rounded-[2px] bg-ink/5 px-2 py-0.5 font-mono text-[10px] font-medium text-ink-2"
                       >
                         {tag}
                       </span>
@@ -151,7 +159,7 @@ export function ThemesPage() {
 
                   {/* Stats + action */}
                   <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                    <div className="flex items-center gap-2 font-mono text-[11px] text-ink-2">
                       <span>v{theme.version}</span>
                       {theme.in_use > 0 && (
                         <span>· {theme.in_use} loja(s)</span>
@@ -161,17 +169,14 @@ export function ThemesPage() {
                       <Button
                         size="sm"
                         variant={isSelected ? "primary" : "outline"}
-                        disabled={saving}
+                        loading={saving && isSelected}
+                        success={isSelected && saved}
                         onClick={(e) => {
                           e.stopPropagation();
                           select(theme.id);
                         }}
                       >
-                        {saving && isSelected
-                          ? "A aplicar..."
-                          : isSelected && saved
-                            ? "Aplicado"
-                            : "Aplicar"}
+                        {isSelected && saved ? "Aplicado" : "Aplicar"}
                       </Button>
                     )}
                   </div>
@@ -179,12 +184,6 @@ export function ThemesPage() {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {saved && !error && (
-        <div className="mt-6 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-          <Check size={16} /> Tema alterado com sucesso!
         </div>
       )}
     </div>
