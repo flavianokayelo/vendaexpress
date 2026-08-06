@@ -1,12 +1,24 @@
-import { Header } from "../../../components/theme/Header";
-import { Footer } from "../../../components/theme/Footer";
-import { ProductCard } from "../../../components/theme/ProductCard";
-import { ProductGrid } from "../../../components/theme/ProductGrid";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
+import { ProductCard } from "./components/ProductCard";
+import { ProductGrid } from "./components/ProductGrid";
 import { CartAdapter } from "../shared/CartAdapter";
-import { HomePage } from "../standard/HomePage";
+import { FreshMarketPageHeader } from "./components/FreshMarketPageHeader";
+import { createOpenPages, type OpenPagesSkin } from "../shared/createOpenPages";
+import { HomePage } from "./HomePage";
 import type { ThemeContract } from "../../contract";
 import manifest from "./theme.json";
 import { config } from "./config";
+
+const SKIN: OpenPagesSkin = {
+  breadcrumb: "slash",
+  titleAccent: "bar",
+  controls: "pill",
+  promoBadge: "circle",
+  sectionTitle: "bar",
+};
+
+const openPages = createOpenPages({ pageHeader: FreshMarketPageHeader, grid: ProductGrid, skin: SKIN });
 
 export const freshMarketTheme: ThemeContract = {
   id: "fresh-market",
@@ -21,6 +33,7 @@ export const freshMarketTheme: ThemeContract = {
   },
   pages: {
     Home: HomePage,
+    ...openPages,
   },
 };
 

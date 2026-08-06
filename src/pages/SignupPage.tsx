@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Store, ArrowLeft, Check, AlertCircle, Lock, Clock } from 'lucide-react';
-import { Button } from '../components/ui/Button';
 import { Input, Field } from '../components/ui/Field';
 import { EmisPaymentModal } from '../components/EmisPaymentModal';
 import { useAuth } from '../lib/auth';
@@ -156,25 +155,47 @@ export function SignupPage({ navigate, planId }: { navigate: (to: string) => voi
   const tentativasEmFalta = trial ? Math.max(0, trial.needed - trial.failed_attempts) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-100">
-      <div className="mx-auto max-w-2xl px-6 py-10">
-        <button onClick={() => navigate('/')} className="mb-6 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-paper">
+      {/* Decorative paper + colour palette — same mood as the landing */}
+      <div className="pointer-events-none absolute -top-44 -left-32 h-[520px] w-[520px] rounded-full bg-primary/20 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-52 -right-28 h-[560px] w-[560px] rounded-full bg-violet-500/25 blur-[130px]" />
+      <div className="pointer-events-none absolute top-1/4 right-1/3 h-[380px] w-[380px] rounded-full bg-amber-400/15 blur-[110px]" />
+      <div className="pointer-events-none absolute top-2/3 left-1/4 h-[300px] w-[300px] rounded-full bg-rose-400/10 blur-[100px]" />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #1a1a14 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      <div className="relative mx-auto max-w-3xl px-6 py-8">
+        <button onClick={() => navigate('/')} className="mb-6 inline-flex items-center gap-1.5 font-body text-sm font-medium text-ink-2 transition-colors hover:text-ink">
           <ArrowLeft size={16} /> Voltar
         </button>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
-          <div className="mb-6 flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-700 to-blue-900 text-white">
-              <Store size={22} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Criar a minha loja</h1>
-              <p className="text-sm text-slate-500">Escolhe o plano, paga por Multicaixa Express e a loja fica activa.</p>
-            </div>
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10">
+            <Store size={24} />
           </div>
+          <div>
+            <span className="mb-1 block font-mono text-[11px] font-semibold uppercase tracking-[.14em] text-ink-2">
+              começar · nova loja
+            </span>
+            <h1 className="font-heading text-[26px] font-bold leading-none tracking-[-.03em] text-ink">
+              Criar a minha loja
+            </h1>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-soft-lg sm:p-7">
+          <p className="text-sm text-ink-2">
+            Escolhe o plano, paga por Multicaixa Express e a loja fica activa em minutos.
+          </p>
 
           {error && (
-            <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-danger/20 bg-danger/5 p-3 text-sm text-danger">
               <AlertCircle size={18} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
@@ -182,68 +203,77 @@ export function SignupPage({ navigate, planId }: { navigate: (to: string) => voi
 
           {/* Caminho alternativo, depois de tentativas de pagamento falhadas */}
           {trial?.eligible && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-start gap-2">
-                <Clock size={18} className="mt-0.5 shrink-0 text-amber-600" />
+            <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 p-4">
+              <div className="flex items-start gap-3">
+                <Clock size={20} className="mt-0.5 shrink-0 text-warning" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-900">
+                  <p className="font-heading text-sm font-semibold text-ink">
                     O pagamento não passou {trial.failed_attempts} vezes
                   </p>
-                  <p className="mt-1 text-xs text-amber-800">
+                  <p className="mt-1 text-xs text-ink-2">
                     Para não ficares à porta, podes começar já com {trial.trial_days} dias de teste
                     e regularizar o pagamento antes de terminarem.
                   </p>
-                  <Button
+                  <button
                     type="button"
                     onClick={handleTrial}
                     disabled={trialBusy || !selectedPlan || !storeName.trim() || password.length < 6}
-                    className="mt-3 w-full sm:w-auto"
+                    className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-violet-600 px-5 py-2.5 font-heading text-[14px] font-semibold text-white shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/35 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {trialBusy ? 'A abrir a loja...' : `Começar com ${trial.trial_days} dias de teste`}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           {trial && !trial.eligible && trial.failed_attempts > 0 && tentativasEmFalta! > 0 && (
-            <div className="mb-4 rounded-lg bg-slate-100 p-3 text-xs text-slate-600">
+            <div className="mt-4 rounded-lg border border-border bg-paper p-3 font-mono text-xs text-ink-2">
               Tentativa de pagamento registada ({trial.failed_attempts} de {trial.needed}). Podes tentar de novo.
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Escolhe o teu plano <span className="text-red-600">*</span>
+              <span className="mb-2 block font-mono text-[12px] font-semibold text-ink">
+                Escolhe o teu plano <span className="text-danger">*</span>
               </span>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 {plans.map((p) => (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedPlan(p.id)}
-                    className={`rounded-xl border p-3 text-left transition-all ${
-                      selectedPlan === p.id ? 'border-blue-700 bg-blue-50 ring-1 ring-blue-700' : 'border-slate-200 hover:border-slate-300'
+                    className={`relative rounded-xl border p-3 text-left transition-all active:scale-[.98] ${
+                      selectedPlan === p.id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary shadow-soft'
+                        : 'border-border bg-surface hover:border-ink/40 hover:shadow-soft'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-900">{p.name}</span>
-                      {selectedPlan === p.id && <Check size={16} className="text-blue-700" />}
+                      <span className="font-heading text-[13px] font-semibold text-ink">{p.name}</span>
+                      {selectedPlan === p.id && (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-600 text-white">
+                          <Check size={12} strokeWidth={3} />
+                        </span>
+                      )}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">{p.price.toLocaleString('pt-AO')} Kz/mês</div>
+                    <div className="mt-1 font-mono text-[11px] text-ink-2">
+                      {p.price.toLocaleString('pt-AO')} Kz/mês
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <Field label="Nome da loja">
-              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: João Shop" />
-            </Field>
-
-            <Field label="Endereço da loja" hint={`${slug || 'o-teu-slug'}.vendaexpress.ao`}>
-              <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="joaoshop" />
-            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nome da loja">
+                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: João Shop" />
+              </Field>
+              <Field label="Endereço da loja" hint={`${slug || 'o-teu-slug'}.vendaexpress.ao`}>
+                <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="joaoshop" />
+              </Field>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email">
@@ -261,22 +291,26 @@ export function SignupPage({ navigate, planId }: { navigate: (to: string) => voi
               </Field>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={busy || !selectedPlan}>
+            <button
+              type="submit"
+              disabled={busy || !selectedPlan}
+              className="inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-primary to-violet-600 px-6 py-3 font-heading text-[15px] font-semibold text-white shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/35 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-60"
+            >
               {busy
                 ? 'A abrir o pagamento...'
                 : chosen
                 ? `Pagar ${chosen.price.toLocaleString('pt-AO')} Kz e criar loja`
                 : 'Escolhe um plano acima'}
-            </Button>
+            </button>
 
-            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
-              <Lock size={12} /> A conta só é criada depois do pagamento ser confirmado pela EMIS.
+            <p className="flex items-center justify-center gap-1.5 text-center font-mono text-xs text-ink-2">
+              <Lock size={13} /> A conta só é criada depois do pagamento ser confirmado pela EMIS.
             </p>
           </form>
 
-          <p className="mt-4 text-center text-sm text-slate-500">
+          <p className="mt-5 text-center text-sm text-ink-2">
             Já tens conta?{' '}
-            <button onClick={() => navigate('/login')} className="font-medium text-blue-700 hover:underline">
+            <button onClick={() => navigate('/login')} className="font-heading font-semibold text-primary underline-offset-4 hover:underline">
               Entrar
             </button>
           </p>

@@ -40,16 +40,18 @@ function Link({
   children,
   className,
   navigate,
+  onClick,
   ...props
 }: {
   href: string;
   children: React.ReactNode;
   className?: string;
   navigate: (to: string) => void;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 } & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   if (href.startsWith("#")) {
     return (
-      <a href={href} className={className} {...props}>
+      <a href={href} className={className} onClick={onClick} {...props}>
         {children}
       </a>
     );
@@ -59,6 +61,8 @@ function Link({
       href={href}
       className={className}
       onClick={(e) => {
+        onClick?.(e);
+        if (e.defaultPrevented) return;
         e.preventDefault();
         navigate(href);
       }}

@@ -5,6 +5,7 @@
 // As rotas públicas (home, produto, categoria, pesquisa) chamam registerThemes()
 // para que o registry esteja sempre povoado, mesmo quando se entra direto numa
 // rota sem passar pela home.
+
 import { registerTheme } from "./ThemeRegistry";
 import { standardTheme } from "../themes/standard";
 import { luxuryTheme } from "../themes/luxury";
