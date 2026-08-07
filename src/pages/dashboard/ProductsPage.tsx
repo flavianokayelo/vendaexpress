@@ -205,7 +205,7 @@ function ProductCard({
   return (
     <Surface className="group overflow-hidden">
       <div
-        className="relative h-40 overflow-hidden bg-ink/[0.04]"
+        className="relative h-28 overflow-hidden bg-ink/[0.04] sm:h-40"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
@@ -234,7 +234,7 @@ function ProductCard({
           )}
           {videoUrl && (
             <span
-              className={`flex items-center gap-1 bg-ink/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-white transition-opacity duration-200 ${
+              className={`hidden items-center gap-1 bg-ink/70 px-2 py-0.5 font-mono text-[10px] font-semibold text-white transition-opacity duration-200 sm:flex ${
                 hovering ? "opacity-0" : "opacity-100"
               }`}
               style={{ borderRadius: '2px' }}
@@ -244,11 +244,13 @@ function ProductCard({
           )}
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-heading font-bold text-ink">{p.name}</h3>
-          <div className="text-right">
-            <div className="font-mono font-bold text-accent">
+          <h3 className="font-heading text-[14px] font-bold leading-snug text-ink sm:text-base">
+            {p.name}
+          </h3>
+          <div className="shrink-0 text-right">
+            <div className="font-mono text-[12px] font-bold text-accent sm:text-base">
               {formatCurrency(Number(p.price), currency)}
             </div>
             {p.compare_at_price && p.compare_at_price > p.price && (
@@ -258,10 +260,10 @@ function ProductCard({
             )}
           </div>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-ink-2">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-ink-2">
           <span>Stock: {p.stock}</span>
           {p.color && (
-            <span className="flex items-center gap-1 bg-ink/[0.04] px-2 py-1 text-ink-2" style={{ borderRadius: '2px' }}>
+            <span className="hidden items-center gap-1 bg-ink/[0.04] px-2 py-1 text-ink-2 sm:flex" style={{ borderRadius: '2px' }}>
               <span
                 className="h-3 w-3 rounded-full ring-1 ring-inset ring-black/10"
                 style={{
@@ -278,14 +280,15 @@ function ProductCard({
           </Badge>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => onEdit(p)}>
+          <Button size="sm" variant="outline" onClick={() => onEdit(p)} className="w-full">
             <Pencil size={14} /> Editar
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onRemove(p)}
-            className="text-danger hover:bg-danger/5"
+            aria-label={`Eliminar ${p.name}`}
+            className="shrink-0 text-danger hover:bg-danger/5"
           >
             <Trash2 size={14} />
           </Button>
@@ -592,13 +595,42 @@ export function ProductsPage() {
   };
 
   const remove = async (p: Product) => {
-    if (!confirm(`Eliminar "${p.name}"?`)) return;
+    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+    toast.success(
+      "Produto eliminado",
+      6000,
+      {
+        label: "Desfazer",
+        onClick: async () => {
+          try {
+            await api.products.create({
+              name: p.name,
+              description: p.description,
+              price: String(p.price),
+              compare_at_price: p.compare_at_price ? String(p.compare_at_price) : "",
+              stock: String(p.stock),
+              category_id: p.category_id,
+              subcategory_id: p.subcategory_id,
+              active: p.active,
+            });
+            toast.info("Produto restaurado");
+            await load();
+          } catch (err) {
+            toast.error(
+              err instanceof Error ? err.message : "Erro ao restaurar produto",
+            );
+            await load();
+          }
+        },
+      },
+    );
     try {
       await api.products.remove(p.id);
-      toast.success("Produto eliminado");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao eliminar produto",
+      );
       await load();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao eliminar produto");
     }
   };
 
@@ -645,7 +677,7 @@ export function ProductsPage() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {filtered.map((p) => (
             <ProductCard
               key={p.id}
@@ -686,13 +718,14 @@ export function ProductsPage() {
                     className="h-20 w-20 border border-border object-cover"
                     style={{ borderRadius: '2px' }}
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(idx)}
-                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-white shadow-card"
-                  >
-                    <X size={12} />
-                  </button>
+<button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        aria-label="Remover a foto"
+                        className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-white shadow-card"
+                      >
+                        <X size={12} />
+                      </button>
                 </div>
               ))}
               {images.length < MAX_PHOTOS && (

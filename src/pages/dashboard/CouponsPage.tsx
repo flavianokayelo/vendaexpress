@@ -83,16 +83,36 @@ export function CouponsPage() {
     }
   };
 
-  const remove = async (c: Coupon) => {
-    if (!confirm(`Eliminar cupom "${c.code}"?`)) return;
-    try {
-      await api.coupons.remove(c.id);
-      toast.success("Cupão eliminado");
-      await load();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao eliminar cupão");
-    }
-  };
+const remove = async (c: Coupon) => {
+  setCoupons((prev) => prev.filter((x) => x.id !== c.id));
+  toast.success(
+    "Cupom eliminado",
+    6000,
+    {
+      label: "Desfazer",
+      onClick: async () => {
+        try {
+          await api.coupons.create({
+            code: c.code,
+            discount_percent: c.discount_percent,
+            is_public: c.is_public,
+          });
+          toast.info("Cupom restaurado");
+          await load();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Erro ao restaurar cupom");
+          await load();
+        }
+      },
+    },
+  );
+  try {
+    await api.coupons.remove(c.id);
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "Erro ao eliminar cupom");
+    await load();
+  }
+};
 
   return (
     <div>
@@ -127,23 +147,21 @@ export function CouponsPage() {
           {coupons.map((c) => (
             <Surface
               key={c.id}
-              className="flex items-center justify-between p-4 hover:-translate-y-0.5 hover:shadow-floating"
+              className="flex flex-col gap-3 p-4 hover:-translate-y-0.5 hover:shadow-floating sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-[15px] tracking-[-.01em] text-ink">
-                    {c.code}
-                  </span>
-                  <Badge color={c.active ? "green" : "ink"}>
-                    {c.active ? "Ativo" : "Inativo"}
-                  </Badge>
-                  {c.is_public && <Badge color="amber">Público</Badge>}
-                </div>
-                <div className="mt-1 font-mono text-[12px] text-ink-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono font-bold text-[15px] tracking-[-.01em] text-ink">
+                  {c.code}
+                </span>
+                <Badge color={c.active ? "green" : "ink"}>
+                  {c.active ? "Ativo" : "Inativo"}
+                </Badge>
+                {c.is_public && <Badge color="amber">Público</Badge>}
+                <span className="font-mono text-[12px] text-ink-2">
                   {c.discount_percent}% de desconto
-                </div>
+                </span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 sm:justify-end">
                 <button
                   onClick={() => togglePublic(c)}
                   title={c.is_public ? "Deixar de mostrar na loja" : "Mostrar publicamente na loja"}
@@ -161,6 +179,7 @@ export function CouponsPage() {
                 </button>
                 <button
                   onClick={() => remove(c)}
+                  aria-label={`Eliminar cupom ${c.code}`}
                   className="p-2 text-ink-2 transition-colors hover:text-danger hover:bg-danger/5"
                   style={{ borderRadius: '2px' }}
                 >

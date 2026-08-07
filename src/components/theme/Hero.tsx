@@ -8,6 +8,16 @@ export type HeroSlide = {
   subtitle?: string;
   cta?: string;
   kicker?: string;
+  /** Link do botão CTA — se presente, faz navegação em vez de onCtaClick. */
+  link?: string;
+  /** Alinhamento do texto sobre a imagem. */
+  align?: "left" | "center" | "right";
+};
+
+const ALIGN_CLASS: Record<NonNullable<HeroSlide["align"]>, string> = {
+  left: "items-start",
+  center: "items-center text-center",
+  right: "items-end text-right",
 };
 
 export function Hero({
@@ -33,13 +43,22 @@ export function Hero({
   if (mode === 'none' || slides.length === 0) return null;
 
   const s = slides[idx];
-  const hasCaption = !!(s.title || s.kicker);
+  const hasCaption = !!(s.title || s.kicker || s.subtitle || s.cta);
+  const align = s.align ?? "left";
+
+  const handleSlideClick = () => {
+    if (s.link && s.cta) {
+      window.open(s.link, "_blank", "noopener,noreferrer");
+    } else if (s.cta) {
+      onCtaClick?.();
+    }
+  };
 
   return (
     <div className="group relative h-full overflow-hidden rounded-[var(--sf-radius-lg)] bg-[var(--sf-surface-muted)] shadow-[var(--sf-shadow-md)]">
         <div
           className={`relative h-full min-h-[150px] ${s.cta ? 'cursor-pointer' : ''}`}
-          onClick={() => s.cta && onCtaClick?.()}
+          onClick={handleSlideClick}
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -53,7 +72,7 @@ export function Hero({
               <img src={s.image} alt={s.title || ''} className="h-full w-full object-cover" />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               {hasCaption && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-1.5 px-4 py-3.5 sm:px-6 sm:py-5">
+                <div className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1.5 px-4 py-3.5 sm:px-6 sm:py-5 ${ALIGN_CLASS[align]}`}>
                   {s.kicker && (
                     <span className="rounded-[var(--sf-radius-pill)] bg-white/20 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-[11.5px]">
                       {s.kicker}
@@ -70,7 +89,25 @@ export function Hero({
                     </div>
                   )}
                   {s.cta && (
-                    <span className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-[var(--sf-radius-pill)] bg-white px-3.5 py-1.5 text-[11.5px] font-bold text-[var(--sf-ink)] shadow-[var(--sf-shadow-sm)] transition-transform duration-200 hover:scale-[1.04] sm:px-4 sm:text-[13px]">
+                    <span
+                      role={s.link ? "link" : undefined}
+                      tabIndex={s.link ? 0 : undefined}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (s.link) {
+                          window.open(s.link, "_blank", "noopener,noreferrer");
+                        } else {
+                          onCtaClick?.();
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (s.link && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          window.open(s.link, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                      className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-[var(--sf-radius-pill)] bg-white px-3.5 py-1.5 text-[11.5px] font-bold text-[var(--sf-ink)] shadow-[var(--sf-shadow-sm)] transition-transform duration-200 hover:scale-[1.04] sm:px-4 sm:text-[13px]"
+                    >
                       {s.cta}
                       <ChevronRight size={13} strokeWidth={2.5} />
                     </span>

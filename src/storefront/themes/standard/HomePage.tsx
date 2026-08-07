@@ -200,6 +200,8 @@ export function HomePage(api: StorefrontApi) {
         title: b.title || (idx === 0 ? store!.name : undefined),
         subtitle: b.subtitle || (idx === 0 ? store!.description || undefined : undefined),
         cta: b.cta,
+        link: b.link,
+        align: b.align,
       });
     });
 

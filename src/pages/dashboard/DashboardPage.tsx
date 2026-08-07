@@ -26,6 +26,9 @@ const CustomersPage = lazy(() =>
 const CouponsPage = lazy(() =>
   import("./CouponsPage").then((m) => ({ default: m.CouponsPage })),
 );
+const SharePage = lazy(() =>
+  import("./SharePage").then((m) => ({ default: m.SharePage })),
+);
 const AppearancePage = lazy(() =>
   import("./AppearancePage").then((m) => ({ default: m.AppearancePage })),
 );
@@ -38,6 +41,9 @@ const SettingsPage = lazy(() =>
 const BuilderPageView = lazy(() =>
   import("./BuilderPageView").then((m) => ({ default: m.BuilderPageView })),
 );
+const HelpCenter = lazy(() =>
+  import("./HelpCenter").then((m) => ({ default: m.HelpCenter })),
+);
 
 const PAGE_SKELETON: Record<DashPage, ReactNode> = {
   overview: <SkeletonStatsGrid />,
@@ -46,9 +52,11 @@ const PAGE_SKELETON: Record<DashPage, ReactNode> = {
   orders: <SkeletonTableRows rows={6} cols={6} />,
   customers: <SkeletonTableRows rows={6} cols={5} />,
   coupons: <SkeletonProductGrid count={3} />,
+  share: <PageLoader />,
   appearance: <PageLoader />,
   themes: <PageLoader />,
   settings: <PageLoader />,
+  help: <PageLoader />,
 };
 
 export function DashboardPage({
@@ -112,9 +120,11 @@ export function DashboardPage({
           {page === "orders" && <OrdersPage />}
           {page === "customers" && <CustomersPage />}
           {page === "coupons" && <CouponsPage />}
+          {page === "share" && <SharePage />}
           {page === "appearance" && <AppearancePage />}
           {page === "themes" && <ThemesPage />}
           {page === "settings" && <SettingsPage />}
+          {page === "help" && <HelpCenter />}
         </Suspense>
       </PageTransition>
     </DashboardShell>

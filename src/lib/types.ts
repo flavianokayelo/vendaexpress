@@ -24,6 +24,10 @@ export type BannerSlide = {
   title?: string;
   subtitle?: string;
   cta?: string;
+  /** Link do botão CTA — aberto numa nova aba na loja. */
+  link?: string;
+  /** Alinhamento do texto/CTA sobre a imagem: esquerda, centro ou direita. */
+  align?: "left" | "center" | "right";
 };
 
 export type Store = {

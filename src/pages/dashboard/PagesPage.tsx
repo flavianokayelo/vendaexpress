@@ -119,7 +119,7 @@ export function PagesPage({
         title="Páginas"
         subtitle="Cria e gere as páginas da tua loja"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search
                 size={14}
@@ -130,7 +130,7 @@ export function PagesPage({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Procurar páginas..."
-                className="h-9 w-52 border border-border bg-paper pl-9 pr-3 font-mono text-[13px] text-ink placeholder:text-ink-2/60 focus:border-ink focus:outline-none"
+                className="h-9 w-full border border-border bg-paper pl-9 pr-3 font-mono text-[13px] text-ink placeholder:text-ink-2/60 focus:border-ink focus:outline-none sm:w-52"
                 style={{ borderRadius: "2px" }}
               />
             </div>
@@ -170,10 +170,10 @@ export function PagesPage({
             return (
               <Surface
                 key={page.id}
-                className="flex items-center gap-4 p-4 transition-shadow hover:shadow-floating"
+                className="flex flex-col gap-3 p-4 transition-shadow hover:shadow-floating sm:flex-row sm:items-center sm:gap-4"
               >
                 <div
-                  className="flex h-10 w-10 items-center justify-center bg-accent-soft text-primary"
+                  className="hidden h-10 w-10 shrink-0 items-center justify-center bg-accent-soft text-primary sm:flex"
                   style={{ borderRadius: "2px" }}
                 >
                   <FileText size={18} />

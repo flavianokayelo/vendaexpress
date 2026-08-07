@@ -12,14 +12,21 @@ import { toast as toastPreset } from "../../lib/animations";
 import { Surface } from "./Surface";
 
 type ToastKind = "success" | "error" | "info";
-type Toast = { id: number; kind: ToastKind; message: string; duration: number };
+type ToastAction = { label: string; onClick: () => void };
+type Toast = {
+  id: number;
+  kind: ToastKind;
+  message: string;
+  duration: number;
+  action?: ToastAction;
+};
 
 const MAX_VISIBLE = 3;
 
 type ToastApi = {
-  success: (message: string, duration?: number) => void;
-  error: (message: string, duration?: number) => void;
-  info: (message: string, duration?: number) => void;
+  success: (message: string, duration?: number, action?: ToastAction) => void;
+  error: (message: string, duration?: number, action?: ToastAction) => void;
+  info: (message: string, duration?: number, action?: ToastAction) => void;
 };
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -39,22 +46,30 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const idRef = useRef(0);
 
-  const push = useCallback((kind: ToastKind, message: string, duration = 4000) => {
-    const id = ++idRef.current;
-    setToasts((prev) => [...prev, { id, kind, message, duration }]);
-    window.setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, duration);
-  }, []);
+  const push = useCallback(
+    (
+      kind: ToastKind,
+      message: string,
+      duration = 4000,
+      action?: ToastAction,
+    ) => {
+      const id = ++idRef.current;
+      setToasts((prev) => [...prev, { id, kind, message, duration, action }]);
+      window.setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, duration);
+    },
+    [],
+  );
 
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const api: ToastApi = {
-    success: (m, d) => push("success", m, d),
-    error: (m, d) => push("error", m, d),
-    info: (m, d) => push("info", m, d),
+    success: (m, d, a) => push("success", m, d, a),
+    error: (m, d, a) => push("error", m, d, a),
+    info: (m, d, a) => push("info", m, d, a),
   };
 
   const visible = toasts.slice(0, MAX_VISIBLE);
@@ -89,6 +104,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <div className="flex-1 font-mono text-[13px] font-medium text-ink">
                   {t.message}
                 </div>
+                {t.action && (
+                  <button
+                    onClick={() => {
+                      t.action!.onClick();
+                      dismiss(t.id);
+                    }}
+                    className="shrink-0 border border-ink bg-ink px-2.5 py-1 font-mono text-[11px] font-bold text-paper transition-opacity hover:opacity-90"
+                    style={{ borderRadius: "2px" }}
+                  >
+                    {t.action.label}
+                  </button>
+                )}
                 <button
                   onClick={() => dismiss(t.id)}
                   className="text-ink-2 transition-colors hover:text-ink"

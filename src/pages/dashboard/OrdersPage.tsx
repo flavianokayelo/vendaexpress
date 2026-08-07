@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Eye } from "lucide-react";
+import { ShoppingCart, Eye, Share2, Check } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { formatCurrency, formatDateTime } from "../../lib/format";
 import { PageHeader } from "./Shell";
+import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Select } from "../../components/ui/Field";
 import { Modal } from "../../components/ui/Modal";
 import { EmptyState } from "../../components/ui/Feedback";
-import { SkeletonTableRows } from "../../components/ui/Skeleton";
+import { SkeletonCard } from "../../components/ui/Skeleton";
 import { Surface } from "../../components/ui/Surface";
 import { useToast } from "../../components/ui/Toast";
 import type { Order, OrderItem, OrderStatus } from "../../lib/types";
@@ -31,6 +32,14 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+const STATUS_DOT: Record<string, string> = {
+  pending: "#f59e0b",
+  paid: "#3b82f6",
+  shipped: "#52504a",
+  delivered: "#16a34a",
+  cancelled: "#ef4444",
+};
+
 export function OrdersPage() {
   const { store } = useAuth();
   const toast = useToast();
@@ -40,6 +49,19 @@ export function OrdersPage() {
     order: Order;
     items: OrderItem[];
   } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [filter, setFilter] = useState<OrderStatus | "all">("all");
+
+  const shareLink = async () => {
+    if (!store) return;
+    const url = `${window.location.origin}${window.location.pathname}#/s/${store.slug}`;
+    try {
+      await navigator.clipboard?.writeText(url);
+    } finally {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const load = async () => {
     try {
@@ -79,45 +101,104 @@ export function OrdersPage() {
     <div>
       <PageHeader title="Pedidos" subtitle={`${orders.length} pedidos`} />
       {loading ? (
-        <SkeletonTableRows rows={6} cols={6} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       ) : orders.length === 0 ? (
         <EmptyState
           icon={<ShoppingCart size={28} />}
-          title="Sem pedidos"
-          description="Os pedidos dos teus clientes aparecerão aqui."
+          title="Sem pedidos ainda"
+          description="Os pedidos dos teus clientes aparecerão aqui. Para começar a vender, partilha o link da tua loja."
+          action={
+            <Button onClick={shareLink}>
+              {copied ? <Check size={16} /> : <Share2 size={16} />}
+              {copied ? "Link copiado!" : "Partilhar o link da loja"}
+            </Button>
+          }
         />
       ) : (
-        <Surface className="overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-accent-soft/30">
-                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Cliente</th>
-                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Telefone</th>
-                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Total</th>
-                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Estado</th>
-                <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Data</th>
-                <th className="px-4 py-3 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {orders.map((o) => (
-                <tr key={o.id} className="transition-colors hover:bg-ink/[0.02]">
-                  <td className="px-4 py-3 font-mono text-[13px] font-semibold text-ink">
-                    {o.customer_name}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[13px] text-ink-2">
-                    {o.customer_phone ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[13px] text-ink">
-                    {formatCurrency(Number(o.total), store?.currency)}
-                  </td>
-                  <td className="px-4 py-3">
+        <>
+          {/* Resumo por estado — filtra a lista de relance */}
+          <div className="mb-5 flex flex-wrap gap-2">
+            {(["all", ...Object.keys(STATUS_LABEL)] as (OrderStatus | "all")[]).map(
+              (s) => {
+                const count =
+                  s === "all"
+                    ? orders.length
+                    : orders.filter((o) => o.status === s).length;
+                const active = filter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setFilter(s)}
+                    aria-pressed={active}
+                    className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-[12px] font-semibold transition-colors ${
+                      active
+                        ? "border-ink bg-ink text-paper"
+                        : "border-border-2 bg-paper text-ink-2 hover:border-ink hover:text-ink"
+                    }`}
+                    style={{ borderRadius: "2px" }}
+                  >
+                    {s !== "all" && (
+                      <span
+                        className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
+                        style={{ backgroundColor: STATUS_DOT[s] }}
+                      />
+                    )}
+                    {s === "all" ? "Todos" : STATUS_LABEL[s]}
+                    <span className={active ? "opacity-70" : "text-ink-2/60"}>{count}</span>
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {orders
+              .filter((o) => filter === "all" || o.status === filter)
+              .map((o) => (
+                <Surface
+                  key={o.id}
+                  className="flex flex-col p-4 hover:-translate-y-0.5 hover:shadow-floating"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate font-heading text-[15px] font-bold text-ink">
+                        {o.customer_name}
+                      </div>
+                      <div className="truncate font-mono text-[12px] text-ink-2">
+                        {o.customer_phone ?? "—"}
+                      </div>
+                    </div>
+                    <Badge color={STATUS_COLOR[o.status]}>
+                      {STATUS_LABEL[o.status]}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 flex items-end justify-between">
+                    <div>
+                      <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-2">
+                        Total
+                      </div>
+                      <div className="mt-0.5 font-heading text-[22px] font-bold tracking-[-.02em] text-ink">
+                        {formatCurrency(Number(o.total), store?.currency)}
+                      </div>
+                    </div>
+                    <span className="font-mono text-[11px] text-ink-2">
+                      {formatDateTime(o.created_at)}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex items-end gap-2 border-t border-border pt-3">
                     <Select
                       value={o.status}
                       onChange={(e) =>
                         updateStatus(o, e.target.value as OrderStatus)
                       }
-                      className="!py-1 !text-[11px] !font-mono !font-semibold"
+                      aria-label={`Estado do pedido de ${o.customer_name}`}
+                      className="!py-1.5 !text-[12px] !font-mono !font-semibold"
                     >
                       {Object.entries(STATUS_LABEL).map(([v, l]) => (
                         <option key={v} value={v}>
@@ -125,24 +206,19 @@ export function OrdersPage() {
                         </option>
                       ))}
                     </Select>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[12px] text-ink-2">
-                    {formatDateTime(o.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
                     <button
                       onClick={() => view(o)}
-                      className="flex h-7 w-7 items-center justify-center text-ink-2 transition-colors hover:bg-ink/[0.04] hover:text-ink"
-                      style={{ borderRadius: '2px' }}
+                      aria-label={`Ver detalhes do pedido de ${o.customer_name}`}
+                      className="ml-auto flex h-7 w-9 items-center justify-center border border-border-2 text-ink-2 transition-colors hover:border-ink hover:text-ink"
+                      style={{ borderRadius: "2px" }}
                     >
                       <Eye size={15} />
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </Surface>
               ))}
-            </tbody>
-          </table>
-        </Surface>
+          </div>
+        </>
       )}
 
       <Modal

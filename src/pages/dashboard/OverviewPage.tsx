@@ -16,6 +16,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { formatCurrency, formatDateTime } from "../../lib/format";
 import { StatCard, PageHeader, type DashPage } from "./Shell";
+import { OnboardingCard } from "./OnboardingCard";
 import { Select } from "../../components/ui/Field";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/Feedback";
@@ -71,6 +72,123 @@ function RevenueSparkline({
   );
 }
 
+type Milestone = {
+  key: string;
+  title: string;
+  done: boolean;
+  hint: string;
+};
+
+function Milestones({
+  stats,
+  onGoToTab,
+}: {
+  stats: { products: number; orders: number; customers: number; revenue: number };
+  onGoToTab: (page: DashPage) => void;
+}) {
+  const milestones: Milestone[] = [
+    {
+      key: "product",
+      title: "Primeiro produto no catálogo",
+      done: stats.products >= 1,
+      hint: stats.products >= 1 ? `${stats.products} no catálogo` : "Adiciona o teu primeiro item",
+    },
+    {
+      key: "order",
+      title: "Primeira venda",
+      done: stats.orders >= 1,
+      hint: stats.orders >= 1 ? `${stats.orders} pedidos` : "Partilha o link da loja",
+    },
+    {
+      key: "customer",
+      title: "Primeiro cliente",
+      done: stats.customers >= 1,
+      hint: stats.customers >= 1 ? `${stats.customers} contactos` : "Aparece após a 1ª venda",
+    },
+    {
+      key: "revenue",
+      title: "Primeira receita",
+      done: stats.revenue > 0,
+      hint: stats.revenue > 0 ? formatCurrency(stats.revenue, undefined) : "Da primeira venda em diante",
+    },
+  ];
+
+  const total = milestones.length;
+  const done = milestones.filter((m) => m.done).length;
+  const pct = Math.round((done / total) * 100);
+  const next = milestones.find((m) => !m.done);
+
+  return (
+    <div className="border border-border bg-paper p-4" style={{ borderRadius: "2px" }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
+          Conquistas
+        </span>
+        <span className="font-heading text-[18px] font-bold tracking-[-.02em] text-ink">
+          {done}/{total}
+        </span>
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden bg-ink/[0.06]"
+        style={{ borderRadius: "2px" }}
+      >
+        <div
+          className="h-full bg-success transition-all"
+          style={{ borderRadius: "2px", width: `${pct}%` }}
+        />
+      </div>
+      <ul className="mt-3 space-y-2.5">
+        {milestones.map((m) => (
+          <li key={m.key} className="flex items-start gap-2.5">
+            <span
+              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border ${
+                m.done
+                  ? "border-success bg-success text-white"
+                  : m.key === next?.key
+                    ? "border-ink bg-ink text-paper"
+                    : "border-border-2 text-transparent"
+              }`}
+              style={{ borderRadius: "2px" }}
+              aria-hidden
+            >
+              {m.done ? <Check size={11} strokeWidth={3} /> : "•"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div
+                className={`font-mono text-[13px] font-semibold ${
+                  m.done ? "text-ink" : "text-ink-2"
+                }`}
+              >
+                {m.title}
+                {m.key === next?.key && (
+                  <span className="ml-1.5 align-middle text-[10px] font-bold uppercase tracking-wide text-info">
+                    · próximo
+                  </span>
+                )}
+              </div>
+              <div className="font-mono text-[11px] text-ink-2/70">{m.hint}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {done === total && (
+        <p className="mt-3 border-t border-border pt-3 font-mono text-[11px] text-info">
+          Loja em pleno funcionamento. Continua a fazer crescer!
+        </p>
+      )}
+      {done === 0 && next && (
+        <button
+          onClick={() => onGoToTab("products")}
+          className="mt-3 w-full border border-ink bg-ink px-3 py-2 font-mono text-[12px] font-bold text-paper transition-opacity hover:opacity-90"
+          style={{ borderRadius: "2px" }}
+        >
+          Começar pelo 1º produto
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function OverviewPage({
   onGoToTab,
 }: {
@@ -117,6 +235,17 @@ export function OverviewPage({
       load();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!store) return;
+    const url = `${window.location.origin}${window.location.pathname}#/s/${store.slug}`;
+    try {
+      await navigator.clipboard?.writeText(url);
+    } finally {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -184,14 +313,8 @@ export function OverviewPage({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              if (store) {
-                const url = `${window.location.origin}${window.location.pathname}#/s/${store.slug}`;
-                navigator.clipboard?.writeText(url);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }
-            }}
+            onClick={copyLink}
+            aria-label="Copiar o link da loja"
           >
             {copied ? (
               <>
@@ -205,6 +328,15 @@ export function OverviewPage({
           </Button>
         </div>
       </div>
+
+      {/* Onboarding / próximo passo inteligente */}
+      <OnboardingCard
+        stats={stats}
+        hasLogo={Boolean(store?.logo_url)}
+        hasBanner={Boolean(store?.banner_url || store?.banner_urls?.length)}
+        onGoToTab={onGoToTab}
+        onShare={copyLink}
+      />
 
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -221,6 +353,7 @@ export function OverviewPage({
           icon={<ShoppingCart size={17} />}
           accent="violet"
           onClick={() => onGoToTab("orders")}
+          hint="Totais recebidos"
         />
         <StatCard
           label="Clientes"
@@ -228,6 +361,7 @@ export function OverviewPage({
           icon={<Users size={17} />}
           accent="teal"
           onClick={() => onGoToTab("customers")}
+          hint="Compradores únicos"
         />
         <StatCard
           label="Receita"
@@ -235,6 +369,8 @@ export function OverviewPage({
           icon={<TrendingUp size={17} />}
           accent="rose"
           onClick={() => onGoToTab("orders")}
+          delta={deltaPct}
+          sparkline={sparkData}
         />
       </div>
 
@@ -262,7 +398,10 @@ export function OverviewPage({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
+          <Milestones stats={stats} onGoToTab={onGoToTab} />
+
+          <div className="flex flex-col gap-3">
           <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2 px-1">
             Atalhos
           </span>
@@ -338,6 +477,7 @@ export function OverviewPage({
               className="ml-auto text-ink-2 transition-transform group-hover:translate-x-[1px]"
             />
           </button>
+          </div>
         </div>
       </div>
 
@@ -362,10 +502,10 @@ export function OverviewPage({
           />
         ) : (
           <div
-            className="overflow-hidden border border-border bg-paper"
+            className="overflow-x-auto rounded-[2px] border border-border bg-paper"
             style={{ borderRadius: "2px" }}
           >
-            <table className="w-full text-sm">
+            <table className="w-full whitespace-nowrap text-sm">
               <thead>
                 <tr className="border-b border-border bg-accent-soft/30">
                   <th className="px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">
