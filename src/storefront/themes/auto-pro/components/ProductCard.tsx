@@ -1,9 +1,9 @@
 // ProductCard do tema Auto Pro — cards robustos com moldura (bordered),
 // imagem 3:2, efeito de elevação no hover e preço em destaque.
 import { Check, Plus, Heart } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { resolveMediaUrl } from "../../../../lib/api";
 import { formatCurrency, placeholderImage } from "../../../../lib/format";
+import { useAddedFeedback } from "../../../../lib/useAddedFeedback";
 import type { Product } from "../../../../lib/types";
 
 const CONDITION_LABEL: Record<string, string> = {
@@ -43,17 +43,13 @@ export function ProductCard({
     ? Math.round((1 - Number(p.price) / Number(p.compare_at_price)) * 100)
     : 0;
 
-  const [justAdded, setJustAdded] = useState(false);
-  const addTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(addTimer.current), []);
+  const { justAdded, markAdded } = useAddedFeedback();
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (outOfStock) return;
     onAdd(p);
-    setJustAdded(true);
-    window.clearTimeout(addTimer.current);
-    addTimer.current = window.setTimeout(() => setJustAdded(false), 1200);
+    markAdded();
   };
 
   return (

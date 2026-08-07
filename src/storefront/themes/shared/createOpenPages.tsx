@@ -39,9 +39,7 @@ import { CategoryGrid } from "../../../components/theme/CategoryGrid";
 import { Reveal } from "../../../components/theme/Reveal";
 import { WishlistDrawer } from "../../../components/storefront/WishlistDrawer";
 import type { StorefrontApi, ThemeProductGridProps, ThemePages } from "../../contract";
-import type { Product, ProductCondition } from "../../../lib/types";
-
-type OpenHeaderProps = { api: StorefrontApi };
+import type { ProductCondition } from "../../../lib/types";
 
 type SortKey = "relevance" | "newest" | "price-asc" | "price-desc";
 
@@ -235,7 +233,7 @@ export function createOpenPages({
   // CATEGORY
   // ---------------------------------------------------------------------------
   function CategoryPage(api: StorefrontApi) {
-    const { slug, navigate, store, products, categories, currency, addToCart, isWishlisted, toggleWishlist } = api;
+    const { slug, navigate, products, categories, currency, addToCart, isWishlisted, toggleWishlist } = api;
 
     const categoryId = api.route?.categoryId;
     const category = categories.find((c) => c.id === categoryId) ?? null;

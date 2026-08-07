@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { Check, MessageCircle, Search as SearchIcon, Store as StoreIcon, ArrowRight } from "lucide-react";
 import { resolveMediaUrl } from "../../../lib/api";
 import { formatCurrency, placeholderImage } from "../../../lib/format";
+import { useCheckout } from "../../../lib/checkout";
 import { Button } from "../../../components/ui/Button";
 import { Input, Field, Textarea } from "../../../components/ui/Field";
 import { EmptyState } from "../../../components/ui/Feedback";
@@ -52,9 +53,7 @@ export function HomePage(api: StorefrontApi) {
     products,
     categories,
     currency,
-    cart,
     addToCart,
-    clearCart,
     wishlist,
     isWishlisted,
     toggleWishlist,
@@ -65,105 +64,32 @@ export function HomePage(api: StorefrontApi) {
   const [selectedCat, setSelectedCat] = useState<string>("");
   const [search, setSearch] = useState("");
 
-  const [couponCode, setCouponCode] = useState("");
-  const [couponBusy, setCouponBusy] = useState(false);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_percent: number } | null>(null);
-
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "" });
-  const [placing, setPlacing] = useState(false);
-  const [placeError, setPlaceError] = useState<string | null>(null);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [whatsappMissing, setWhatsappMissing] = useState(false);
+  const {
+    subtotal,
+    discount,
+    total,
+    cartCount,
+    couponCode,
+    setCouponCode,
+    couponBusy,
+    couponError,
+    appliedCoupon,
+    applyCoupon,
+    checkoutOpen,
+    setCheckoutOpen,
+    orderForm,
+    setOrderForm,
+    placing,
+    placeError,
+    whatsappMissing,
+    placeOrder,
+    orderSuccess,
+    setOrderSuccess,
+    openCheckout,
+  } = useCheckout(api);
 
   const catalogRef = useRef<HTMLElement>(null);
   const scrollToCatalog = () => catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  const subtotal = useMemo(
-    () => cart.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0),
-    [cart],
-  );
-  const discount = appliedCoupon ? subtotal * (appliedCoupon.discount_percent / 100) : 0;
-  const total = subtotal - discount;
-
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setCouponBusy(true);
-    setCouponError(null);
-    try {
-      const result = await api.validateCoupon(couponCode.trim());
-      setAppliedCoupon(result);
-    } catch (err) {
-      setAppliedCoupon(null);
-      setCouponError(err instanceof Error ? err.message : "Cupom inválido");
-    } finally {
-      setCouponBusy(false);
-    }
-  };
-
-  const openCheckout = () => {
-    if (!store?.whatsapp) {
-      setWhatsappMissing(true);
-      return;
-    }
-    setWhatsappMissing(false);
-    setCartOpen(false);
-    setCheckoutOpen(true);
-  };
-
-  const buildWhatsappMessage = () => {
-    const lines: string[] = [];
-    lines.push(`*Novo pedido - ${store?.name}*`);
-    lines.push("");
-    lines.push(`Cliente: ${orderForm.name}`);
-    lines.push(`Telefone: ${orderForm.phone}`);
-    lines.push(`Endereço: ${orderForm.address}`);
-    lines.push("");
-    lines.push("Itens:");
-    cart.forEach((i) => {
-      lines.push(`- ${i.quantity}x ${i.product.name} — ${formatCurrency(Number(i.product.price) * i.quantity, currency)}`);
-    });
-    lines.push("");
-    lines.push(`Subtotal: ${formatCurrency(subtotal, currency)}`);
-    if (discount > 0 && appliedCoupon) {
-      lines.push(`Desconto (cupom ${appliedCoupon.code}): -${formatCurrency(discount, currency)}`);
-    }
-    lines.push(`Total: ${formatCurrency(total, currency)}`);
-    return lines.join("\n");
-  };
-
-  const placeOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPlacing(true);
-    setPlaceError(null);
-    const whatsappMessage = buildWhatsappMessage();
-    try {
-      await api.placeOrder({
-        name: orderForm.name,
-        phone: orderForm.phone,
-        address: orderForm.address,
-        items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
-        coupon_code: appliedCoupon?.code,
-      });
-
-      const digits = store?.whatsapp ? store.whatsapp.replace(/\D/g, "") : "";
-      if (digits) {
-        window.open(`https://wa.me/${digits}?text=${encodeURIComponent(whatsappMessage)}`, "_blank");
-      }
-
-      clearCart();
-      setCheckoutOpen(false);
-      setOrderSuccess(true);
-      setOrderForm({ name: "", phone: "", address: "" });
-      setCouponCode("");
-      setAppliedCoupon(null);
-    } catch (err) {
-      setPlaceError(err instanceof Error ? err.message : "Não foi possível enviar o pedido");
-    } finally {
-      setPlacing(false);
-    }
-  };
 
   const waDigits = store.whatsapp ? store.whatsapp.replace(/\D/g, "") : "";
   const categoryNames = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
@@ -214,7 +140,7 @@ export function HomePage(api: StorefrontApi) {
         store={store}
         search={search}
         onSearchChange={setSearch}
-        cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
+        cartCount={cartCount}
         onCartClick={() => setCartOpen(true)}
         wishlistCount={wishlist.length}
         onWishlistClick={() => setWishlistOpen(true)}

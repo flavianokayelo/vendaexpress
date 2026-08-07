@@ -1,9 +1,9 @@
 // ProductCard do tema Minimal — flat, sem moldura e sem ornamento. Imagem,
 // nome e preço; o estado (condição) e o desconto aparecem como texto simples.
 import { Check, Plus, Heart } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { resolveMediaUrl } from "../../../../lib/api";
 import { formatCurrency, placeholderImage } from "../../../../lib/format";
+import { useAddedFeedback } from "../../../../lib/useAddedFeedback";
 import type { Product } from "../../../../lib/types";
 
 const CONDITION_LABEL: Record<string, string> = {
@@ -39,17 +39,13 @@ export function ProductCard({
   const outOfStock = p.stock <= 0;
   const hasCondition = p.item_condition && p.item_condition !== "novo";
 
-  const [justAdded, setJustAdded] = useState(false);
-  const addTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(addTimer.current), []);
+  const { justAdded, markAdded } = useAddedFeedback();
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (outOfStock) return;
     onAdd(p);
-    setJustAdded(true);
-    window.clearTimeout(addTimer.current);
-    addTimer.current = window.setTimeout(() => setJustAdded(false), 1200);
+    markAdded();
   };
 
   return (

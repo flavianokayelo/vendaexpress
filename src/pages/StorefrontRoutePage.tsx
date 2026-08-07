@@ -20,7 +20,7 @@ import { StorefrontThemeProvider } from "../storefrontTheme/ThemeProvider";
 import { resolveConfig } from "../storefrontTheme/resolveConfig";
 import type { StorefrontApi } from "../storefront/contract";
 import { FALLBACK_THEME_ID, resolveTheme, getThemePage } from "../storefront/engine/ThemeRegistry";
-import { registerThemes } from "../storefront/engine/registerThemes";
+import { registerThemes, ensureThemeLoaded } from "../storefront/engine/registerThemes";
 import { ProductDetailSkeleton } from "../components/ui/Skeleton";
 
 registerThemes();
@@ -72,6 +72,7 @@ function StorefrontRoutePageInner({
   const [categories, setCategories] = useState<Category[]>([]);
   const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([]);
   const [loadingState, setLoadingState] = useState(true);
+  const [themeReady, setThemeReady] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -82,6 +83,8 @@ function StorefrontRoutePageInner({
         setProducts(data.products);
         setCategories(data.categories);
         setPublicCoupons(data.coupons ?? []);
+        await ensureThemeLoaded(data.store.theme_id);
+        setThemeReady(true);
       } catch {
         setNotFound(true);
       } finally {
@@ -91,9 +94,10 @@ function StorefrontRoutePageInner({
   }, [slug]);
 
   const theme = useMemo(() => {
+    if (!themeReady) return null;
     const id = store?.theme_id ?? FALLBACK_THEME_ID;
     return resolveTheme(id);
-  }, [store]);
+  }, [store, themeReady]);
 
   const apiValue: StorefrontApi | null = useMemo(() => {
     if (!store || !theme) return null;

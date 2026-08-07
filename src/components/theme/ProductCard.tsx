@@ -1,8 +1,8 @@
 import { Check, Plus, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
 import { resolveMediaUrl } from '../../lib/api';
 import { formatCurrency, placeholderImage } from '../../lib/format';
+import { useAddedFeedback } from '../../lib/useAddedFeedback';
 import type { Product } from '../../lib/types';
 import { useStorefrontTheme } from '../../storefrontTheme/ThemeProvider';
 import type { CardHoverEffect, CardImageAspect, CardStyle } from '../../storefrontTheme/types';
@@ -68,17 +68,13 @@ export function ProductCard({
   const { card } = useStorefrontTheme();
   const contentPadding = card.style === 'padded-tint' ? 'p-3' : 'p-2.5';
 
-  const [justAdded, setJustAdded] = useState(false);
-  const addTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(addTimer.current), []);
+  const { justAdded, markAdded } = useAddedFeedback();
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (outOfStock) return;
     onAdd(p);
-    setJustAdded(true);
-    window.clearTimeout(addTimer.current);
-    addTimer.current = window.setTimeout(() => setJustAdded(false), 1200);
+    markAdded();
   };
 
   return (

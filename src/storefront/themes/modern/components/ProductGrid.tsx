@@ -1,9 +1,9 @@
 // ProductGrid do tema Modern — grelha densa (mais colunas que o standard) ou
 // calha horizontal para secções de destaque.
-import { useEffect, useRef, useState } from "react";
 import { ProductCard } from "./ProductCard";
 import { RailNav } from "../../../../components/theme/RailNav";
 import { useHorizontalRail } from "../../../../lib/useHorizontalRail";
+import { useInfiniteGrid } from "../../../../lib/useInfiniteGrid";
 import type { Product } from "../../../../lib/types";
 
 const PAGE_SIZE = 18;
@@ -31,31 +31,9 @@ export function ProductGrid({
   paginate?: boolean;
   compact?: boolean;
 }) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [products]);
-
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!paginate) return;
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((v) => Math.min(v + PAGE_SIZE, products.length));
-        }
-      },
-      { rootMargin: "400px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [paginate, products.length]);
+  const { visible, visibleCount, sentinelRef } = useInfiniteGrid(products, PAGE_SIZE, paginate);
 
   const { railRef, canScrollLeft, canScrollRight, scrollRail } = useHorizontalRail(products);
-
-  const visible = paginate ? products.slice(0, visibleCount) : products;
 
   if (visible.length === 0) return null;
 
