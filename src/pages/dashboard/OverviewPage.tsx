@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Package,
   ShoppingCart,
@@ -31,44 +31,209 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
-function RevenueSparkline({
+const SHORT_MONTHS = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+function monthLabels(count: number): string[] {
+  const out: string[] = [];
+  const now = new Date();
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push(SHORT_MONTHS[d.getMonth()]);
+  }
+  return out;
+}
+
+function compactValue(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return String(Math.round(v));
+}
+
+function RevenueChart({
   data,
-  accent,
+  currency,
 }: {
   data: number[];
-  accent: string;
+  currency?: string;
 }) {
-  const w = 120;
-  const h = 36;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min || 1;
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / range) * (h - 4) - 2;
-    return `${x},${y}`;
-  });
+  const [hover, setHover] = useState<number | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ w: number; h: number }>({ w: 640, h: 220 });
+  const labels = monthLabels(data.length);
+
+  const hasData = data.some((v) => v > 0) && data.length >= 2;
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0].contentRect;
+      if (r.width > 0 && r.height > 0) {
+        setBox({ w: Math.round(r.width), h: Math.round(r.height) });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const W = box.w || 640;
+  const H = box.h || 220;
+  const padL = 48;
+  const padR = 8;
+  const padT = 12;
+  const padB = 22;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const rawMax = Math.max(...data, 1);
+  const tickCount = 4;
+  const rawStep = rawMax / tickCount;
+  const pow = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+  const norm = rawStep / pow;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * pow;
+  const niceMax = Math.max(step * tickCount, rawMax);
+  const ticks = Array.from({ length: tickCount + 1 }, (_, i) => step * i);
+  const y = (v: number) => padT + plotH - (v / niceMax) * plotH;
+
+  if (!hasData) {
+    return (
+      <div
+        ref={wrapRef}
+        className="flex min-h-[180px] flex-col items-center justify-center gap-2 text-center"
+      >
+        <div className="font-mono text-[13px] font-bold text-ink">
+          Sem receita neste período
+        </div>
+        <div className="font-mono text-[11px] text-ink-2/70">
+          A receita dos pedidos aparecerá aqui
+        </div>
+      </div>
+    );
+  }
+
+  const band = plotW / data.length;
+  const barW = Math.min(30, band * 0.55);
+
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0">
-      <defs>
-        <linearGradient id={`spark-${accent}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={accent} stopOpacity="0.15" />
-          <stop offset="100%" stopColor={accent} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon
-        points={`0,${h} ${pts.join(" ")} ${w},${h}`}
-        fill={`url(#spark-${accent})`}
-      />
-      <polyline
-        points={pts.join(" ")}
-        fill="none"
-        stroke={accent}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <>
+      <div ref={wrapRef} className="relative min-h-[180px] flex-1">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <style>{`
+            @keyframes ve-grow {
+              from { transform: scaleY(0); }
+              to { transform: scaleY(1); }
+            }
+            .ve-bar {
+              transform-box: fill-box;
+              transform-origin: bottom;
+              animation: ve-grow 0.55s cubic-bezier(.22,.61,.36,1) both;
+            }
+          `}</style>
+
+          {ticks.map((t) => (
+            <g key={t}>
+              <line
+                x1={padL}
+                x2={W - padR}
+                y1={y(t)}
+                y2={y(t)}
+                stroke="#000"
+                strokeOpacity={t === 0 ? 0.12 : 0.05}
+                strokeDasharray={t === 0 ? undefined : "3 4"}
+              />
+              <text
+                x={padL - 8}
+                y={y(t) + 3.5}
+                textAnchor="end"
+                className="fill-ink/50 font-mono text-[10px]"
+              >
+                {compactValue(t)}
+              </text>
+            </g>
+          ))}
+
+          {data.map((v, i) => {
+            const cx = padL + band * i + band / 2;
+            const h = Math.max((v / niceMax) * plotH, 2);
+            const by = padT + plotH;
+            const active = hover === i;
+            return (
+              <g key={i}>
+                {active && (
+                  <line
+                    x1={cx}
+                    x2={cx}
+                    y1={padT}
+                    y2={padT + plotH}
+                    stroke="#8b5cf6"
+                    strokeOpacity={0.25}
+                  />
+                )}
+                <rect
+                  x={cx - barW / 2}
+                  y={by - h}
+                  width={barW}
+                  height={h}
+                  rx={2}
+                  fill={active ? "#6d28d9" : "#8b5cf6"}
+                  fillOpacity={v === 0 ? 0.25 : active ? 1 : 0.85}
+                  className="ve-bar"
+                />
+                <rect
+                  x={cx - band / 2}
+                  y={padT}
+                  width={band}
+                  height={plotH}
+                  fill="transparent"
+                  onMouseEnter={() => setHover(i)}
+                  onMouseLeave={() => setHover(null)}
+                />
+                <text
+                  x={cx}
+                  y={padT + plotH + 18}
+                  textAnchor="middle"
+                  className={`font-mono text-[10px] ${
+                    active ? "fill-ink" : "fill-ink/50"
+                  }`}
+                >
+                  {labels[i]}
+                </text>
+                {active && (
+                  <g transform={`translate(${cx}, ${Math.max(padT + 4, by - h - 26)})`}>
+                    <rect
+                      x={-34}
+                      y={10}
+                      width={68}
+                      height={22}
+                      rx={3}
+                      fill="#111"
+                    />
+                    <text
+                      textAnchor="middle"
+                      y={24.5}
+                      className="fill-paper font-mono text-[10px] font-bold"
+                    >
+                      {compactValue(v)} {currency === "AOA" ? "Kz" : ""}
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      <p className="mt-1 flex items-center gap-2 font-mono text-[10px] text-ink-2/70">
+        <span className="inline-block h-[8px] w-[8px]" style={{ borderRadius: "2px", background: "#8b5cf6" }} />
+        Receita por mês · passa o rato para veres os valores
+      </p>
+    </>
   );
 }
 
@@ -374,28 +539,28 @@ export function OverviewPage({
         />
       </div>
 
-      {/* Revenue mini chart & Quick actions */}
+      {/* Revenue chart & Quick actions */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div
-          className="border border-border bg-paper p-5 lg:col-span-2"
+          className="flex flex-col border border-border bg-paper p-5 lg:col-span-2"
           style={{ borderRadius: "2px" }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
               Receita (últimos 12 meses)
             </span>
-            <span className="font-heading text-[22px] font-bold tracking-[-.02em] text-ink">
-              {formatCurrency(revenue12, store?.currency)}
-            </span>
-          </div>
-          <div className="flex justify-between items-end">
-            <RevenueSparkline data={sparkData} accent="#8b5cf6" />
-            <div className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-success">
-              {deltaPct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {deltaPct >= 0 ? "+" : ""}
-              {deltaPct}%
+            <div className="flex items-center gap-2.5">
+              <span className="font-heading text-[22px] font-bold tracking-[-.02em] text-ink">
+                {formatCurrency(revenue12, store?.currency)}
+              </span>
+              <span className="flex items-center gap-1 font-mono text-[12px] font-semibold text-success">
+                {deltaPct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                {deltaPct >= 0 ? "+" : ""}
+                {deltaPct}%
+              </span>
             </div>
           </div>
+          <RevenueChart data={sparkData} currency={store?.currency} />
         </div>
 
         <div className="flex flex-col gap-4">

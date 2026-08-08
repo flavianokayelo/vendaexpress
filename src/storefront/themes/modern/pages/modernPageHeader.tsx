@@ -24,7 +24,7 @@ export function ModernPageHeader({ api }: { api: StorefrontApi }) {
         </button>
         <div className="flex items-center gap-3">
           {store.logo_url ? (
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white p-1">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden">
               <img src={resolveMediaUrl(store.logo_url) ?? ""} alt={store.name} className="h-full w-full object-contain" />
             </span>
           ) : (

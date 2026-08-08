@@ -1,26 +1,29 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
-interface EditableTextProps {
+type EditableTextTag = 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
+
+interface EditableTextProps<T extends EditableTextTag = 'span'> {
   value: string;
   onChange?: (value: string) => void;
   isEditing?: boolean;
   className?: string;
-  tag?: 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
+  tag?: T;
   style?: React.CSSProperties;
   placeholder?: string;
 }
 
-export function EditableText({
+export function EditableText<T extends EditableTextTag = 'span'>({
   value,
   onChange,
   isEditing,
   className = '',
-  tag: Tag = 'span',
+  tag,
   style,
   placeholder,
-}: EditableTextProps) {
+}: EditableTextProps<T>) {
   const [active, setActive] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<React.ElementRef<T>>(null);
+  const Tag = (tag ?? 'span') as T;
 
   useEffect(() => {
     if (!active && ref.current && ref.current.textContent !== value) {
@@ -45,7 +48,7 @@ export function EditableText({
   if (active) {
     return (
       <Tag
-        ref={ref as any}
+        ref={ref}
         className={className}
         style={style}
         contentEditable
@@ -65,7 +68,7 @@ export function EditableText({
 
   return (
     <Tag
-      ref={ref as any}
+      ref={ref}
       className={`${className} cursor-text rounded-sm -mx-0.5 px-0.5 hover:bg-blue-50 hover:ring-1 hover:ring-blue-200/50 transition-all`}
       style={style}
       onClick={(e) => {

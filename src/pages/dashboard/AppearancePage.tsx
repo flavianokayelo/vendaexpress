@@ -593,7 +593,7 @@ export function AppearancePage() {
               )}
               <div className="flex items-center gap-3 bg-white px-4 py-3">
                 {logoUrl ? (
-                  <img src={resolveMediaUrl(logoUrl) ?? ""} alt={store?.name} className="h-10 w-10 border border-border bg-white object-contain p-0.5" style={{ borderRadius: '2px' }} />
+                  <img src={resolveMediaUrl(logoUrl) ?? ""} alt={store?.name} className="h-10 w-10 object-contain" />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center border border-border text-sm font-bold text-white" style={{ borderRadius: '2px', backgroundColor: color }}>
                     {(store?.name ?? "L")[0]}

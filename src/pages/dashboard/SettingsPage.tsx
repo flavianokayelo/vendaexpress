@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   User,
   MapPin,
@@ -6,6 +6,7 @@ import {
   Clock,
   Check,
   Globe,
+  AlertCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -14,7 +15,9 @@ import { Button } from "../../components/ui/Button";
 import { Input, Field, Select, Textarea } from "../../components/ui/Field";
 import { Surface } from "../../components/ui/Surface";
 import { useToast } from "../../components/ui/Toast";
-import type { ReactNode } from "react";
+import { veStorage } from "../../lib/client-storage";
+import type { HoursSettings } from "../../lib/client-storage";
+import { STORE_DAYS } from "../../lib/client-storage";
 
 type SettingsTab = "profile" | "address" | "store" | "hours";
 
@@ -32,15 +35,26 @@ const CURRENCIES = [
   { value: "BRL", label: "Real (BRL)" },
 ];
 
-const DAYS = [
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-  "Domingo",
-] as const;
+const PROVINCES = [
+  "Luanda",
+  "Benguela",
+  "Huambo",
+  "Lobito",
+  "Huíla",
+  "Cabinda",
+  "Malanje",
+  "Uíge",
+];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\+?[0-9][0-9\s-]{8,}$/;
+
+function validatePhone(value: string): string | null {
+  if (!value.trim()) return null;
+  if (!PHONE_RE.test(value.trim()))
+    return "Indica um número válido, ex: +244 923 000 000";
+  return null;
+}
 
 function SectionHeader({
   icon,
@@ -81,37 +95,56 @@ function SaveBar({
   saving,
   saved,
   disabled,
+  error,
 }: {
   saving: boolean;
   saved: boolean;
   disabled?: boolean;
+  error?: string | null;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <Button type="submit" disabled={saving || disabled}>
-        {saving ? "A guardar..." : "Guardar alterações"}
-      </Button>
-      {saved && (
-        <span className="inline-flex items-center gap-1.5 font-mono text-[13px] font-semibold text-success">
-          <Check size={15} /> Guardado
-        </span>
+    <div className="mt-6 border-t border-border pt-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={saving || disabled}>
+          {saving ? "A guardar..." : "Guardar alterações"}
+        </Button>
+        {saved && (
+          <span className="inline-flex items-center gap-1.5 font-mono text-[13px] font-semibold text-success">
+            <Check size={15} /> Guardado
+          </span>
+        )}
+      </div>
+      {error && (
+        <p className="mt-3 flex items-center gap-1.5 font-mono text-[12px] font-semibold text-danger">
+          <AlertCircle size={14} /> {error}
+        </p>
       )}
     </div>
   );
 }
 
+function FieldError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <span className="mt-1 block font-mono text-[11px] font-semibold text-danger">
+      {message}
+    </span>
+  );
+}
+
 export function SettingsPage() {
-  const { store, refreshStore } = useAuth();
+  const { store, refreshStore, user } = useAuth();
   const toast = useToast();
   const [tab, setTab] = useState<SettingsTab>("store");
+  const slug = store?.slug ?? "";
 
-  // Informações da loja (persistidas)
+  // Informações da loja (persistidas no servidor)
   const [name, setName] = useState(store?.name ?? "");
   const [whatsapp, setWhatsapp] = useState(store?.whatsapp ?? "");
   const [currency, setCurrency] = useState(store?.currency ?? "AOA");
   const [description, setDescription] = useState(store?.description ?? "");
 
-  // Perfil / Endereço / Horários — visuais por agora
+  // Perfil / Endereço / Horários — persistidos localmente (veStorage)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
@@ -122,21 +155,22 @@ export function SettingsPage() {
   const [reference, setReference] = useState("");
   const [pickupPoint, setPickupPoint] = useState("");
 
-  const [hours, setHours] = useState<
-    Record<(typeof DAYS)[number], { open: boolean; from: string; to: string }>
-  >({
-    Segunda: { open: true, from: "08:00", to: "18:00" },
-    Terça: { open: true, from: "08:00", to: "18:00" },
-    Quarta: { open: true, from: "08:00", to: "18:00" },
-    Quinta: { open: true, from: "08:00", to: "18:00" },
-    Sexta: { open: true, from: "08:00", to: "18:00" },
-    Sábado: { open: true, from: "09:00", to: "13:00" },
-    Domingo: { open: false, from: "09:00", to: "13:00" },
-  });
-
+  const [hours, setHours] = useState<HoursSettings>(() =>
+    STORE_DAYS.reduce<HoursSettings>((acc, day) => {
+      acc[day] = { open: day !== "Domingo", from: "08:00", to: "18:00" };
+      if (day === "Sábado") acc[day] = { open: true, from: "09:00", to: "13:00" };
+      if (day === "Domingo") acc[day] = { open: false, from: "09:00", to: "13:00" };
+      return acc;
+    }, {} as HoursSettings)
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [localSaved, setLocalSaved] = useState(false);
 
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Hidrata a partir do servidor quando a loja muda
   useEffect(() => {
     if (store) {
       setName(store.name);
@@ -146,10 +180,33 @@ export function SettingsPage() {
     }
   }, [store]);
 
+  // Hidrata Perfil / Endereço / Horários a partir do storage local
+  useEffect(() => {
+    if (slug) {
+      const profile = veStorage.profile.getProfile(slug);
+      setFullName((prev) => profile.name || prev);
+      setEmail(profile.email || user?.email || "");
+      setProfilePhone(profile.whatsapp || "");
+      setPhoneError(validatePhone(profile.whatsapp));
+
+      const addr = veStorage.address.getAddress(slug);
+      setProvince(addr.province || "Luanda");
+      setMunicipality(addr.municipality);
+      setStreet(addr.street);
+      setReference(addr.reference);
+      setPickupPoint(addr.pickupPoint);
+
+      setHours(veStorage.hours.getHours(slug));
+    } else if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [slug, user]);
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!store) return;
     setSaving(true);
+    setFormError(null);
     try {
       await api.stores.update({
         name,
@@ -161,11 +218,80 @@ export function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao guardar alterações");
+      setFormError(
+        err instanceof Error ? err.message : "Erro ao guardar alterações",
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  const saveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slug) return;
+    const phoneProblem = validatePhone(profilePhone);
+    setPhoneError(phoneProblem);
+    if (phoneProblem) return;
+
+    const emailClean = email.trim();
+    if (!emailClean) {
+      toast.error("Indica o teu e-mail");
+      return;
+    }
+    if (!EMAIL_RE.test(emailClean)) {
+      toast.error("Indica um e-mail válido");
+      return;
+    }
+
+    veStorage.profile.setProfile(slug, {
+      name: fullName.trim(),
+      email: emailClean,
+      whatsapp: profilePhone.trim(),
+    });
+    flashLocalSaved();
+  };
+
+  const saveAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slug) return;
+    if (!province.trim() || !municipality.trim() || !street.trim()) {
+      toast.error("Preenche província, município e rua/bairro");
+      return;
+    }
+    veStorage.address.setAddress(slug, {
+      province: province.trim(),
+      municipality: municipality.trim(),
+      street: street.trim(),
+      reference: reference.trim(),
+      pickupPoint: pickupPoint.trim(),
+    });
+    flashLocalSaved();
+  };
+
+  const saveHours = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slug) return;
+    for (const day of STORE_DAYS) {
+      const slot = hours[day];
+      if (slot.open && (!slot.from || !slot.to)) {
+        toast.error(`Define o horário de ${day}`);
+        return;
+      }
+      if (slot.open && slot.from >= slot.to) {
+        toast.error(`Horário de ${day} inválido (abertura antes do fecho)`);
+        return;
+      }
+    }
+    veStorage.hours.setHours(slug, hours);
+    flashLocalSaved();
+  };
+
+  const flashLocalSaved = () => {
+    setLocalSaved(true);
+    setTimeout(() => setLocalSaved(false), 2000);
+  };
+
+  const localSaveBar = <SaveBar saving={false} saved={localSaved} disabled={!slug} />;
 
   return (
     <div>
@@ -196,8 +322,8 @@ export function SettingsPage() {
       <div className="max-w-2xl space-y-6">
         {/* ─── MEU PERFIL ─── */}
         {tab === "profile" && (
-          <>
-            <Surface className="p-6">
+          <form onSubmit={saveProfile}>
+            <Section>
               <SectionHeader icon={<User size={14} />} label="Dados pessoais" />
               <div className="space-y-4">
                 <Field label="Nome completo">
@@ -208,7 +334,7 @@ export function SettingsPage() {
                   />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="E-mail">
+                  <Field label="E-mail" hint="Usado para contacto e para entrares na conta">
                     <Input
                       type="email"
                       value={email}
@@ -219,23 +345,29 @@ export function SettingsPage() {
                   <Field label="Telefone">
                     <Input
                       value={profilePhone}
-                      onChange={(e) => setProfilePhone(e.target.value)}
+                      onChange={(e) => {
+                        setProfilePhone(e.target.value);
+                        setPhoneError(null);
+                      }}
                       placeholder="+244 9XX XXX XXX"
                     />
+                    <FieldError message={phoneError} />
                   </Field>
                 </div>
               </div>
               <p className="mt-4 font-mono text-[11px] text-ink-2">
-                Estes dados serão usados para contacto e suporte da tua conta.
+                Guardado neste dispositivo. Estes dados serão usados para
+                contacto e suporte da tua conta.
               </p>
-            </Surface>
-          </>
+              {localSaveBar}
+            </Section>
+          </form>
         )}
 
         {/* ─── ENDEREÇO ─── */}
         {tab === "address" && (
-          <>
-            <Surface className="p-6">
+          <form onSubmit={saveAddress}>
+            <Section>
               <SectionHeader icon={<MapPin size={14} />} label="Ponto de origem" />
               <p className="-mt-3 mb-5 font-mono text-[12px] text-ink-2">
                 O endereço de partida para entregas e ponto de retirada para os
@@ -245,13 +377,11 @@ export function SettingsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Província">
                     <Select value={province} onChange={(e) => setProvince(e.target.value)}>
-                      {["Luanda", "Benguela", "Huambo", "Lobito", "Huíla", "Cabinda", "Malanje", "Uíge"].map(
-                        (p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ),
-                      )}
+                      {PROVINCES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
                     </Select>
                   </Field>
                   <Field label="Município">
@@ -285,10 +415,12 @@ export function SettingsPage() {
                 </Field>
               </div>
               <p className="mt-4 font-mono text-[11px] text-ink-2">
-                Em breve, o cliente verá este endereço ao finalizar a compra.
+                Guardado neste dispositivo. Em breve, o cliente verá este
+                endereço ao finalizar a compra.
               </p>
-            </Surface>
-          </>
+              {localSaveBar}
+            </Section>
+          </form>
         )}
 
         {/* ─── INFORMAÇÕES DA LOJA ─── */}
@@ -332,9 +464,7 @@ export function SettingsPage() {
                     />
                   </Field>
                 </div>
-                <div className="mt-6 border-t border-border pt-5">
-                  <SaveBar saving={saving} saved={saved} />
-                </div>
+                <SaveBar saving={saving} saved={saved} error={formError} />
               </Section>
             </form>
 
@@ -355,15 +485,15 @@ export function SettingsPage() {
 
         {/* ─── HORÁRIOS ─── */}
         {tab === "hours" && (
-          <>
-            <Surface className="p-6">
+          <form onSubmit={saveHours}>
+            <Section>
               <SectionHeader icon={<Clock size={14} />} label="Horários de funcionamento" />
               <p className="-mt-3 mb-5 font-mono text-[12px] text-ink-2">
                 Define os dias e horários em que a tua loja está a operar.
               </p>
               <div className="space-y-3">
-                {DAYS.map((day) => {
-                  const h = hours[day];
+                {STORE_DAYS.map((day) => {
+                  const slot = hours[day];
                   return (
                     <div
                       key={day}
@@ -373,30 +503,30 @@ export function SettingsPage() {
                         <button
                           type="button"
                           role="switch"
-                          aria-checked={h.open}
+                          aria-checked={slot.open}
                           onClick={() =>
                             setHours((prev) => ({ ...prev, [day]: { ...prev[day], open: !prev[day].open } }))
                           }
-                          className={`relative h-5 w-9 flex-shrink-0 transition-colors ${h.open ? "bg-accent" : "bg-ink/15"}`}
+                          className={`relative h-5 w-9 flex-shrink-0 transition-colors ${slot.open ? "bg-accent" : "bg-ink/15"}`}
                           style={{ borderRadius: "2px" }}
                         >
                           <span
-                            className={`absolute top-0.5 h-4 w-4 bg-white transition-transform ${h.open ? "translate-x-4" : "translate-x-0.5"}`}
+                            className={`absolute top-0.5 h-4 w-4 bg-white transition-transform ${slot.open ? "translate-x-4" : "translate-x-0.5"}`}
                             style={{ borderRadius: "1px" }}
                           />
                         </button>
-                        <span className={`font-mono text-[13px] font-semibold ${h.open ? "text-ink" : "text-ink-2"}`}>
+                        <span className={`font-mono text-[13px] font-semibold ${slot.open ? "text-ink" : "text-ink-2"}`}>
                           {day}
                         </span>
-                        {!h.open && (
+                        {!slot.open && (
                           <span className="font-mono text-[11px] text-ink-2">Fechado</span>
                         )}
                       </div>
-                      {h.open && (
+                      {slot.open && (
                         <div className="flex items-center gap-2">
                           <Input
                             type="time"
-                            value={h.from}
+                            value={slot.from}
                             onChange={(e) =>
                               setHours((prev) => ({ ...prev, [day]: { ...prev[day], from: e.target.value } }))
                             }
@@ -405,7 +535,7 @@ export function SettingsPage() {
                           <span className="font-mono text-[12px] text-ink-2">até</span>
                           <Input
                             type="time"
-                            value={h.to}
+                            value={slot.to}
                             onChange={(e) =>
                               setHours((prev) => ({ ...prev, [day]: { ...prev[day], to: e.target.value } }))
                             }
@@ -418,10 +548,12 @@ export function SettingsPage() {
                 })}
               </div>
               <p className="mt-4 font-mono text-[11px] text-ink-2">
-                Em breve, estes horários aparecerão na tua loja para informar os clientes.
+                Guardado neste dispositivo. Em breve, estes horários aparecerão
+                na tua loja para informar os clientes.
               </p>
-            </Surface>
-          </>
+              {localSaveBar}
+            </Section>
+          </form>
         )}
       </div>
     </div>

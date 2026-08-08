@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "../../lib/auth";
 import { DashboardShell, type DashPage } from "./Shell";
 import { TrialBanner } from "../../components/TrialBanner";
@@ -7,6 +7,21 @@ import { Button } from "../../components/ui/Button";
 import { PageTransition } from "../../components/ui/Animation";
 import { SkeletonProductGrid, SkeletonStatsGrid, SkeletonTableRows } from "../../components/ui/Skeleton";
 import { Store } from "lucide-react";
+import { getLastPage, saveLastPage } from "../../lib/client-storage";
+
+const DASH_PAGES: DashPage[] = [
+  "overview",
+  "products",
+  "categories",
+  "orders",
+  "customers",
+  "coupons",
+  "share",
+  "appearance",
+  "themes",
+  "settings",
+  "help",
+];
 
 const OverviewPage = lazy(() =>
   import("./OverviewPage").then((m) => ({ default: m.OverviewPage })),
@@ -65,8 +80,15 @@ export function DashboardPage({
   navigate: (to: string) => void;
 }) {
   const { user, store, loading } = useAuth();
-  const [page, setPage] = useState<DashPage>("overview");
+  const [page, setPage] = useState<DashPage>(() => {
+    const last = getLastPage("dashboard");
+    return DASH_PAGES.includes(last as DashPage) ? (last as DashPage) : "overview";
+  });
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    saveLastPage("dashboard", page);
+  }, [page]);
 
   if (loading) return <PageLoader />;
 

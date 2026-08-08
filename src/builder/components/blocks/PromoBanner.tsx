@@ -41,7 +41,7 @@ export const promoBannerBlock: BlockDefinition = {
     bgImage: '',
   },
   component: function PromoBannerBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, subtitle, buttonText, buttonUrl, bgColor, textColor, buttonColor, bgImage } = settings as Record<string, string>;
+    const { title, subtitle, buttonText, bgColor, textColor, buttonColor, bgImage } = settings as Record<string, string>;
     const hasBgImage = bgImage && bgImage !== '';
 
     const handleChange = useCallback((key: string, value: string) => {

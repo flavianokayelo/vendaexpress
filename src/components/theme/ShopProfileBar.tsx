@@ -72,7 +72,7 @@ export function ShopProfileBar({
         <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3.5">
             {store.logo_url ? (
-              <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--sf-surface)] p-1.5 shadow-[var(--sf-shadow-md)] ring-1 ring-[var(--sf-line)]">
+              <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden">
                 <img
                   src={resolveMediaUrl(store.logo_url) ?? ''}
                   alt={store.name}

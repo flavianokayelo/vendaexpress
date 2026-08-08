@@ -53,7 +53,11 @@ const NAV: { id: DashPage; label: string; icon: typeof LayoutDashboard }[] = [
 ];
 
 /** Navegação agrupada por domínio, até colapsável por grupo. */
-const NAV_GROUPS: { label: string; icon: typeof LayoutDashboard; ids: DashPage[] }[] = [
+const NAV_GROUPS: {
+  label: string;
+  icon: typeof LayoutDashboard;
+  ids: DashPage[];
+}[] = [
   { label: "Visão Geral", icon: LayoutDashboard, ids: ["overview"] },
   {
     label: "Catálogo",
@@ -61,13 +65,29 @@ const NAV_GROUPS: { label: string; icon: typeof LayoutDashboard; ids: DashPage[]
     ids: ["products", "categories", "coupons"],
   },
   { label: "Vendas", icon: ShoppingCart, ids: ["orders", "customers"] },
-  { label: "Loja", icon: Store, ids: ["share", "appearance", "themes", "settings"] },
+  {
+    label: "Loja",
+    icon: Store,
+    ids: ["share", "appearance", "themes", "settings"],
+  },
   { label: "Ajuda", icon: ExternalLink, ids: ["help"] },
 ];
 
-type Stats =
-  | { products: number; orders: number; customers: number; revenue: number }
-  | null;
+/** As 4 páginas de acesso direto na barra inferior do mobile — o resto vive na folha "Mais". */
+const MOBILE_TAB_IDS: DashPage[] = ["overview", "products", "orders", "share"];
+
+/** Mesmos grupos da sidebar, mas sem os itens já presentes na barra inferior. */
+const MOBILE_MORE_GROUPS = NAV_GROUPS.map((group) => ({
+  ...group,
+  ids: group.ids.filter((id) => !MOBILE_TAB_IDS.includes(id)),
+})).filter((group) => group.ids.length > 0);
+
+type Stats = {
+  products: number;
+  orders: number;
+  customers: number;
+  revenue: number;
+} | null;
 
 function useSidebarStats() {
   const [stats, setStats] = useState<Stats>(null);
@@ -146,11 +166,13 @@ function NavList({
   onNavigate,
   counts,
   collapsed,
+  groups = NAV_GROUPS,
 }: {
   page: DashPage;
   onNavigate: (p: DashPage) => void;
   counts: Stats;
   collapsed: boolean;
+  groups?: typeof NAV_GROUPS;
 }) {
   const [closedGroups, setClosedGroups] = useState<Set<string>>(() => {
     try {
@@ -167,7 +189,10 @@ function NavList({
       if (next.has(label)) next.delete(label);
       else next.add(label);
       try {
-        localStorage.setItem("ve_dash_closed_groups", JSON.stringify([...next]));
+        localStorage.setItem(
+          "ve_dash_closed_groups",
+          JSON.stringify([...next]),
+        );
       } catch {
         /* ignore */
       }
@@ -176,11 +201,11 @@ function NavList({
   };
 
   const badgeFor = (id: DashPage): number | null =>
-    id === "orders" ? counts?.orders ?? 0 : null;
+    id === "orders" ? (counts?.orders ?? 0) : null;
 
   return (
     <>
-      {NAV_GROUPS.map((group, i) => {
+      {groups.map((group, i) => {
         const closed = closedGroups.has(group.label);
         const items = NAV.filter((item) => group.ids.includes(item.id));
         return (
@@ -207,7 +232,9 @@ function NavList({
                 />
               </button>
             )}
-            <div className={`space-y-[1px] ${closed && !collapsed ? "hidden" : ""}`}>
+            <div
+              className={`space-y-[1px] ${closed && !collapsed ? "hidden" : ""}`}
+            >
               {items.map((item) => {
                 const active = page === item.id;
                 const badge = badgeFor(item.id);
@@ -218,19 +245,20 @@ function NavList({
                     onClick={() => onNavigate(item.id)}
                     className={`group relative flex w-full items-center gap-3 px-3 py-[9px] font-mono text-[13px] font-semibold transition-all duration-150 ${
                       collapsed ? "justify-center" : ""
-                    } ${
-                      active ? "text-accent" : "text-ink-2 hover:text-ink"
-                    }`}
-                    style={{ borderRadius: '2px' }}
+                    } ${active ? "text-accent" : "text-ink-2 hover:text-ink"}`}
+                    style={{ borderRadius: "2px" }}
                   >
                     {active && (
                       <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-accent" />
                     )}
-                    <span className={`flex h-7 w-7 items-center justify-center transition-colors duration-150 ${
-                      active
-                        ? "bg-accent text-accent-foreground"
-                        : "bg-ink/[0.04] text-ink-2 group-hover:bg-ink/[0.08]"
-                    }`} style={{ borderRadius: '2px' }}>
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center transition-colors duration-150 ${
+                        active
+                          ? "bg-accent text-accent-foreground"
+                          : "bg-ink/[0.04] text-ink-2 group-hover:bg-ink/[0.08]"
+                      }`}
+                      style={{ borderRadius: "2px" }}
+                    >
                       <item.icon size={15} />
                     </span>
                     {!collapsed && item.label}
@@ -250,6 +278,70 @@ function NavList({
   );
 }
 
+/** Barra de navegação inferior fixa, ao estilo de app nativa (mobile only). */
+function MobileTabBar({
+  page,
+  onNavigate,
+  moreOpen,
+  onToggleMore,
+  counts,
+}: {
+  page: DashPage;
+  onNavigate: (p: DashPage) => void;
+  moreOpen: boolean;
+  onToggleMore: () => void;
+  counts: Stats;
+}) {
+  const items = NAV.filter((item) => MOBILE_TAB_IDS.includes(item.id));
+  const moreActive = !moreOpen && !MOBILE_TAB_IDS.includes(page);
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-border bg-paper/95 backdrop-blur-lg md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {items.map((item) => {
+        const active = !moreOpen && page === item.id;
+        const badge = item.id === "orders" ? (counts?.orders ?? 0) : null;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            className={`relative flex flex-1 flex-col items-center gap-1 py-2 font-mono text-[10px] font-semibold transition-colors ${
+              active ? "text-accent" : "text-ink-2"
+            }`}
+          >
+            {active && (
+              <span className="absolute top-0 h-[2px] w-8 rounded-full bg-accent" />
+            )}
+            <span className="relative">
+              <item.icon size={20} strokeWidth={active ? 2.4 : 2} />
+              {badge != null && badge > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold text-white">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
+            </span>
+            {item.label}
+          </button>
+        );
+      })}
+      <button
+        onClick={onToggleMore}
+        className={`relative flex flex-1 flex-col items-center gap-1 py-2 font-mono text-[10px] font-semibold transition-colors ${
+          moreActive ? "text-accent" : "text-ink-2"
+        }`}
+      >
+        {moreActive && (
+          <span className="absolute top-0 h-[2px] w-8 rounded-full bg-accent" />
+        )}
+        <Menu size={20} strokeWidth={moreActive ? 2.4 : 2} />
+        Mais
+      </button>
+    </nav>
+  );
+}
+
 export function DashboardShell({
   page,
   onNavigate,
@@ -260,13 +352,16 @@ export function DashboardShell({
   children: ReactNode;
 }) {
   const { store, signOut } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [sidebarClosed, setSidebarClosed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem("ve_dash_sidebar_closed") === "1";
+      const stored = localStorage.getItem("ve_dash_sidebar_closed");
+      if (stored != null) return stored === "1";
     } catch {
-      return false;
+      /* ignore */
     }
+    // Sem preferência guardada: tablet começa recolhida (mais espaço de ecrã), desktop expandida.
+    return typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches;
   });
   const stats = useSidebarStats();
 
@@ -298,19 +393,29 @@ export function DashboardShell({
             onClick={toggleSidebar}
             className="mx-auto flex h-9 w-9 shrink-0 items-center justify-center text-ink-2 transition-colors hover:text-ink md:mx-0"
             title={sidebarClosed ? "Abrir menu" : "Recolher menu"}
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            {sidebarClosed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            {sidebarClosed ? (
+              <PanelLeftOpen size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
           </button>
           {!sidebarClosed && (
             <>
-              <div className="flex h-9 w-10 shrink-0 items-center justify-center overflow-hidden bg-ink text-paper">
-                {store?.logo_url ? (
-                  <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-contain" />
-                ) : (
+              {store?.logo_url ? (
+                <span className="flex h-9 w-10 shrink-0 items-center justify-center overflow-hidden">
+                  <img
+                    src={resolveMediaUrl(store.logo_url) ?? ""}
+                    alt=""
+                    className="h-full w-full object-contain"
+                  />
+                </span>
+              ) : (
+                <div className="flex h-9 w-10 shrink-0 items-center justify-center bg-ink text-paper">
                   <Store size={19} />
-                )}
-              </div>
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <div className="truncate font-mono text-[13px] font-bold text-ink">
@@ -343,9 +448,12 @@ export function DashboardShell({
             rel="noopener noreferrer"
             title={sidebarClosed ? "Ver loja" : undefined}
             className="group flex items-center gap-2 border border-border-2 px-[11px] py-[9px] font-mono text-[12px] font-semibold text-ink-2 transition-all hover:border-ink hover:text-ink"
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            <ExternalLink size={15} className={`shrink-0 transition-transform duration-150 group-hover:translate-x-[1px] ${sidebarClosed ? "mx-auto" : ""}`} />
+            <ExternalLink
+              size={15}
+              className={`shrink-0 transition-transform duration-150 group-hover:translate-x-[1px] ${sidebarClosed ? "mx-auto" : ""}`}
+            />
             {!sidebarClosed && "Ver loja"}
           </a>
           <button
@@ -354,88 +462,139 @@ export function DashboardShell({
             className={`group flex w-full items-center gap-2 px-[11px] py-[9px] font-mono text-[12px] font-semibold text-ink-2 transition-colors hover:text-danger ${
               sidebarClosed ? "justify-center" : ""
             }`}
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: "2px" }}
           >
-            <LogOut size={15} className="shrink-0 transition-transform duration-150 group-hover:-translate-y-[0.5px]" />
+            <LogOut
+              size={15}
+              className="shrink-0 transition-transform duration-150 group-hover:-translate-y-[0.5px]"
+            />
             {!sidebarClosed && "Sair"}
           </button>
         </div>
       </aside>
 
-      {/* Mobile header */}
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-paper px-4 py-3 md:hidden">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center bg-ink text-paper overflow-hidden" style={{ borderRadius: '2px' }}>
-            {store?.logo_url ? (
-              <img src={resolveMediaUrl(store.logo_url) ?? ""} alt="" className="h-full w-full object-contain" />
-            ) : (
+      {/* Cabeçalho mobile */}
+      <div
+        className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-paper/95 px-4 py-3 backdrop-blur-lg md:hidden"
+        style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          {store?.logo_url ? (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden" style={{ borderRadius: "2px" }}>
+              <img
+                src={resolveMediaUrl(store.logo_url) ?? ""}
+                alt=""
+                className="h-full w-full object-contain"
+              />
+            </span>
+          ) : (
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center bg-ink text-paper overflow-hidden"
+              style={{ borderRadius: "2px" }}
+            >
               <Store size={16} />
-            )}
-          </div>
-          <span className="font-mono text-sm font-bold text-ink">
+            </div>
+          )}
+          <span className="truncate font-mono text-sm font-bold text-ink">
             {store?.name}
           </span>
         </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 text-ink-2 hover:text-ink"
-          style={{ borderRadius: '2px' }}
+        <a
+          href={`#/s/${store?.slug ?? ""}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Ver loja"
+          className="flex h-9 w-9 shrink-0 items-center justify-center text-ink-2 transition-colors hover:text-ink"
+          style={{ borderRadius: "2px" }}
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+          <ExternalLink size={18} />
+        </a>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Folha "Mais" — sobe do fundo, ao estilo de app nativa */}
       <div
-        className={`fixed inset-0 z-40 md:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-40 md:hidden ${moreOpen ? "" : "pointer-events-none"}`}
+        aria-hidden={!moreOpen}
       >
         <div
-          onClick={() => setMobileOpen(false)}
+          onClick={() => setMoreOpen(false)}
           className={`absolute inset-0 bg-ink/40 transition-opacity duration-200 ${
-            mobileOpen ? "opacity-100" : "opacity-0"
+            moreOpen ? "opacity-100" : "opacity-0"
           }`}
         />
         <div
-          className={`absolute inset-y-0 left-0 w-64 bg-paper shadow-xl transition-transform duration-200 ease-out ${
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          className={`absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-2xl border-t border-border bg-paper shadow-xl transition-transform duration-300 ease-out ${
+            moreOpen ? "translate-y-0" : "translate-y-full"
           }`}
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
         >
-          <nav className="px-3 py-4">
+          <div className="flex justify-center pt-2.5">
+            <span className="h-1 w-9 rounded-full bg-border-2" />
+          </div>
+          <div className="flex items-center justify-between px-4 pb-1 pt-2.5">
+            <span className="font-heading text-[15px] font-bold tracking-[-.01em] text-ink">
+              Mais
+            </span>
+            <button
+              onClick={() => setMoreOpen(false)}
+              className="flex h-8 w-8 items-center justify-center text-ink-2 hover:text-ink"
+              style={{ borderRadius: "2px" }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <nav className="px-3 py-2">
             <NavList
               page={page}
               onNavigate={(p) => {
                 onNavigate(p);
-                setMobileOpen(false);
+                setMoreOpen(false);
               }}
-              counts={null}
+              counts={stats}
               collapsed={false}
+              groups={MOBILE_MORE_GROUPS}
             />
           </nav>
           <div className="mt-2 space-y-1 border-t border-border px-3 py-3">
             <a
               href={`#/s/${store?.slug ?? ""}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="group flex items-center gap-3 px-3 py-2 font-mono text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink"
-              style={{ borderRadius: '2px' }}
+              style={{ borderRadius: "2px" }}
             >
-              <ExternalLink size={17} className="transition-transform duration-150 group-hover:translate-x-[1px]" /> Ver loja
+              <ExternalLink
+                size={17}
+                className="transition-transform duration-150 group-hover:translate-x-[1px]"
+              />{" "}
+              Ver loja
             </a>
             <button
               onClick={signOut}
               className="group flex w-full items-center gap-3 px-3 py-2 font-mono text-[13px] font-semibold text-ink-2 transition-colors hover:text-danger"
-              style={{ borderRadius: '2px' }}
+              style={{ borderRadius: "2px" }}
             >
-              <LogOut size={17} className="transition-transform duration-150 group-hover:-translate-y-[0.5px]" /> Sair
+              <LogOut
+                size={17}
+                className="transition-transform duration-150 group-hover:-translate-y-[0.5px]"
+              />{" "}
+              Sair
             </button>
           </div>
         </div>
       </div>
 
       {/* Main */}
-      <main className={`transition-all duration-200 ${sidebarClosed ? "md:pl-[68px]" : "md:pl-64"}`}>
+      <main
+        className={`transition-all duration-200 ${sidebarClosed ? "md:pl-[68px]" : "md:pl-64"}`}
+      >
         <div className="sticky top-0 z-10 hidden items-center justify-between border-b border-border bg-paper/80 px-8 py-[15px] backdrop-blur md:flex">
           <div className="flex items-center gap-2.5 font-mono text-[13px] font-semibold text-ink">
             {active && (
-              <span className="flex h-6 w-6 items-center justify-center bg-accent-soft text-accent" style={{ borderRadius: '2px' }}>
+              <span
+                className="flex h-6 w-6 items-center justify-center bg-accent-soft text-accent"
+                style={{ borderRadius: "2px" }}
+              >
                 <active.icon size={13} />
               </span>
             )}
@@ -443,10 +602,26 @@ export function DashboardShell({
           </div>
           <span className="font-mono text-[11px] text-ink-2">{subdomain}</span>
         </div>
-        <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto max-w-6xl px-4 pb-24 pt-6 md:px-8 md:py-8">
           {children}
         </div>
+        {/* Espaço de segurança para a barra inferior + notch dos telemóveis */}
+        <div
+          className="md:hidden"
+          style={{ height: "env(safe-area-inset-bottom)" }}
+        />
       </main>
+
+      <MobileTabBar
+        page={page}
+        onNavigate={(p) => {
+          setMoreOpen(false);
+          onNavigate(p);
+        }}
+        moreOpen={moreOpen}
+        onToggleMore={() => setMoreOpen((v) => !v)}
+        counts={stats}
+      />
     </div>
   );
 }
@@ -467,7 +642,9 @@ export function PageHeader({
         <h1 className="font-heading text-[24px] font-bold tracking-[-.02em] text-ink">
           {title}
         </h1>
-        {subtitle && <p className="mt-0.5 font-mono text-[13px] text-ink-2">{subtitle}</p>}
+        {subtitle && (
+          <p className="mt-0.5 font-mono text-[13px] text-ink-2">{subtitle}</p>
+        )}
       </div>
       {action}
     </div>
@@ -495,19 +672,19 @@ export function StatCard({
 }) {
   const colors = {
     primary: "text-primary bg-primary/10",
-    amber:   "text-warning bg-amber-50",
-    green:   "text-success bg-green-50",
-    violet:  "text-accent bg-accent/10",
-    teal:    "text-teal bg-teal-50",
-    rose:    "text-rose bg-rose-50",
+    amber: "text-warning bg-amber-50",
+    green: "text-success bg-green-50",
+    violet: "text-accent bg-accent/10",
+    teal: "text-teal bg-teal-50",
+    rose: "text-rose bg-rose-50",
   };
   const ringColors = {
     primary: "ring-primary/20",
-    amber:   "ring-warning/20",
-    green:   "ring-success/20",
-    violet:  "ring-accent/20",
-    teal:    "ring-teal/20",
-    rose:    "ring-rose/20",
+    amber: "ring-warning/20",
+    green: "ring-success/20",
+    violet: "ring-accent/20",
+    teal: "ring-teal/20",
+    rose: "ring-rose/20",
   };
   const hasDelta = typeof delta === "number";
   const up = (delta ?? 0) >= 0;
@@ -516,19 +693,25 @@ export function StatCard({
       as={onClick ? "button" : "div"}
       onClick={onClick}
       className={`relative overflow-hidden p-5 ${
-        onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-floating text-left" : ""
+        onClick
+          ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-floating text-left"
+          : ""
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">{label}</span>
+        <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-2">
+          {label}
+        </span>
         <div
           className={`flex h-9 w-9 items-center justify-center ring-1 ring-inset ${colors[accent]} ${ringColors[accent]}`}
-          style={{ borderRadius: '2px' }}
+          style={{ borderRadius: "2px" }}
         >
           {icon}
         </div>
       </div>
-      <div className="mt-2 font-heading text-[28px] font-bold tracking-[-.02em] text-ink">{value}</div>
+      <div className="mt-2 font-heading text-[28px] font-bold tracking-[-.02em] text-ink">
+        {value}
+      </div>
       {(hasDelta || hint) && (
         <div className="mt-2 flex items-center gap-2">
           {hasDelta ? (
@@ -548,7 +731,19 @@ export function StatCard({
         </div>
       )}
       {sparkline && sparkline.length > 1 && (
-        <Sparkline data={sparkline} accent={accent === "rose" ? "#e11d48" : accent === "violet" ? "#8b5cf6" : accent === "teal" ? "#0d9488" : "#6b7280"} className="mt-3" />
+        <Sparkline
+          data={sparkline}
+          accent={
+            accent === "rose"
+              ? "#e11d48"
+              : accent === "violet"
+                ? "#8b5cf6"
+                : accent === "teal"
+                  ? "#0d9488"
+                  : "#6b7280"
+          }
+          className="mt-3"
+        />
       )}
     </Surface>
   );

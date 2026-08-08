@@ -65,10 +65,9 @@ const CATEGORY_ICONS: Record<string, typeof LayoutTemplate> = {
 };
 
 export function BuilderSidebar({
-  blocks, onAddBlock,
+  blocks,
 }: {
   blocks: BlockDefinition[];
-  onAddBlock: (type: string, settings?: Record<string, unknown>) => void;
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);

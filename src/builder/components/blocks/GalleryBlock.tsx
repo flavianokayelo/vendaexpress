@@ -34,11 +34,11 @@ export const galleryBlock: BlockDefinition = {
     images: [],
   },
   component: function GalleryBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, columns, gap, bgColor, images } = settings as Record<string, any>;
+    const { title, columns, gap, bgColor, images } = settings as Record<string, unknown>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);
-    const imgList: string[] = Array.isArray(images) ? images : [];
+    const imgList: string[] = Array.isArray(images) ? (images as string[]) : [];
 
     return (
       <section id={id} onClick={() => onSelect?.(id)} className="px-6 py-12 md:px-12" style={{ backgroundColor: bgColor || '#ffffff', ...style }}>

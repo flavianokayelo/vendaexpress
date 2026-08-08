@@ -88,6 +88,26 @@
   .font-storefront * {
     transition-timing-function: var(--sf-ease, cubic-bezier(0.4, 0, 0.2, 1));
   }
+
+  /* Previne overflow horizontal e jump de layout ao abrir o teclado no iOS. */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+  }
+}
+
+/* iOS Safari amplia automaticamente a página ao focar inputs com
+   font-size < 16px (zoom incómodo no iPhone/iPad). Alguns Android WebViews
+   e browsers fazem o mesmo. Para garantir que NENHUM dispositivo faz zoom,
+   força 16px em todos os campos de formulário em todas as plataformas.
+   Colocado fora de @layer para vencer as utilities do Tailwind (text-sm). */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 /* Esconde a scrollbar em calhas horizontais que já têm setas/snap próprias

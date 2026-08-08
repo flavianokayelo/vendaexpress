@@ -53,7 +53,7 @@ export const imageTextBlock: BlockDefinition = {
     textColor: '#1e293b',
   },
   component: function ImageTextBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, content, buttonText, buttonUrl, imageUrl, imageAlt, layout, bgColor, textColor } = settings as Record<string, string>;
+    const { title, content, buttonText, imageUrl, imageAlt, layout, bgColor, textColor } = settings as Record<string, string>;
     const isLeft = layout === 'image-left';
     const hasImage = imageUrl && imageUrl !== '';
 

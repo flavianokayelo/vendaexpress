@@ -9,8 +9,8 @@ import {
   Printer,
   Check,
   QrCode,
-  Instagram,
-  Facebook,
+  AtSign,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { PageHeader } from "./Shell";
@@ -230,154 +230,154 @@ export function SharePage() {
         />
       </div>
 
-      <div className="max-w-4xl space-y-6">
-        {/* Link da loja */}
-        <Surface className="p-6">
-          <div className="flex items-start gap-3">
-            <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center border border-border-2 bg-accent-soft/40 text-ink"
-              style={{ borderRadius: "2px" }}
-            >
-              <Link2 size={16} />
-            </span>
-            <div>
-              <h2 className="font-heading text-[16px] font-bold tracking-[-.01em] text-ink">
-                O link da tua loja
-              </h2>
-              <p className="mt-0.5 font-mono text-[12px] text-ink-2">
-                Partilha por mensagem, redes sociais ou e-mail.
-              </p>
+      <div className="max-w-6xl space-y-6">
+        {/* Link + QR lado a lado */}
+        <div className="grid gap-5 lg:grid-cols-5 lg:items-start">
+          {/* Link da loja */}
+          <Surface className="p-6 lg:col-span-2">
+            <div className="flex items-start gap-3">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center border border-border-2 bg-accent-soft/40 text-ink"
+                style={{ borderRadius: "2px" }}
+              >
+                <Link2 size={16} />
+              </span>
+              <div>
+                <h2 className="font-heading text-[16px] font-bold tracking-[-.01em] text-ink">
+                  O link da tua loja
+                </h2>
+                <p className="mt-0.5 font-mono text-[12px] text-ink-2">
+                  Partilha por mensagem, redes sociais ou e-mail.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-stretch">
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[2px] border border-border-2 bg-muted/30 px-3">
+            <div className="mt-5 flex min-w-0 items-center gap-2 rounded-[2px] border border-border-2 bg-muted/30 px-3 py-2.5">
               <Link2 size={15} className="shrink-0 text-ink-2" />
               <span className="truncate font-mono text-[13px] text-ink">{linkLabel}</span>
             </div>
-            <div className="flex items-stretch gap-2">
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <Button variant="outline" onClick={copyUrl} title="Copiar link">
                 {copied ? <Check size={15} /> : <Copy size={15} />}
                 {copied ? "Copiado" : "Copiar"}
               </Button>
-              <Button variant="primary" onClick={shareNative} className="flex-1 sm:flex-none">
-                Partilhar
-              </Button>
               <Button variant="outline" onClick={openStore} title="Abrir loja">
                 <ExternalLink size={15} />
+                Abrir loja
               </Button>
             </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <a
-              href={wa ? `${wa}?text=${encodeURIComponent(`Olá! Visita a minha loja ${store.name}: ${url}`)}` : undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={wa ? undefined : (e) => e.preventDefault()}
-              className={`inline-flex items-center gap-2 border px-3 py-2 font-mono text-[12px] font-semibold transition-colors ${
-                wa
-                  ? "border-success/30 bg-success/10 text-[#128C7E] hover:border-[#128C7E]"
-                  : "cursor-not-allowed border-border-2 text-ink-2"
-              }`}
-              style={{ borderRadius: "2px" }}
-            >
-              <MessageCircle size={15} />
-              Partilhar no WhatsApp
-            </a>
-            <Button variant="ghost" size="sm" onClick={() => window.print()}>
-              <Printer size={15} /> Imprimir
+            <Button variant="primary" onClick={shareNative} className="mt-2 w-full">
+              Partilhar
             </Button>
-          </div>
-        </Surface>
 
-        {/* Códigos QR */}
-        <div>
-          <div className="mb-3 flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center bg-accent-soft text-accent" style={{ borderRadius: "2px" }}>
-              <QrCode size={13} />
-            </span>
-            <h2 className="font-heading text-[18px] font-bold tracking-[-.01em] text-ink">
-              Cartões QR para impressão
-            </h2>
-          </div>
+            <div className="mt-4 space-y-2 border-t border-border pt-4">
+              <a
+                href={wa ? `${wa}?text=${encodeURIComponent(`Olá! Visita a minha loja ${store.name}: ${url}`)}` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={wa ? undefined : (e) => e.preventDefault()}
+                className={`flex items-center justify-center gap-2 border px-3 py-2 font-mono text-[12px] font-semibold transition-colors ${
+                  wa
+                    ? "border-success/30 bg-success/10 text-[#128C7E] hover:border-[#128C7E]"
+                    : "cursor-not-allowed border-border-2 text-ink-2"
+                }`}
+                style={{ borderRadius: "2px" }}
+              >
+                <MessageCircle size={15} />
+                Partilhar no WhatsApp
+              </a>
+              <Button variant="ghost" size="sm" onClick={() => window.print()} className="w-full">
+                <Printer size={15} /> Imprimir
+              </Button>
+            </div>
+          </Surface>
 
-          <div ref={printRef} className="grid gap-5 md:grid-cols-2">
-            <QRCard
-              title="Loja online"
-              subtitle="Leva o cliente direto à tua página"
-              data={url}
-              accent={store.theme_primary || "#15150E"}
-              defaultSize={printSize}
-              onSizeChange={setPrintSize}
-            />
-            {wa && (
+          {/* Códigos QR */}
+          <div className="lg:col-span-3">
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center bg-accent-soft text-accent" style={{ borderRadius: "2px" }}>
+                <QrCode size={13} />
+              </span>
+              <h2 className="font-heading text-[18px] font-bold tracking-[-.01em] text-ink">
+                Cartões QR para impressão
+              </h2>
+            </div>
+
+            <div ref={printRef} className="grid gap-5 sm:grid-cols-2">
               <QRCard
-                title="WhatsApp"
-                subtitle="Abre um chat direto contigo"
-                data={wa}
-                accent="#128C7E"
+                title="Loja online"
+                subtitle="Leva o cliente direto à tua página"
+                data={url}
+                accent={store.theme_primary || "#15150E"}
                 defaultSize={printSize}
                 onSizeChange={setPrintSize}
               />
-            )}
-          </div>
+              {wa && (
+                <QRCard
+                  title="WhatsApp"
+                  subtitle="Abre um chat direto contigo"
+                  data={wa}
+                  accent="#128C7E"
+                  defaultSize={printSize}
+                  onSizeChange={setPrintSize}
+                />
+              )}
+            </div>
 
-          <p className="mt-3 font-mono text-[11px] text-ink-2">
-            Imprime em A5, A4 ou A3, coloca numa moldura ou pendura na montra. O QR continua a funcionar mesmo em preto e branco.
-          </p>
+            <p className="mt-3 font-mono text-[11px] text-ink-2">
+              Imprime em A5, A4 ou A3, coloca numa moldura ou pendura na montra. O QR continua a funcionar mesmo em preto e branco.
+            </p>
+          </div>
         </div>
 
         {/* Dicas */}
         <Surface className="p-6">
-          <h3 className="mb-4 font-heading text-[15px] font-bold tracking-[-.01em] text-ink">
+          <h3 className="mb-1 font-heading text-[15px] font-bold tracking-[-.01em] text-ink">
             Ideias para divulgares a tua loja
           </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-2" style={{ borderRadius: "2px" }}>
-                <Instagram size={16} />
-              </span>
-              <div>
-                <div className="font-mono text-[13px] font-bold text-ink">Redes sociais</div>
-                <p className="mt-0.5 font-mono text-[12px] text-ink-2">
-                  Coloca o link da loja na bio do Instagram e Facebook e partilha fotos dos produtos.
-                </p>
+          <p className="mb-4 font-mono text-[12px] text-ink-2">
+            Segue estes passos para levar a loja a mais clientes.
+          </p>
+          <div className="divide-y divide-border">
+            {[
+              {
+                icon: AtSign,
+                title: "Redes sociais",
+                desc: "Coloca o link da loja na bio do Instagram e Facebook e partilha fotos dos produtos.",
+              },
+              {
+                icon: MessageCircle,
+                title: "Grupos e contactos",
+                desc: "Envia o link pelos teus grupos de WhatsApp e e-mail, com um pequeno texto de apresentação.",
+              },
+              {
+                icon: Printer,
+                title: "Embalagens",
+                desc: "Imprime o QR da loja e cola nas embalagens dos produtos que envias aos clientes.",
+              },
+              {
+                icon: Users,
+                title: "Boca a boca",
+                desc: "Pede aos teus clientes para avaliarem e indicarem a loja a amigos e colegas.",
+              },
+            ].map((step, i) => (
+              <div key={step.title} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center bg-ink font-mono text-[12px] font-bold text-paper"
+                  style={{ borderRadius: "2px" }}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <step.icon size={14} className="text-ink-2" />
+                    <div className="font-mono text-[13px] font-bold text-ink">{step.title}</div>
+                  </div>
+                  <p className="mt-0.5 font-mono text-[12px] text-ink-2">{step.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-2" style={{ borderRadius: "2px" }}>
-                <MessageCircle size={16} />
-              </span>
-              <div>
-                <div className="font-mono text-[13px] font-bold text-ink">Grupos e contactos</div>
-                <p className="mt-0.5 font-mono text-[12px] text-ink-2">
-                  Envia o link pelos teus grupos de WhatsApp e e-mail, com um pequeno texto de apresentação.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-2" style={{ borderRadius: "2px" }}>
-                <Printer size={16} />
-              </span>
-              <div>
-                <div className="font-mono text-[13px] font-bold text-ink">Embalagens</div>
-                <p className="mt-0.5 font-mono text-[12px] text-ink-2">
-                  Imprime o QR da loja e cola nas embalagens dos produtos que envias aos clientes.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-2" style={{ borderRadius: "2px" }}>
-                <Facebook size={16} />
-              </span>
-              <div>
-                <div className="font-mono text-[13px] font-bold text-ink">Boca a boca</div>
-                <p className="mt-0.5 font-mono text-[12px] text-ink-2">
-                  Pede aos teus clientes para avaliarem e indicarem a loja a amigos e colegas.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </Surface>
       </div>

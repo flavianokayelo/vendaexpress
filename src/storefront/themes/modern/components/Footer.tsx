@@ -27,7 +27,7 @@ export function Footer({
           <div>
             <div className="mb-3 flex items-center gap-2.5">
               {store.logo_url ? (
-                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white p-1.5">
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden">
                   <img
                     src={resolveMediaUrl(store.logo_url) ?? ""}
                     alt={store.name}

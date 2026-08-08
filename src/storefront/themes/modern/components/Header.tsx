@@ -97,7 +97,7 @@ export function Header({
         <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-3 py-2.5 sm:gap-5 sm:px-4">
           <div className="flex flex-shrink-0 items-center gap-2">
             {store.logo_url ? (
-              <span className="flex h-8 max-w-[120px] flex-shrink-0 items-center justify-center rounded-[8px] bg-white px-1 sm:h-9">
+              <span className="flex h-8 max-w-[120px] flex-shrink-0 items-center justify-center sm:h-9">
                 <img
                   src={resolveMediaUrl(store.logo_url) ?? ""}
                   alt={store.name}

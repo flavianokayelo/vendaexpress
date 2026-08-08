@@ -1,8 +1,7 @@
-import { useContext } from 'react';
-import type { EditorAction, EditorState, BuilderContextType } from '../types/editor';
+import { useReducer, useMemo, useCallback } from 'react';
+import type { BuilderContextType } from '../types/editor';
 import type { BlockDefinition } from '../types/block';
 import type { PageSection } from '../types/page';
-import { useReducer, useMemo, useCallback } from 'react';
 import { editorReducer, initialEditorState } from '../core/BuilderEngine';
 import { globalBlockRegistry } from '../core/BlockRegistry';
 
@@ -20,11 +19,11 @@ export function useBuilderEngine(): BuilderContextType {
 
   const value = useMemo<BuilderContextType>(() => ({
     state,
-    blocks: useMemo(() => {
+    blocks: (() => {
       const m = new Map<string, BlockDefinition>();
       for (const b of globalBlockRegistry.getAll()) m.set(b.type, b);
       return m;
-    }, []),
+    })(),
     dispatch,
     getBlock,
     getSelected,

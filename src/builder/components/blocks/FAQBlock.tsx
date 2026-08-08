@@ -31,7 +31,7 @@ export const faqBlock: BlockDefinition = {
     textColor: '#1e293b',
   },
   component: function FAQBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, bgColor, textColor } = settings as Record<string, any>;
+    const { title, bgColor, textColor } = settings as Record<string, string>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);

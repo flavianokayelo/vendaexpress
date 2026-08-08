@@ -42,7 +42,7 @@ export const categoryListBlock: BlockDefinition = {
     textColor: '#1e293b',
   },
   component: function CategoryListBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, columns, limit, bgColor, cardColor, textColor } = settings as Record<string, any>;
+    const { title, columns, limit, bgColor, cardColor, textColor } = settings as Record<string, string>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);

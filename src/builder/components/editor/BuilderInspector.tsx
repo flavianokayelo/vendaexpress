@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
-  Trash2, Copy, Type, Palette, Layout, Eye, ChevronDown,
-  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
+  Trash2, Copy, Type, Palette, Layout, Eye,
+  AlignLeft, AlignCenter, AlignRight,
 } from 'lucide-react';
 import type { PageSection } from '../../types/page';
-import type { BlockDefinition, FieldSchema, FieldType } from '../../types/block';
+import type { BlockDefinition, FieldSchema } from '../../types/block';
 import { globalBlockRegistry } from '../../core/BlockRegistry';
 
 const CATEGORY_STYLE = 'bg-ink text-paper';
@@ -222,11 +222,6 @@ export function BuilderInspector({
   onDuplicate: (id: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>('content');
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
-
-  const toggleSection = (name: string) => {
-    setCollapsedSections((prev) => ({ ...prev, [name]: !prev[name] }));
-  };
 
   if (!section) {
     return (

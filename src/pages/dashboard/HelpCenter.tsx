@@ -1,17 +1,39 @@
-import React, { useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   Search,
   Store,
   Package,
   MessageSquare,
   ChevronDown,
+  LifeBuoy,
 } from "lucide-react";
+import { PageHeader } from "./Shell";
+import { Surface } from "../../components/ui/Surface";
+import { Button } from "../../components/ui/Button";
 
 interface FAQItem {
   id: number;
   question: string;
-  answer: React.ReactNode;
+  answer: ReactNode;
 }
+
+const CATEGORIES = [
+  {
+    icon: Store,
+    title: "Configuração da Loja",
+    desc: "Aprende a alterar o domínio, moeda, horário e dados gerais da tua conta.",
+  },
+  {
+    icon: Package,
+    title: "Produtos & Catálogo",
+    desc: "Como adicionar produtos, gerir categorias e criar cupões de desconto.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Vendas via WhatsApp",
+    desc: "Configura o teu número para receberes pedidos diretamente no teu telemóvel.",
+  },
+];
 
 const faqData: FAQItem[] = [
   {
@@ -20,9 +42,9 @@ const faqData: FAQItem[] = [
     answer: (
       <>
         Para ligar um domínio personalizado, precisas de ter o plano{" "}
-        <strong>Premium</strong> ativo. Acessa as{" "}
-        <strong>Configurações &gt; Domínio</strong> e segue o passo a passo para
-        alterar os CNAME e DNS do teu fornecedor de domínio.
+        <strong className="text-ink">Premium</strong> ativo. Acessa as{" "}
+        <strong className="text-ink">Configurações &gt; Domínio</strong> e segue o
+        passo a passo para alterar os CNAME e DNS do teu fornecedor de domínio.
       </>
     ),
   },
@@ -32,8 +54,9 @@ const faqData: FAQItem[] = [
     answer: (
       <>
         Os pedidos são direcionados para o WhatsApp que configurares nas{" "}
-        <strong>Configurações da Loja</strong>. Combinas os métodos de pagamento
-        (Transferência, Express, etc.) diretamente com o teu cliente.
+        <strong className="text-ink">Configurações da Loja</strong>. Combinas os
+        métodos de pagamento (Transferência, Express, etc.) diretamente com o teu
+        cliente.
       </>
     ),
   },
@@ -42,160 +65,147 @@ const faqData: FAQItem[] = [
     question: "Posso alterar a moeda da loja depois de criada?",
     answer: (
       <>
-        Sim! Vai a <strong>Configurações &gt; Informações da Loja</strong>,
-        altera o campo <em>Moeda</em> (ex: Kwanza AOA) e clica em{" "}
-        <strong>Guardar alterações</strong>.
+        Sim! Vai a <strong className="text-ink">Configurações &gt; Informações da
+        Loja</strong>, altera o campo <em>Moeda</em> (ex: Kwanza AOA) e clica em{" "}
+        <strong className="text-ink">Guardar alterações</strong>.
       </>
     ),
   },
 ];
 
-export const HelpCenter: React.FC = () => {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+export function HelpCenter() {
+  const [query, setQuery] = useState("");
+  const [openFaq, setOpenFaq] = useState<number | null>(1);
 
   const toggleFaq = (id: number) => {
     setOpenFaq((prev) => (prev === id ? null : id));
   };
 
-  return (
-    <div className="min-h-screen text-[#2d2b2a] font-sans flex flex-col antialiased">
-      {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-12">
-        {/* Hero Section / Pesquisa */}
-        <section className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7c3aed]/10 text-[#7c3aed] text-xs font-semibold mb-4 border border-[#7c3aed]/20">
-            Suporte 24/7
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-[#111111] mb-3 tracking-tight">
-            Como podemos ajudar-te hoje?
-          </h1>
-          <p className="text-[#716e69] max-w-lg mx-auto text-sm md:text-base mb-8">
-            Encontra respostas rápidas para configurar a tua loja, gerir
-            produtos e integrar pagamentos.
-          </p>
+  const filteredFaq = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return faqData;
+    return faqData.filter((item) => item.question.toLowerCase().includes(q));
+  }, [query]);
 
-          {/* Barra de Pesquisa */}
-          <div className="relative max-w-2xl mx-auto group">
-            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#716e69] group-focus-within:text-[#7c3aed] transition-colors" />
+  return (
+    <div>
+      <div className="-mt-1 mb-7">
+        <PageHeader
+          title="Central de ajuda"
+          subtitle="Encontra respostas rápidas ou fala diretamente com o suporte"
+        />
+      </div>
+
+      <div className="max-w-4xl space-y-6">
+        {/* Pesquisa */}
+        <Surface className="p-6">
+          <div className="relative">
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-2" />
             <input
               type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Pesquisar artigos, dúvidas ou tutoriais..."
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-white border border-[#e2dcd0] shadow-sm focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/20 transition-all text-sm"
+              className="w-full border border-border-2 bg-muted/30 py-3 pl-10 pr-4 font-mono text-[13px] text-ink placeholder:text-ink-2 outline-none transition-colors focus:border-ink"
+              style={{ borderRadius: "2px" }}
             />
           </div>
-        </section>
+        </Surface>
 
-        {/* Categorias Principais (Cards) */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <div className="p-6 rounded-xl bg-[#f2eee5] border border-[#e2dcd0] hover:border-[#7c3aed] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
-            <div className="w-12 h-12 rounded-lg bg-white border border-[#e2dcd0] flex items-center justify-center text-[#7c3aed] mb-4 group-hover:bg-[#7c3aed] group-hover:text-white transition-colors">
-              <Store className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-[#111111] mb-1">
-              Configuração da Loja
-            </h3>
-            <p className="text-xs text-[#716e69] leading-relaxed">
-              Aprende a alterar o domínio, moeda, horário e dados gerais da tua
-              conta.
-            </p>
-          </div>
+        {/* Categorias */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          {CATEGORIES.map((cat) => (
+            <Surface key={cat.title} className="p-5">
+              <span
+                className="flex h-9 w-9 items-center justify-center border border-border-2 bg-accent-soft/40 text-ink"
+                style={{ borderRadius: "2px" }}
+              >
+                <cat.icon size={16} />
+              </span>
+              <h3 className="mt-3 font-heading text-[14px] font-bold tracking-[-.01em] text-ink">
+                {cat.title}
+              </h3>
+              <p className="mt-1 font-mono text-[12px] leading-relaxed text-ink-2">
+                {cat.desc}
+              </p>
+            </Surface>
+          ))}
+        </div>
 
-          <div className="p-6 rounded-xl bg-[#f2eee5] border border-[#e2dcd0] hover:border-[#7c3aed] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
-            <div className="w-12 h-12 rounded-lg bg-white border border-[#e2dcd0] flex items-center justify-center text-[#7c3aed] mb-4 group-hover:bg-[#7c3aed] group-hover:text-white transition-colors">
-              <Package className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-[#111111] mb-1">
-              Produtos & Catálogo
-            </h3>
-            <p className="text-xs text-[#716e69] leading-relaxed">
-              Como adicionar produtos, gerir categorias e criar cupões de
-              desconto.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#f2eee5] border border-[#e2dcd0] hover:border-[#7c3aed] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
-            <div className="w-12 h-12 rounded-lg bg-white border border-[#e2dcd0] flex items-center justify-center text-[#7c3aed] mb-4 group-hover:bg-[#7c3aed] group-hover:text-white transition-colors">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-[#111111] mb-1">
-              Vendas via WhatsApp
-            </h3>
-            <p className="text-xs text-[#716e69] leading-relaxed">
-              Configura o teu número para receberes pedidos diretamente no teu
-              telemóvel.
-            </p>
-          </div>
-        </section>
-
-        {/* FAQ Accordion */}
-        <section className="max-w-3xl mx-auto mb-16">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1.5 h-6 bg-[#7c3aed] rounded-full"></div>
-            <h2 className="text-xl font-bold text-[#111111]">
-              Perguntas Frequentes
+        {/* FAQ */}
+        <div>
+          <div className="mb-3 flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center bg-accent-soft text-accent" style={{ borderRadius: "2px" }}>
+              <LifeBuoy size={13} />
+            </span>
+            <h2 className="font-heading text-[18px] font-bold tracking-[-.01em] text-ink">
+              Perguntas frequentes
             </h2>
           </div>
 
-          <div className="space-y-4">
-            {faqData.map((item) => {
-              const isOpen = openFaq === item.id;
-              return (
-                <div
-                  key={item.id}
-                  className="border border-[#e2dcd0] rounded-xl bg-white overflow-hidden transition-all"
-                >
-                  <button
-                    onClick={() => toggleFaq(item.id)}
-                    className="w-full p-5 text-left font-medium text-[#111111] flex justify-between items-center hover:bg-[#f8f6f0]/50 transition-colors"
-                  >
-                    <span>{item.question}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-[#716e69] transition-transform duration-300 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
+          <Surface className="divide-y divide-border">
+            {filteredFaq.length === 0 ? (
+              <p className="p-6 font-mono text-[13px] text-ink-2">
+                Nenhum resultado para "{query}".
+              </p>
+            ) : (
+              filteredFaq.map((item) => {
+                const isOpen = openFaq === item.id;
+                return (
+                  <div key={item.id}>
+                    <button
+                      onClick={() => toggleFaq(item.id)}
+                      className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-muted/30"
+                    >
+                      <span className="font-mono text-[13px] font-semibold text-ink">
+                        {item.question}
+                      </span>
+                      <ChevronDown
+                        size={15}
+                        className={`shrink-0 text-ink-2 transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 font-mono text-[12px] leading-relaxed text-ink-2">
+                        {item.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </Surface>
+        </div>
 
-                  {isOpen && (
-                    <div className="px-5 pb-5 text-xs text-[#716e69] leading-relaxed animate-fadeIn">
-                      {item.answer}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* Suporte via WhatsApp */}
+        <Surface className="flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div className="flex items-center gap-3">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center bg-ink text-paper"
+              style={{ borderRadius: "2px" }}
+            >
+              <MessageSquare size={16} />
+            </span>
+            <div>
+              <h3 className="font-heading text-[15px] font-bold tracking-[-.01em] text-ink">
+                Ainda tens dúvidas?
+              </h3>
+              <p className="mt-0.5 font-mono text-[12px] text-ink-2">
+                A nossa equipa de suporte responde-te em tempo real.
+              </p>
+            </div>
           </div>
-        </section>
-
-        {/* Banner de Suporte no WhatsApp */}
-        <section className="bg-[#111111] text-white rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-xl">
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#7c3aed]/30 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="space-y-2 text-center md:text-left z-10">
-            <h3 className="text-xl font-bold">Ainda tens dúvidas?</h3>
-            <p className="text-xs text-gray-400 max-w-md">
-              A nossa equipa de suporte está pronta para te ajudar a alavancar a
-              tua loja em tempo real.
-            </p>
-          </div>
-
-          <a
-            href="https://wa.me/244956519417"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="z-10 bg-[#7c3aed] hover:bg-violet-600 text-white font-medium text-xs px-6 py-3.5 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-purple-900/40"
-          >
-            <MessageSquare className="w-4 h-4" /> Falar no WhatsApp
+          <a href="https://wa.me/244956519417" target="_blank" rel="noopener noreferrer">
+            <Button variant="primary">
+              <MessageSquare size={15} /> Falar no WhatsApp
+            </Button>
           </a>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#e2dcd0] py-6 text-center text-xs text-[#716e69]">
-        © 2026 Venda Express. Todos os direitos reservados.
-      </footer>
+        </Surface>
+      </div>
     </div>
   );
-};
+}
 
 export default HelpCenter;

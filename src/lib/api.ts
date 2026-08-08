@@ -3,6 +3,10 @@ export const BACKEND_ORIGIN = "http://192.168.100.196:4000";
 const TOKEN_KEY = "ve_token";
 
 import type { Order } from "./types";
+import type { Plan } from "./types";
+import type { Store, Payment, Category, Subcategory, Product, Customer, OrderItem } from "./types";
+import type { PublicCoupon } from "./types";
+import type { Page, PageCreate, PageUpdate } from "../builder/types/page";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -33,9 +37,9 @@ export function resolveMediaUrl(
 export class ApiError extends Error {
   status: number;
   code?: string;
-  payload: any;
+  payload: unknown;
 
-  constructor(message: string, status: number, code?: string, payload?: any) {
+  constructor(message: string, status: number, code?: string, payload?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -231,12 +235,12 @@ export async function aiAssistImage(
 
 export const api = {
   pages: {
-    list: () => request<any[]>("/pages"),
-    get: (id: string) => request<any>(`/pages/${id}`),
-    create: (payload: any) =>
-      request<any>("/pages", { method: "POST", body: JSON.stringify(payload) }),
-    update: (id: string, payload: any) =>
-      request<any>(`/pages/${id}`, {
+    list: () => request<Page[]>("/pages"),
+    get: (id: string) => request<Page>(`/pages/${id}`),
+    create: (payload: PageCreate) =>
+      request<Page>("/pages", { method: "POST", body: JSON.stringify(payload) }),
+    update: (id: string, payload: PageUpdate) =>
+      request<Page>(`/pages/${id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       }),
@@ -262,7 +266,7 @@ export const api = {
     me: () => request<{ user: { id: string; email: string } }>("/auth/me"),
   },
   plans: {
-    list: () => request<any[]>("/plans"),
+    list: () => request<Plan[]>("/plans"),
   },
   // Registo pago: a conta só nasce depois da EMIS confirmar.
   signup: {
@@ -339,7 +343,7 @@ export const api = {
       }>("/signup/trial", { method: "POST", body: JSON.stringify(payload) }),
   },
   stores: {
-    getMine: () => request<any>("/stores/mine"),
+    getMine: () => request<Store>("/stores/mine"),
     getStats: () =>
       request<{
         products: number;
@@ -350,7 +354,7 @@ export const api = {
         recentOrders: Order[];
       }>("/stores/mine/stats"),
     create: (payload: { name: string; slug: string; plan_id: string }) =>
-      request<any>("/stores", {
+      request<Store>("/stores", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -373,13 +377,26 @@ export const api = {
         };
       };
     }) =>
-      request<any>("/stores/mine", {
+      request<Store>("/stores/mine", {
         method: "PUT",
         body: JSON.stringify(payload),
       }),
   },
   themes: {
-    list: () => request<any[]>("/themes"),
+    list: () =>
+      request<
+        {
+          id: string;
+          name: string;
+          label: string;
+          description: string;
+          tags: string[];
+          version: string;
+          author: string;
+          accent: string;
+          in_use: number;
+        }[]
+      >("/themes"),
   },
   subscription: {
     status: () =>
@@ -393,14 +410,14 @@ export const api = {
           | "no_store";
         expires_at: string | null;
         days_left: number;
-        plan: any | null;
+        plan: Plan | null;
         store_status?: string;
       }>("/subscription/status"),
   },
   payments: {
     start: (planId: string) =>
       request<{
-        payment: any;
+        payment: Payment;
         emis: {
           token: string | null;
           frame_url: string | null;
@@ -412,16 +429,19 @@ export const api = {
         body: JSON.stringify({ plan_id: planId }),
       }),
     status: (paymentId: string) =>
-      request<{ payment: any; store: any }>(`/payments/${paymentId}/status`),
-    listMine: () => request<any[]>("/payments/mine"),
+      request<{ payment: Payment; store: Store }>(`/payments/${paymentId}/status`),
+    listMine: () => request<Payment[]>("/payments/mine"),
     // Só funciona com EMIS_ALLOW_MANUAL=true no .env do backend (para testes locais)
     confirmManual: (paymentId: string) =>
-      request<{ payment: any }>(`/payments/${paymentId}/confirm-manual`, {
+      request<{ payment: Payment }>(`/payments/${paymentId}/confirm-manual`, {
         method: "POST",
       }),
   },
   admin: {
-    listStores: () => request<any[]>("/admin/stores"),
+    listStores: () =>
+      request<Array<Store & { owner_email: string; plan_name: string | null }>>(
+        "/admin/stores",
+      ),
     getStats: () =>
       request<{
         stores: number;
@@ -431,14 +451,14 @@ export const api = {
       }>("/admin/stats"),
   },
   categories: {
-    list: () => request<any[]>("/categories"),
+    list: () => request<Category[]>("/categories"),
     create: (name: string, icon_url?: string | null) =>
-      request<any>("/categories", {
+      request<Category>("/categories", {
         method: "POST",
         body: JSON.stringify({ name, icon_url }),
       }),
     update: (id: string, name: string, icon_url?: string | null) =>
-      request<any>(`/categories/${id}`, {
+      request<Category>(`/categories/${id}`, {
         method: "PUT",
         body: JSON.stringify({ name, icon_url }),
       }),
@@ -447,16 +467,16 @@ export const api = {
   },
   subcategories: {
     list: (categoryId?: string) =>
-      request<any[]>(
+      request<Subcategory[]>(
         `/subcategories${categoryId ? `?category_id=${categoryId}` : ""}`,
       ),
     create: (categoryId: string, name: string) =>
-      request<any>("/subcategories", {
+      request<Subcategory>("/subcategories", {
         method: "POST",
         body: JSON.stringify({ category_id: categoryId, name }),
       }),
     update: (id: string, name: string) =>
-      request<any>(`/subcategories/${id}`, {
+      request<Subcategory>(`/subcategories/${id}`, {
         method: "PUT",
         body: JSON.stringify({ name }),
       }),
@@ -493,14 +513,14 @@ export const api = {
   },
   products: {
     list: () =>
-      request<unknown>("/products").then((d) => unwrapList<any>(d, "products")),
-    create: (payload: Record<string, any>) =>
-      request<any>("/products", {
+      request<unknown>("/products").then((d) => unwrapList<Product>(d, "products")),
+    create: (payload: Record<string, unknown>) =>
+      request<Product>("/products", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    update: (id: string, payload: Record<string, any>) =>
-      request<any>(`/products/${id}`, {
+    update: (id: string, payload: Record<string, unknown>) =>
+      request<Product>(`/products/${id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       }),
@@ -518,35 +538,35 @@ export const api = {
   },
   orders: {
     list: () =>
-      request<unknown>("/orders").then((d) => unwrapList<any>(d, "orders")),
-    getItems: (orderId: string) => request<any[]>(`/orders/${orderId}/items`),
+      request<unknown>("/orders").then((d) => unwrapList<Order>(d, "orders")),
+    getItems: (orderId: string) => request<OrderItem[]>(`/orders/${orderId}/items`),
     updateStatus: (orderId: string, status: string) =>
-      request<any>(`/orders/${orderId}/status`, {
+      request<Order>(`/orders/${orderId}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
   },
   customers: {
     list: () =>
-      request<unknown>("/customers").then((d) => unwrapList<any>(d, "customers")),
+      request<unknown>("/customers").then((d) => unwrapList<Customer>(d, "customers")),
   },
   storefront: {
     get: (slug: string) =>
       request<{
-        store: any;
-        categories: any[];
-        products: any[];
-        coupons: import("./types").PublicCoupon[];
+        store: Store;
+        categories: Category[];
+        products: Product[];
+        coupons: PublicCoupon[];
       }>(`/storefront/${slug}`),
     getProduct: (slug: string, id: string) =>
       request<{
-        store: any;
-        product: any;
-        category: any | null;
-        related: any[];
+        store: Store;
+        product: Product;
+        category: Category | null;
+        related: Product[];
       }>(`/storefront/${slug}/products/${id}`),
     validateCoupon: (slug: string, code: string) =>
-      request<any>(`/storefront/${slug}/coupons/validate`, {
+      request<PublicCoupon>(`/storefront/${slug}/coupons/validate`, {
         method: "POST",
         body: JSON.stringify({ code }),
       }),
@@ -565,7 +585,7 @@ export const api = {
         { method: "POST", body: JSON.stringify(payload) },
       ),
     getCart: (slug: string, guestId: string) =>
-      request<{ product: any; quantity: number }[]>(
+      request<{ product: Product; quantity: number }[]>(
         `/storefront/${slug}/cart?guest_id=${guestId}`,
       ),
     syncCart: (
@@ -578,7 +598,7 @@ export const api = {
         body: JSON.stringify({ guest_id: guestId, items }),
       }),
     getWishlist: (slug: string, guestId: string) =>
-      request<any[]>(`/storefront/${slug}/wishlist?guest_id=${guestId}`),
+      request<Product[]>(`/storefront/${slug}/wishlist?guest_id=${guestId}`),
     syncWishlist: (slug: string, guestId: string, productIds: string[]) =>
       request<void>(`/storefront/${slug}/wishlist`, {
         method: "PUT",
@@ -592,7 +612,7 @@ const SESSION_KEY = "ve_session_v1";
 
 export type CachedSession = {
   user: { id: string; email: string };
-  store: any | null;
+  store: Store | null;
 };
 
 export function getCachedSession(): CachedSession | null {

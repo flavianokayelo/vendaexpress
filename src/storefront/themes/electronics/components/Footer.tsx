@@ -42,7 +42,7 @@ export function Footer({
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             {store.logo_url ? (
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--sf-radius-md)] bg-white p-1">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden">
                 <img src={resolveMediaUrl(store.logo_url) ?? ""} alt={store.name} className="h-full w-full object-contain" />
               </span>
             ) : (

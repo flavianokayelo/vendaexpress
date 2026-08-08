@@ -46,7 +46,7 @@ export function Header({
         {/* logo à esquerda */}
         <div className="flex min-w-0 flex-shrink-0 items-center gap-2.5">
           {store.logo_url ? (
-            <button type="button" onClick={onHelpClick} aria-label="Início" className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden bg-white p-1">
+            <button type="button" onClick={onHelpClick} aria-label="Início" className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden">
               <img src={resolveMediaUrl(store.logo_url) ?? ""} alt={store.name} className="h-full w-full object-contain" />
             </button>
           ) : (

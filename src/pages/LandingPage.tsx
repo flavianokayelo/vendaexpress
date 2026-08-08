@@ -1015,7 +1015,7 @@ function TourFrame({
 function InteractiveTourFallback({ reduce }: { reduce: boolean }) {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(!reduce);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [visible, setVisible] = useState(false);
 
   const advance = useCallback(() => {
@@ -1025,7 +1025,7 @@ function InteractiveTourFallback({ reduce }: { reduce: boolean }) {
   useEffect(() => {
     if (!visible || reduce || !playing) return;
     intervalRef.current = setInterval(advance, 5200);
-    return () => clearInterval(intervalRef.current);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [advance, visible, reduce, playing]);
 
   useEffect(() => {
@@ -1768,7 +1768,7 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                 navigate={navigate}
               >
                 {store?.logo_url ? (
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-0.5">
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full">
                     <img
                       src={resolveMediaUrl(store.logo_url) ?? ""}
                       alt=""
@@ -1906,7 +1906,7 @@ export function LandingPage({ navigate }: { navigate: (to: string) => void }) {
                     navigate={navigate}
                   >
                     {store?.logo_url ? (
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-0.5">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full">
                         <img
                           src={resolveMediaUrl(store.logo_url) ?? ""}
                           alt=""

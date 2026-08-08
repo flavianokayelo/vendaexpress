@@ -44,9 +44,9 @@ export const textBlock: BlockDefinition = {
     return (
       <section id={id} onClick={() => onSelect?.(id)} className="px-6 py-12 md:px-12" style={{ backgroundColor: bgColor || 'transparent', ...style }}>
         <div className="mx-auto" style={{ maxWidth: `${maxWidth ?? 720}px` }}>
-          {title !== undefined && <EditableText tag="h2" isEditing={isEditing} value={title} onChange={(v) => handleChange('title', v)} className="text-2xl font-bold text-slate-900 md:text-3xl" style={{ textAlign: textAlign as any, color: textColor }} />}
+          {title !== undefined && <EditableText tag="h2" isEditing={isEditing} value={title} onChange={(v) => handleChange('title', v)} className="text-2xl font-bold text-slate-900 md:text-3xl" style={{ textAlign: textAlign as React.CSSProperties['textAlign'], color: textColor }} />}
           {content !== undefined && (
-            <EditableText tag="div" isEditing={isEditing} value={content} onChange={(v) => handleChange('content', v)} className="mt-4 text-base leading-relaxed" style={{ textAlign: textAlign as any, color: textColor }} />
+            <EditableText tag="div" isEditing={isEditing} value={content} onChange={(v) => handleChange('content', v)} className="mt-4 text-base leading-relaxed" style={{ textAlign: textAlign as React.CSSProperties['textAlign'], color: textColor }} />
           )}
         </div>
       </section>

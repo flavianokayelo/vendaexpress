@@ -22,7 +22,7 @@ export function Footer({
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-center gap-2.5">
             {store.logo_url ? (
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden bg-white p-1">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden">
                 <img src={resolveMediaUrl(store.logo_url) ?? ""} alt={store.name} className="h-full w-full object-contain" />
               </span>
             ) : (

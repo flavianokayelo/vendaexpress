@@ -83,7 +83,7 @@ function StorefrontRoutePageInner({
         setProducts(data.products);
         setCategories(data.categories);
         setPublicCoupons(data.coupons ?? []);
-        await ensureThemeLoaded(data.store.theme_id);
+        await ensureThemeLoaded(data.store.theme_id ?? FALLBACK_THEME_ID);
         setThemeReady(true);
       } catch {
         setNotFound(true);

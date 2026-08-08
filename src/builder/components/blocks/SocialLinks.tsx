@@ -39,7 +39,7 @@ export const socialLinksBlock: BlockDefinition = {
     iconColor: '#1e293b',
   },
   component: function SocialLinksBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, facebookUrl, instagramUrl, whatsappUrl, twitterUrl, bgColor, iconColor } = settings as Record<string, any>;
+    const { title, facebookUrl, instagramUrl, whatsappUrl, twitterUrl, bgColor, iconColor } = settings as Record<string, string>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);

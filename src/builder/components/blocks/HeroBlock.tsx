@@ -66,7 +66,7 @@ export const heroBlock: BlockDefinition = {
     settings, style, isEditing, onSelect, id, onChangeSettings,
   }) {
     const {
-      title, subtitle, buttonText, buttonUrl, imageUrl, imageAlt,
+      title, subtitle, buttonText, imageUrl, imageAlt,
       bgColor, textColor, buttonColor, layout, minHeight, overlay,
     } = settings as Record<string, string>;
     const hasImage = imageUrl && imageUrl !== '';

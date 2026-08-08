@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   SortableContext, verticalListSortingStrategy,
   useSortable,
@@ -6,7 +6,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Copy, Sparkles } from 'lucide-react';
 import { globalBlockRegistry } from '../../core/BlockRegistry';
-import { createSection } from '../../utils/defaults';
 import type { PageSection } from '../../types/page';
 import type { DeviceMode } from '../../types/editor';
 import type { BlockSettings } from '../../types/block';
@@ -20,9 +19,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   layout: 'bg-ink text-paper',
 };
 
-function SectionToolbar({ section, onSelect, onRemove, onDuplicate }: {
+function SectionToolbar({ section, onRemove, onDuplicate }: {
   section: PageSection;
-  onSelect: (id: string) => void;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
 }) {
@@ -119,7 +117,7 @@ function SortableSection({ section, isSelected, onSelect, onRemove, onDuplicate,
         <div className="absolute -left-1 top-1/2 h-8 w-0.5 -translate-y-1/2 bg-accent shadow-sm shadow-accent/30" style={{ borderRadius: '2px' }} />
       )}
 
-      <SectionToolbar section={section} onSelect={onSelect} onRemove={onRemove} onDuplicate={onDuplicate} />
+      <SectionToolbar section={section} onRemove={onRemove} onDuplicate={onDuplicate} />
 
       {!isSelected && (
         <div className="mx-auto mt-0 h-px max-w-[calc(100%-4rem)] bg-transparent transition-colors group-hover:bg-accent/20" />

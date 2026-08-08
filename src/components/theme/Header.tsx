@@ -296,7 +296,7 @@ export function Header({
           <div className="mx-auto grid max-w-[1240px] grid-cols-[auto_1fr_auto] items-center gap-4 px-2 py-2 sm:gap-7 sm:px-4 sm:py-0" style={{ minHeight: 64 }}>
             <div className="flex flex-shrink-0 items-center gap-2.5">
               {store.logo_url ? (
-                <span className="flex h-8 max-w-[128px] flex-shrink-0 items-center justify-center rounded-[9px] bg-white px-1 sm:h-[34px]">
+                <span className="flex h-8 max-w-[128px] flex-shrink-0 items-center justify-center sm:h-[34px]">
                   <img
                     src={resolveMediaUrl(store.logo_url) ?? ''}
                     alt={store.name}

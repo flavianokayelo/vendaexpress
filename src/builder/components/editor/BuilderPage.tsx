@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DndContext, DragOverlay, closestCenter,
   PointerSensor, useSensor, useSensors,
@@ -16,15 +16,6 @@ import type { BuilderContextType } from '../../hooks/useBuilder';
 import type { PageSection, PageStatus } from '../../types/page';
 import type { BlockDefinition } from '../../types/block';
 import type { DeviceMode } from '../../types/editor';
-
-const GRADIENT_MAP: Record<string, string> = {
-  hero: 'from-violet-500 to-purple-600',
-  products: 'from-blue-500 to-cyan-600',
-  marketing: 'from-amber-500 to-orange-600',
-  content: 'from-emerald-500 to-teal-600',
-  footer: 'from-slate-600 to-slate-800',
-  layout: 'from-rose-500 to-pink-600',
-};
 
 function PaletteDragPreview({ type, block }: { type: string; block?: BlockDefinition }) {
   const Icon = LayoutTemplate;
@@ -111,7 +102,6 @@ export function BuilderEditor({
   const pageTitle = state.page?.title ?? 'Nova página';
   const [dragTarget, setDragTarget] = useState<{ kind: 'palette'; type: string } | { kind: 'section'; section: PageSection } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropTargetRef = useRef<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -130,10 +120,6 @@ export function BuilderEditor({
 
   const handleDuplicate = useCallback((id: string) => {
     dispatch({ type: 'DUPLICATE_SECTION', id });
-  }, [dispatch]);
-
-  const handleReorder = useCallback((newSections: PageSection[]) => {
-    dispatch({ type: 'REORDER_SECTIONS', sections: newSections });
   }, [dispatch]);
 
   const handleAddBlock = useCallback((type: string, defaults?: Record<string, unknown>) => {
@@ -346,7 +332,7 @@ export function BuilderEditor({
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar — block library */}
           <aside className="w-64 shrink-0 border-r border-border bg-paper">
-            <BuilderSidebar blocks={availableBlocks} onAddBlock={handleAddBlock} />
+            <BuilderSidebar blocks={availableBlocks} />
           </aside>
 
           {/* Center — canvas */}

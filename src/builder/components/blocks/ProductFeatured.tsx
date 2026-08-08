@@ -37,7 +37,7 @@ export const productFeaturedBlock: BlockDefinition = {
     accentColor: '#1d4ed8',
   },
   component: function ProductFeaturedBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, description, buttonText, bgColor, accentColor } = settings as Record<string, any>;
+    const { title, description, buttonText, bgColor, accentColor } = settings as Record<string, string>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);

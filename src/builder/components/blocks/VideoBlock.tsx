@@ -44,7 +44,7 @@ export const videoBlock: BlockDefinition = {
     bgColor: '#f8fafc',
   },
   component: function VideoBlock({ settings, style, onSelect, id }) {
-    const { videoUrl, thumbnail, controls, maxWidth, bgColor } = settings as Record<string, any>;
+    const { videoUrl, thumbnail, controls, maxWidth, bgColor } = settings as Record<string, unknown>;
     const hasVideo = videoUrl && videoUrl !== '';
 
     const getEmbedUrl = (url: string): string | null => {

@@ -51,7 +51,7 @@ export const productGridBlock: BlockDefinition = {
     priceColor: '#1d4ed8',
   },
   component: function ProductGridBlock({ settings, style, isEditing, onSelect, id, onChangeSettings }) {
-    const { title, layout, columns, limit, bgColor, cardBgColor, textColor, priceColor } = settings as Record<string, any>;
+    const { title, layout, columns, limit, bgColor, cardBgColor, textColor, priceColor } = settings as Record<string, string>;
     const handleChange = useCallback((key: string, value: string) => {
       onChangeSettings?.({ [key]: value });
     }, [onChangeSettings]);
